@@ -49,7 +49,9 @@ account-service and VAuthenticator to a Spring UserDetails implementation.
 
 ## Next Features
 
-* User details exchanged between a generic account-service and VAuthenticator independent from Spring Security
+* ~~User details exchanged between a generic account-service and VAuthenticator independent from Spring Security~~
+* Token enhancer 
+* Client application management
 * Password recovery system
 * OpenID Connect Global Login
 * OpenID Connect Global Logout
