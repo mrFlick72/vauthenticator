@@ -10,6 +10,8 @@ class UserInfoEndPoint {
 
     @GetMapping("/user-info")
     fun key(principal: JwtAuthenticationToken) =
-            ok(UserInfo(principal.token.claims["user_name"] as String))
+            ok(UserInfo(sub = principal.token.claims.get("user_name") as String,
+                    userName = principal.token.claims["user_name"] as String,
+                    authorities = (principal.token.claims.get("authorities") as List<String>)))
 
 }

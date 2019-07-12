@@ -6,7 +6,6 @@ import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken
 import org.springframework.security.oauth2.common.OAuth2AccessToken
 import org.springframework.security.oauth2.provider.OAuth2Authentication
 import org.springframework.security.oauth2.provider.token.TokenEnhancer
-import java.util.*
 
 class IdTokenEnhancer(private val oidcIss: String,
                       private val keyRepository: KeyRepository,
@@ -35,7 +34,7 @@ class IdTokenEnhancer(private val oidcIss: String,
 
     private fun idTokenAsJwt(authentication: OAuth2Authentication): String {
         val keyPair = keyRepository.getKeyPair()
-        val idToken = IdToken.createIdToken(oidcIss, UUID.randomUUID().toString(), authentication, clock)
+        val idToken = IdToken.createIdToken(oidcIss, authentication.name, authentication, clock)
         val idTokenAsJwtSignedFor = idToken.idTokenAsJwtSignedFor(keyPair)
         return idTokenAsJwtSignedFor
     }

@@ -11,7 +11,8 @@ import java.lang.annotation.RetentionPolicy
 
 @Retention(RetentionPolicy.RUNTIME)
 @WithSecurityContext(factory = OAuth2WithSecurityContextFactory::class)
-annotation class WithMockOAuth2User(val username: String = "A_USER_NAME", val userNameKey: String = "user_name")
+annotation class WithMockOAuth2User(val username: String = "A_USER_NAME", val userNameKey: String = "user_name",
+                                    val authoritiesKey: String = "authorities", val authorities: String = "USER")
 
 internal class OAuth2WithSecurityContextFactory : WithSecurityContextFactory<WithMockOAuth2User> {
 
@@ -19,7 +20,7 @@ internal class OAuth2WithSecurityContextFactory : WithSecurityContextFactory<Wit
         val securityContext = SecurityContextHolder.createEmptyContext();
 
         val jwt = Jwt("A_TOKEN", null, null,
-                mapOf("HEADER" to "VALUE"), mapOf(annotation.userNameKey to annotation.username))
+                mapOf("HEADER" to "VALUE"), mapOf(annotation.userNameKey to annotation.username, annotation.authoritiesKey to annotation.authorities.split(",")))
 
         securityContext.authentication = JwtAuthenticationToken(jwt)
         securityContext.authentication.isAuthenticated = true

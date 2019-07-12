@@ -107,7 +107,7 @@ class ScurityAccountUser(private val accountRepository: AccountRepository, priva
 
                         objectMapper.writeValueAsString(SecurityAccountDetails(it.userName,
                                 passwordEncoder.encode(it.password),
-                                listOf("USER")))
+                                listOf("USER", "ADMIN")))
                     }
                     .orElseThrow({ UsernameNotFoundException("user not found") })
 
