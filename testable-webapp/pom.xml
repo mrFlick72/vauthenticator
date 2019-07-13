@@ -11,7 +11,7 @@
     <groupId>it.valeriovaudi.sso</groupId>
     <artifactId>webapp</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>webapp</name>
+    <name>testable-webapp</name>
     <description>Demo project for Spring Boot</description>
 
     <properties>
@@ -41,7 +41,37 @@
     </dependencies>
 
     <build>
+        <finalName>testable-spring-boot2x-webapp</finalName>
+
         <plugins>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>1.2.0</version>
+                <configuration>
+                    <imageName>mrflick72/${project.build.finalName}:1.0.0</imageName>
+                    <imageTags>
+                        <imageTag>1.0.0</imageTag>
+                        <imageTag>latest</imageTag>
+                    </imageTags>
+                    <dockerDirectory>src/main/docker</dockerDirectory>
+                    <resources>
+                        <resource>
+                            <targetPath>/</targetPath>
+                            <directory>${project.build.directory}</directory>
+                            <include>${project.build.finalName}.jar</include>
+                        </resource>
+                    </resources>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.activation</groupId>
+                        <artifactId>activation</artifactId>
+                        <version>1.1.1</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
