@@ -15,8 +15,7 @@ open class UserInfoEnhancer(private val accountRepository: AccountRepository) {
             .map { account ->
                 val claims = mutableMapOf<String, Any>()
 
-                claims["authorities"] = authorities(principal)
-
+                RoleClaimsProvider(account, claims)
                 OpenIdClaimsProvider(account, claims)
                 EmailClaimsProvider(account, claims)
                 ProfileClaimsProvider(account, claims)
@@ -28,6 +27,15 @@ open class UserInfoEnhancer(private val accountRepository: AccountRepository) {
 
 
 typealias ClaimsProvider = (Account, MutableMap<String, Any>) -> MutableMap<String, Any>
+
+
+object RoleClaimsProvider : ClaimsProvider {
+    override fun invoke(account: Account, claims: MutableMap<String, Any>): MutableMap<String, Any> {
+        claims["authorities"] = account.authorities
+        return claims
+    }
+
+}
 
 object EmailClaimsProvider : ClaimsProvider {
     override fun invoke(account: Account, claims: MutableMap<String, Any>): MutableMap<String, Any> {
@@ -69,10 +77,6 @@ object OpenIdClaimsProvider : ClaimsProvider {
     }
 
 }
-
-
-fun authorities(principal: OidcUserInfoAuthenticationContext) =
-    principal.authorization.accessToken.claims!!["authorities"] as List<String>
 
 fun userName(principal: OidcUserInfoAuthenticationContext) =
     principal.authorization.accessToken.claims!!["sub"] as String

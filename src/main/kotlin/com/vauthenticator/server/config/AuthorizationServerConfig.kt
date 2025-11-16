@@ -21,6 +21,7 @@ import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.oidc.sessionmanagement.sendAuthorizationResponse
 import com.vauthenticator.server.oidc.token.IdTokenEnhancer
 import com.vauthenticator.server.oidc.userinfo.UserInfoEnhancer
+import com.vauthenticator.server.role.adapter.token.RoleTokenEnhancer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -38,6 +39,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
@@ -88,6 +90,9 @@ class AuthorizationServerConfig {
         ): OAuth2TokenCustomizer<JwtEncodingContext> {
         return OAuth2TokenCustomizer { context: JwtEncodingContext ->
             val assignedKeys = mutableSetOf<Kid>()
+            RoleTokenEnhancer("id_token", "authorities").customize(context)
+            RoleTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "authorities").customize(context)
+
             OAuth2TokenEnhancer(assignedKeys, keyRepository, clientApplicationRepository).customize(context)
             IdTokenEnhancer(assignedKeys, keyRepository).customize(context)
             LambdaTokenEnhancer(enabled, lambdaName, lambdaFunction, AwsLambdaFunctionContextFactory(accountRepository))

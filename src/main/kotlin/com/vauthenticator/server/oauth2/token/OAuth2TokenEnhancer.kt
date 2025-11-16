@@ -5,11 +5,9 @@ import com.vauthenticator.server.keys.domain.Kid
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
-import java.util.stream.Collectors
 
 class OAuth2TokenEnhancer(
     private val assignedKeys: MutableSet<Kid>,
@@ -31,12 +29,7 @@ class OAuth2TokenEnhancer(
             } else {
                 val attributes = context.authorization!!.attributes
                 val principal = attributes["java.security.Principal"] as Authentication
-
                 context.claims.claim("user_name", principal.name)
-                context.claims.claim("authorities", principal.authorities
-                    .stream()
-                    .map { obj: GrantedAuthority -> obj.authority }
-                    .collect(Collectors.toList()))
             }
 
         }
