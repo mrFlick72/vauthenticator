@@ -54,6 +54,16 @@ CREATE TABLE ACCOUNT_ROLE
     FOREIGN KEY (role_name) REFERENCES ROLE (name) on delete cascade
 );
 
+CREATE TABLE ACCOUNT_GROUP
+(
+    account_username varchar(255) not null,
+    role_name        varchar(64)  not null,
+
+
+    FOREIGN KEY (account_username) REFERENCES ACCOUNT (username) on delete cascade,
+    FOREIGN KEY (role_name) REFERENCES ROLE (name) on delete cascade
+);
+
 CREATE TABLE KEYS
 (
     key_id                        varchar(255) not null primary key,

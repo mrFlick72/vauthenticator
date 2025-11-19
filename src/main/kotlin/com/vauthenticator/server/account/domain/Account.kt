@@ -16,6 +16,7 @@ data class Account(
     var username: String,
     var password: String,
     var authorities: Set<String>,
+    var groups: Set<String>,
 
     var email: String,
     var emailVerified: Boolean = false,
@@ -153,6 +154,7 @@ class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : Cac
                     username = it["username"] as String,
                     password = it["password"] as String,
                     authorities = (it["authorities"] as List<String>).toSet(),
+                    groups = (it["groups"] as List<String>).toSet(),
                     email = it["email"] as String,
                     emailVerified = it["emailVerified"] as Boolean,
                     firstName = it["firstName"] as String,
@@ -170,22 +172,25 @@ class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : Cac
 
 
     override fun loadableContentIntoCacheFor(source: Account): String =
-        objectMapper.writeValueAsString(mapOf(
-            "accountNonExpired" to source.accountNonExpired,
-            "accountNonLocked" to source.accountNonLocked,
-            "credentialsNonExpired" to source.credentialsNonExpired,
-            "enabled" to source.enabled,
-            "username" to source.username,
-            "password" to source.password,
-            "authorities" to source.authorities,
-            "email" to source.email,
-            "emailVerified" to source.emailVerified,
-            "firstName" to source.firstName,
-            "lastName" to source.lastName,
-            "birthDate" to source.birthDate.map { it.iso8601FormattedDate() }.orElseGet { "" },
-            "phone" to source.phone.map { it.formattedPhone() }.orElseGet { "" },
-            "locale" to source.locale.map { it.formattedLocale() }.orElseGet { "" },
-            "mandatory_action" to source.mandatoryAction.name
-        ))
+        objectMapper.writeValueAsString(
+            mapOf(
+                "accountNonExpired" to source.accountNonExpired,
+                "accountNonLocked" to source.accountNonLocked,
+                "credentialsNonExpired" to source.credentialsNonExpired,
+                "enabled" to source.enabled,
+                "username" to source.username,
+                "password" to source.password,
+                "authorities" to source.authorities,
+                "groups" to source.groups,
+                "email" to source.email,
+                "emailVerified" to source.emailVerified,
+                "firstName" to source.firstName,
+                "lastName" to source.lastName,
+                "birthDate" to source.birthDate.map { it.iso8601FormattedDate() }.orElseGet { "" },
+                "phone" to source.phone.map { it.formattedPhone() }.orElseGet { "" },
+                "locale" to source.locale.map { it.formattedLocale() }.orElseGet { "" },
+                "mandatory_action" to source.mandatoryAction.name
+            )
+        )
 
 }

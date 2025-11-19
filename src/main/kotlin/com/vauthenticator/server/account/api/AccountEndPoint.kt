@@ -79,7 +79,8 @@ data class AccountRepresentation(
     var birthDate: String = "",
     var phone: String = "",
     var locale: String = "",
-    val authorities: List<String> = emptyList()
+    val authorities: List<String> = emptyList(),
+    val groups: List<String> = emptyList()
 )
 
 object SignUpAccountConverter {
@@ -96,6 +97,7 @@ object SignUpAccountConverter {
             lastName = representation.lastName,
             email = representation.email,
             authorities = representation.authorities.toSet(),
+            groups = representation.groups.toSet(),
             birthDate = Date.isoDateFor(representation.birthDate),
             phone = Phone.phoneFor(representation.phone),
             locale = UserLocale.localeFrom(representation.locale),
