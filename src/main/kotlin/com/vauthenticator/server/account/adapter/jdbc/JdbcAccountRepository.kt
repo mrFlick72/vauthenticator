@@ -84,7 +84,7 @@ private const val DELETE_ACCOUNT_ROLE_QUERY = "DELETE FROM ACCOUNT_ROLE WHERE ro
 private const val INSERT_ACCOUNT_ROLE_QUERY = "INSERT INTO ACCOUNT_ROLE (account_username, role_name) VALUES (?,?)"
 
 private const val FIND_ACCOUNT_GROUP_QUERY: String = """
-    SELECT role_name
+    SELECT group_name
      FROM ACCOUNT_GROUP
      WHERE account_username=?
     """
@@ -213,9 +213,9 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
     }
 
     private fun saveGroupFor(userName: String, groups: Set<String>) {
-        val userRoles: Set<String> = getUserRoleFor(userName)
+        val userGroups: Set<String> = getUserGroupFor(userName)
 
-        userRoles.forEach { jdbcTemplate.update(DELETE_ACCOUNT_GROUP_QUERY, it) }
+        userGroups.forEach { jdbcTemplate.update(DELETE_ACCOUNT_GROUP_QUERY, it) }
         groups.forEach {
             jdbcTemplate.update(INSERT_ACCOUNT_GROUP_QUERY, userName, it)
         }

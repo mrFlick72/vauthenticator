@@ -16,7 +16,7 @@ fun MutableMap<String, AttributeValue>.valueAsBoolFor(key: String): Boolean =
     this[key]?.bool()!!
 
 fun MutableMap<String, AttributeValue>.valueAsStringSetFor(key: String): Set<String> =
-    this[key]?.ss()!!.toSet()
+    this[key]?.ss()?.toSet() ?: emptySet()
 
 fun MutableMap<String, AttributeValue>.valueAsLongFor(key: String): Long =
     this[key]?.n()!!.toLong()

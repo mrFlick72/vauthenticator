@@ -42,6 +42,7 @@ object JdbcUtils {
             jdbcTemplate.execute("DROP TABLE IF EXISTS GROUPS_ROLE;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS ACCOUNT CASCADE;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS ACCOUNT_ROLE;")
+            jdbcTemplate.execute("DROP TABLE IF EXISTS ACCOUNT_GROUP;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS KEYS;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS TICKET;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS PASSWORD_HISTORY;")
