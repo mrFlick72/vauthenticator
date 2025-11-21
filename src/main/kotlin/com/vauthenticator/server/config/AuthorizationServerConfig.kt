@@ -95,8 +95,8 @@ class AuthorizationServerConfig {
             RoleTokenEnhancer("id_token", "authorities").customize(context)
             RoleTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "authorities").customize(context)
 
-            GroupTokenEnhancer("id_token", "authorities", accountRepository).customize(context)
-            GroupTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "authorities", accountRepository).customize(context)
+            GroupTokenEnhancer("id_token", "groups", accountRepository).customize(context)
+            GroupTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "groups", accountRepository).customize(context)
 
             OAuth2TokenEnhancer(assignedKeys, keyRepository, clientApplicationRepository).customize(context)
             IdTokenEnhancer(assignedKeys, keyRepository).customize(context)
@@ -141,6 +141,8 @@ class AuthorizationServerConfig {
         redisTemplate: RedisTemplate<String, String?>,
         http: HttpSecurity
     ): SecurityFilterChain {
+        http.csrf { it.disable() }.headers { it.frameOptions { it.disable() } }
+        http.cors { it.configurationSource(corsConfigurationSource) }
 
         val userInfoEnhancer = UserInfoEnhancer(accountRepository)
 
@@ -159,8 +161,6 @@ class AuthorizationServerConfig {
                     MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                 )
             }
-        http.csrf { it.disable() }.headers { it.frameOptions { it.disable() } }
-        http.cors { it.configurationSource(corsConfigurationSource) }
 
         authorizationServerConfigurer.oidc { configurer ->
             configurer.userInfoEndpoint { customizer ->
