@@ -43,7 +43,7 @@ In order to make simple the ui assets build for local development take in consid
 in order to be sure to have the asset files in the correct path execute this script:
 
 ```shell
-cd ..
+cd ../auth-server
 rm -rf dist
 
 mkdir -p dist/static-asset/content/asset/

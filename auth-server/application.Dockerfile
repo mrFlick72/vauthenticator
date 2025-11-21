@@ -7,7 +7,7 @@ FROM amazoncorretto:21-al2023
 COPY --from=security_provider /etc/passwd /etc/passwd
 USER application
 
-ADD target/vauthenticator.jar /usr/local/vauthenticator/
+ADD ../target/vauthenticator.jar /usr/local/vauthenticator/
 
 VOLUME /var/log/onlyone-portal
 
