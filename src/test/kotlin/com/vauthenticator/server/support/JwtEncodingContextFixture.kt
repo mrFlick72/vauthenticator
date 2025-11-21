@@ -34,6 +34,16 @@ object JwtEncodingContextFixture {
         .registeredClient(registeredClient)
         .build()
 
+    val newIdTokenContext: JwtEncodingContext = JwtEncodingContext.with(
+        JwsHeader.with(MacAlgorithm.HS256),
+        JwtClaimsSet.builder()
+    )
+        .tokenType(OAuth2TokenType("id_token"))
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .authorization(authorization)
+        .registeredClient(registeredClient)
+        .build()
+
 
     val newClientCredentialsContext: JwtEncodingContext = JwtEncodingContext.with(
         JwsHeader.with(MacAlgorithm.HS256),

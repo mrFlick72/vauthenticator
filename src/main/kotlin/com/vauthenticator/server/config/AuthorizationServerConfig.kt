@@ -21,6 +21,7 @@ import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.oidc.sessionmanagement.sendAuthorizationResponse
 import com.vauthenticator.server.oidc.token.IdTokenEnhancer
 import com.vauthenticator.server.oidc.userinfo.UserInfoEnhancer
+import com.vauthenticator.server.role.adapter.token.GroupTokenEnhancer
 import com.vauthenticator.server.role.adapter.token.RoleTokenEnhancer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -84,6 +85,7 @@ class AuthorizationServerConfig {
         keyRepository: KeyRepository,
         lambdaFunction: LambdaFunction,
         clientApplicationRepository: ClientApplicationRepository,
+        accountRepository: AccountRepository,
         @Value("\${vauthenticator.lambda.aws.enabled:false}") enabled: Boolean,
         @Value("\${vauthenticator.lambda.aws.function-name:vauthenticator-token-enhancer}") lambdaName: String,
 
@@ -92,6 +94,9 @@ class AuthorizationServerConfig {
             val assignedKeys = mutableSetOf<Kid>()
             RoleTokenEnhancer("id_token", "authorities").customize(context)
             RoleTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "authorities").customize(context)
+
+            GroupTokenEnhancer("id_token", "authorities", accountRepository).customize(context)
+            GroupTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "authorities", accountRepository).customize(context)
 
             OAuth2TokenEnhancer(assignedKeys, keyRepository, clientApplicationRepository).customize(context)
             IdTokenEnhancer(assignedKeys, keyRepository).customize(context)

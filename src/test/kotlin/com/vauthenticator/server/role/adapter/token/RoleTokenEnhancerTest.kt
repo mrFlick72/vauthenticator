@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 class RoleTokenEnhancerTest {
 
     @Test
-    fun `when the role are put in an access token claims`() {
+    fun `when the roles are put in an access token claims`() {
         val uut = RoleTokenEnhancer("access_token", "authorize")
         val context = JwtEncodingContextFixture.newContext
 
@@ -19,10 +19,11 @@ class RoleTokenEnhancerTest {
         assertEquals(expected, actual)
     }
 
+
     @Test
-    fun `when the role are put in an id token claims`() {
+    fun `when the roles are put in an id token claims`() {
         val uut = RoleTokenEnhancer("id_token", "authorize")
-        val context = JwtEncodingContextFixture.newContext
+        val context = JwtEncodingContextFixture.newIdTokenContext
 
         uut.customize(context)
 
@@ -32,8 +33,9 @@ class RoleTokenEnhancerTest {
         assertEquals(expected, actual)
     }
 
+
     @Test
-    fun `when the role are not put in any token since that the principal is a client credential principal`() {
+    fun `when the roles are not put in any token since that the principal is a client credential principal`() {
         val uut = RoleTokenEnhancer("access_token", "authorize")
         val context = JwtEncodingContextFixture.newClientCredentialsContext
 
