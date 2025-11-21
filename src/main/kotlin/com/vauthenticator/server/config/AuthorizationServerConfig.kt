@@ -86,17 +86,19 @@ class AuthorizationServerConfig {
         lambdaFunction: LambdaFunction,
         clientApplicationRepository: ClientApplicationRepository,
         accountRepository: AccountRepository,
+        @Value("\${vauthenticator.token.role-claim-name:authorities}") roleClaimName: String,
+        @Value("\${vauthenticator.token.group-claim-name:groups}") groupClaimName: String,
         @Value("\${vauthenticator.lambda.aws.enabled:false}") enabled: Boolean,
         @Value("\${vauthenticator.lambda.aws.function-name:vauthenticator-token-enhancer}") lambdaName: String,
 
         ): OAuth2TokenCustomizer<JwtEncodingContext> {
         return OAuth2TokenCustomizer { context: JwtEncodingContext ->
             val assignedKeys = mutableSetOf<Kid>()
-            RoleTokenEnhancer("id_token", "authorities").customize(context)
-            RoleTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "authorities").customize(context)
+            RoleTokenEnhancer("id_token", roleClaimName).customize(context)
+            RoleTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, roleClaimName).customize(context)
 
-            GroupTokenEnhancer("id_token", "groups", accountRepository).customize(context)
-            GroupTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, "groups", accountRepository).customize(context)
+            GroupTokenEnhancer("id_token", groupClaimName, accountRepository).customize(context)
+            GroupTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, groupClaimName, accountRepository).customize(context)
 
             OAuth2TokenEnhancer(assignedKeys, keyRepository, clientApplicationRepository).customize(context)
             IdTokenEnhancer(assignedKeys, keyRepository).customize(context)
