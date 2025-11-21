@@ -1,5 +1,6 @@
 package com.vauthenticator.server.support
 
+import com.vauthenticator.server.support.SecurityFixture.principalFor
 import org.springframework.security.oauth2.core.AuthorizationGrantType
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
 import org.springframework.security.oauth2.jwt.JwsHeader
@@ -20,6 +21,7 @@ object JwtEncodingContextFixture {
     private val authorization = OAuth2Authorization.withRegisteredClient(registeredClient)
         .principalName(EMAIL)
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .attributes { it["java.security.Principal"] = principalFor(EMAIL) }
         .build()
 
     val newContext: JwtEncodingContext = JwtEncodingContext.with(
@@ -28,6 +30,17 @@ object JwtEncodingContextFixture {
     )
         .tokenType(OAuth2TokenType.ACCESS_TOKEN)
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .authorization(authorization)
+        .registeredClient(registeredClient)
+        .build()
+
+
+    val newClientCredentialsContext: JwtEncodingContext = JwtEncodingContext.with(
+        JwsHeader.with(MacAlgorithm.HS256),
+        JwtClaimsSet.builder()
+    )
+        .tokenType(OAuth2TokenType.ACCESS_TOKEN)
+        .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
         .authorization(authorization)
         .registeredClient(registeredClient)
         .build()
