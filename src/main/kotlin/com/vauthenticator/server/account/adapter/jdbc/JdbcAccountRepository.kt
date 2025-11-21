@@ -83,13 +83,23 @@ private const val FIND_ACCOUNT_ROLE_QUERY: String = """
 private const val DELETE_ACCOUNT_ROLE_QUERY = "DELETE FROM ACCOUNT_ROLE WHERE role_name=?"
 private const val INSERT_ACCOUNT_ROLE_QUERY = "INSERT INTO ACCOUNT_ROLE (account_username, role_name) VALUES (?,?)"
 
+private const val FIND_ACCOUNT_GROUP_QUERY: String = """
+    SELECT group_name
+     FROM ACCOUNT_GROUP
+     WHERE account_username=?
+    """
+private const val DELETE_ACCOUNT_GROUP_QUERY = "DELETE FROM ACCOUNT_GROUP WHERE group_name=?"
+private const val INSERT_ACCOUNT_GROUP_QUERY = "INSERT INTO ACCOUNT_GROUP (account_username, group_name) VALUES (?,?)"
+
 @Transactional
 class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRepository {
+
 
     @Transactional(readOnly = true)
     override fun accountFor(username: String): Optional<Account> {
 
         val authorities: Set<String> = getUserRoleFor(username)
+        val groups: Set<String> = getUserGroupFor(username)
 
         val queryResult = jdbcTemplate.query(FIND_ONE_QUERY, { rs, _ ->
             Account(
@@ -115,7 +125,9 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
                 ),
                 mandatoryAction = AccountMandatoryAction.valueOf(
                     rs.getString("mandatory_action")
-                )
+                ),
+                groups = groups
+
             )
         }, username)
         return Optional.ofNullable(queryResult.firstOrNull())
@@ -123,6 +135,9 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
 
     private fun getUserRoleFor(username: String) =
         jdbcTemplate.query(FIND_ACCOUNT_ROLE_QUERY, { rs, _ -> rs.getString("role_name") }, username).toSet()
+
+    private fun getUserGroupFor(username: String): Set<String> =
+        jdbcTemplate.query(FIND_ACCOUNT_GROUP_QUERY, { rs, _ -> rs.getString("group_name") }, username).toSet()
 
     override fun save(account: Account) {
         jdbcTemplate.update(
@@ -159,6 +174,7 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
         )
 
         saveRoleFor(account.username, account.authorities)
+        saveGroupFor(account.username, account.groups)
     }
 
     override fun create(account: Account) {
@@ -181,6 +197,7 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
                 account.mandatoryAction.name
             )
             saveRoleFor(account.username, account.authorities)
+            saveGroupFor(account.username, account.groups)
         } catch (e: DuplicateKeyException) {
             throw AccountRegistrationException(e.message!!, e)
         }
@@ -192,6 +209,15 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
         userRoles.forEach { jdbcTemplate.update(DELETE_ACCOUNT_ROLE_QUERY, it) }
         roles.forEach {
             jdbcTemplate.update(INSERT_ACCOUNT_ROLE_QUERY, userName, it)
+        }
+    }
+
+    private fun saveGroupFor(userName: String, groups: Set<String>) {
+        val userGroups: Set<String> = getUserGroupFor(userName)
+
+        userGroups.forEach { jdbcTemplate.update(DELETE_ACCOUNT_GROUP_QUERY, it) }
+        groups.forEach {
+            jdbcTemplate.update(INSERT_ACCOUNT_GROUP_QUERY, userName, it)
         }
     }
 

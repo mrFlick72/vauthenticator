@@ -21,6 +21,8 @@ import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.oidc.sessionmanagement.sendAuthorizationResponse
 import com.vauthenticator.server.oidc.token.IdTokenEnhancer
 import com.vauthenticator.server.oidc.userinfo.UserInfoEnhancer
+import com.vauthenticator.server.role.adapter.token.GroupTokenEnhancer
+import com.vauthenticator.server.role.adapter.token.RoleTokenEnhancer
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -29,14 +31,16 @@ import org.springframework.context.annotation.Profile
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.support.lob.DefaultLobHandler
+import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer
@@ -46,6 +50,7 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.web.DefaultRedirectStrategy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher
 import org.springframework.web.cors.CorsConfigurationSource
 
 
@@ -59,7 +64,7 @@ class AuthorizationServerConfig {
     lateinit var accountRepository: AccountRepository
 
     @Autowired
-    lateinit var corsConfigurationSource : CorsConfigurationSource
+    lateinit var corsConfigurationSource: CorsConfigurationSource
 
     @Bean
     fun jwkSource(keyRepository: KeyRepository, keyDecrypter: KeyDecrypter): JWKSource<SecurityContext?> =
@@ -80,12 +85,21 @@ class AuthorizationServerConfig {
         keyRepository: KeyRepository,
         lambdaFunction: LambdaFunction,
         clientApplicationRepository: ClientApplicationRepository,
+        accountRepository: AccountRepository,
+        @Value("\${vauthenticator.token.role-claim-name:authorities}") roleClaimName: String,
+        @Value("\${vauthenticator.token.group-claim-name:groups}") groupClaimName: String,
         @Value("\${vauthenticator.lambda.aws.enabled:false}") enabled: Boolean,
         @Value("\${vauthenticator.lambda.aws.function-name:vauthenticator-token-enhancer}") lambdaName: String,
 
         ): OAuth2TokenCustomizer<JwtEncodingContext> {
         return OAuth2TokenCustomizer { context: JwtEncodingContext ->
             val assignedKeys = mutableSetOf<Kid>()
+            RoleTokenEnhancer("id_token", roleClaimName).customize(context)
+            RoleTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, roleClaimName).customize(context)
+
+            GroupTokenEnhancer("id_token", groupClaimName, accountRepository).customize(context)
+            GroupTokenEnhancer(OAuth2TokenType.ACCESS_TOKEN.value, groupClaimName, accountRepository).customize(context)
+
             OAuth2TokenEnhancer(assignedKeys, keyRepository, clientApplicationRepository).customize(context)
             IdTokenEnhancer(assignedKeys, keyRepository).customize(context)
             LambdaTokenEnhancer(enabled, lambdaName, lambdaFunction, AwsLambdaFunctionContextFactory(accountRepository))
@@ -111,10 +125,10 @@ class AuthorizationServerConfig {
     @Bean("oAuth2AuthorizationService")
     @Profile("database")
     fun jdbcOAuth2AuthorizationService(
-        jdbcTemplate : JdbcTemplate,
-        registeredClientRepository : RegisteredClientRepository
+        jdbcTemplate: JdbcTemplate,
+        registeredClientRepository: RegisteredClientRepository
     ): OAuth2AuthorizationService {
-        return JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository, DefaultLobHandler())
+        return JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository)
     }
 
     @Bean
@@ -129,13 +143,26 @@ class AuthorizationServerConfig {
         redisTemplate: RedisTemplate<String, String?>,
         http: HttpSecurity
     ): SecurityFilterChain {
-        OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http)
         http.csrf { it.disable() }.headers { it.frameOptions { it.disable() } }
         http.cors { it.configurationSource(corsConfigurationSource) }
 
         val userInfoEnhancer = UserInfoEnhancer(accountRepository)
 
-        val authorizationServerConfigurer = http.getConfigurer(OAuth2AuthorizationServerConfigurer::class.java)
+        val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer.authorizationServer()
+        http
+            .securityMatcher(authorizationServerConfigurer.endpointsMatcher)
+            .with(
+                authorizationServerConfigurer, { it.oidc(Customizer.withDefaults()) }// Enable OpenID Connect 1.0
+            )
+            .authorizeHttpRequests { it.anyRequest().authenticated() }
+            // Redirect to the login page when not authenticated from the
+            // authorization endpoint
+            .exceptionHandling {
+                it.defaultAuthenticationEntryPointFor(
+                    LoginUrlAuthenticationEntryPoint("/login"),
+                    MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+                )
+            }
 
         authorizationServerConfigurer.oidc { configurer ->
             configurer.userInfoEndpoint { customizer ->

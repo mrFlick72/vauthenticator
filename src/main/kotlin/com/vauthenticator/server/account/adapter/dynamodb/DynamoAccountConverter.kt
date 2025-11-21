@@ -39,7 +39,8 @@ object DynamoAccountConverter {
         ),
         mandatoryAction = AccountMandatoryAction.valueOf(
             dynamoPayload.valueAsStringFor("mandatory_action")
-        )
+        ),
+        groups = dynamoPayload.valueAsStringSetFor("group")
     )
 
     fun fromDomainToDynamo(account: Account) =

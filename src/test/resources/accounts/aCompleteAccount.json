@@ -6,6 +6,7 @@
   "username": "email@domain.com",
   "password": "secret",
   "authorities": [],
+  "groups": [],
   "email": "email@domain.com",
   "emailVerified": false,
   "firstName": "A First Name",

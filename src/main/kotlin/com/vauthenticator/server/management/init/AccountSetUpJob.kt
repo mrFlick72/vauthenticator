@@ -29,6 +29,7 @@ class AccountSetUpJob(
                 "admin@email.com",
                 passwordEncoder.encode("secret"),
                 authorities = setOf(userRole.name, adminRole.name),
+                groups = emptySet(),
                 email = "admin@email.com",
                 emailVerified = true,
                 firstName = "Admin",
