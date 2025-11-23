@@ -106,6 +106,7 @@ jobs:
 
       - name: Build frontend artifacts
         run: |
+          cd management-ui
           cd src/main/frontend
           npm install --legacy-peer-deps
           npm run-script production-build
