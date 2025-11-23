@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.*
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
 import java.util.*
 
@@ -62,9 +62,9 @@ class WebSecurityConfig(
         http.csrf {
             it.requireCsrfProtectionMatcher(
                 OrRequestMatcher(
-                    AntPathRequestMatcher("/login", HttpMethod.POST.name()),
-                    AntPathRequestMatcher("/mfa-challenge", HttpMethod.POST.name()),
-                    AntPathRequestMatcher("/change-password", HttpMethod.POST.name())
+                    PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/login"),
+                    PathPatternRequestMatcher.pathPattern( HttpMethod.POST, "/mfa-challenge"),
+                    PathPatternRequestMatcher.pathPattern( HttpMethod.POST, "/change-password")
                 )
             )
         }
@@ -87,7 +87,8 @@ class WebSecurityConfig(
             )
                 .invalidateHttpSession(true)
                 .logoutRequestMatcher(
-                    AntPathRequestMatcher("/logout"))
+                    PathPatternRequestMatcher.pathPattern("/logout")
+                )
         }
 
 
