@@ -1,4 +1,4 @@
-name: build VAuthenticator
+name: build VAuthenticator Management UI
 
 on:
   push: { }
@@ -7,13 +7,11 @@ on:
       version:
         description: 'make a tag'
         required: false
-        type: string
 
       newversion:
         description: 'Next desired version'
-        required: false
+        required: true
         type: string
-
 jobs:
   tag-artifact:
     if: github.event.inputs.version != '' || github.event.inputs.version != ' '
@@ -34,7 +32,7 @@ jobs:
         run: |
           git config --global user.email "${{ secrets.GIT_EMAIL }}"
           git config --global user.name "${{ secrets.GIT_USERNAME }}"
-
+          
           mvn versions:set -DnewVersion=${{github.event.inputs.version}}
           git commit -am "[skip-ci] new version release ${{github.event.inputs.version}}"
           git push
@@ -49,31 +47,12 @@ jobs:
         run: |
           git config --global user.email "${{ secrets.GIT_EMAIL }}"
           git config --global user.name "${{ secrets.GIT_USERNAME }}"
-
+          
           mvn versions:set -DnewVersion=${{github.event.inputs.newversion}}
           git commit -am "[skip-ci] new version release ${{github.event.inputs.newversion}}"
           git push
-
   build-backend:
     runs-on: ubuntu-22.04
-    services:
-      postgres:
-        image: postgres:14-alpine
-        ports:
-          - "5432:5432"
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
-      localstack:
-        image: localstack/localstack:3.2
-        ports:
-          - "4566-4599:4566-4599"
-        env:
-          SERVICES: s3,kms,dynamodb,sns
-      redis:
-        image: redis
-        ports:
-          - "6379:6379"
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -86,16 +65,15 @@ jobs:
 
       - name: Build
         run: |
-          cd auth-server
-          mvn install -q
+          cd management-ui
+          mvn clean install -q
 
       - name: docker push
         run: |
-          cd auth-server
-
+          cd management-ui
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
           
-          if [[ ${GITHUB_REF##*/} == 'main' ]]
+          if [[ ${GITHUB_REF##*/} == 'master' ]]
           then
             DOCKER_TAG="latest"
           else
@@ -103,18 +81,17 @@ jobs:
           fi
           
           echo "$DOCKER_TAG"
-          docker build -t mrflick72/vauthenticator-k8s:$DOCKER_TAG -f application.Dockerfile .
-          docker push mrflick72/vauthenticator-k8s:$DOCKER_TAG
+          docker build . -t mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG
+          docker push mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG
 
       - name: Docker tag
         if: github.event.inputs.version != '' || github.event.inputs.version != ' '
 
         run: |
-          cd auth-server
-          
+          cd management-ui
           DOCKER_TAG="${{github.event.inputs.version}}"
-          docker build -t mrflick72/vauthenticator-k8s:$DOCKER_TAG -f application.Dockerfile .
-          docker push mrflick72/vauthenticator-k8s:$DOCKER_TAG
+          docker build . -t mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG
+          docker push mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG
   ui-backend:
     runs-on: ubuntu-22.04
 
@@ -129,8 +106,6 @@ jobs:
 
       - name: Build frontend artifacts
         run: |
-          cd auth-server
-
           cd src/main/frontend
           npm install --legacy-peer-deps
           npm run-script production-build
