@@ -86,10 +86,13 @@ jobs:
 
       - name: Build
         run: |
+          cd auth-server
           mvn install -q
 
       - name: docker push
         run: |
+          cd auth-server
+
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
           
           if [[ ${GITHUB_REF##*/} == 'main' ]]
@@ -124,6 +127,8 @@ jobs:
 
       - name: Build frontend artifacts
         run: |
+          cd auth-server
+
           cd src/main/frontend
           npm install --legacy-peer-deps
           npm run-script production-build
