@@ -1,12 +1,10 @@
 package com.vauthenticator.server.oauth2.clientapp
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.cache.CacheOperation
 import com.vauthenticator.server.cache.RedisCacheOperation
 import com.vauthenticator.server.oauth2.clientapp.adapter.cache.CachedClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.adapter.cache.ClientApplicationCacheContentConverter
 import com.vauthenticator.server.oauth2.clientapp.adapter.dynamodb.DynamoDbClientApplicationRepository
-import com.vauthenticator.server.oauth2.clientapp.adapter.inmemory.InMemoryAllowedOriginRepository
 import com.vauthenticator.server.oauth2.clientapp.adapter.jdbc.JdbcClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.adapter.redis.RedisAllowedOriginRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.AllowedOriginRepository
@@ -22,6 +20,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 
 @Configuration(proxyBeanMethods = false)

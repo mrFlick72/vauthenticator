@@ -1,6 +1,5 @@
 package com.vauthenticator.server.lambdas
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.extentions.toSha256
 import com.vauthenticator.server.support.JwtEncodingContextFixture.newContext
 import com.vauthenticator.server.support.RequestAttributesFixture.requestAttributes
@@ -23,6 +22,7 @@ import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.lambda.LambdaClient
 import software.amazon.awssdk.services.lambda.model.InvokeRequest
 import software.amazon.awssdk.services.lambda.model.InvokeResponse
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 
 @ExtendWith(MockKExtension::class)

@@ -1,10 +1,10 @@
 package com.vauthenticator.server.oauth2.clientapp.adapter.cache
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.security.registeredclient.RegisteredClientRepositoryFixture.aClientApplication
 import com.vauthenticator.server.support.JsonUtils.prettifyInOneLineJsonFrom
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 class ClientApplicationCacheContentConverterTest {
     val underTest = ClientApplicationCacheContentConverter(ObjectMapper())

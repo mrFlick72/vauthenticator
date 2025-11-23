@@ -1,6 +1,5 @@
 package com.vauthenticator.server.management.cleanup
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vauthenticator.server.keys.adapter.jdbc.JdbcKeyStorage
 import com.vauthenticator.server.keys.domain.DataKey
 import com.vauthenticator.server.keys.domain.KeyPurpose.SIGNATURE
@@ -18,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 import java.time.Clock
 import java.time.Duration
 import java.util.*
@@ -31,7 +31,7 @@ class DatabaseTtlEntryCleanJobTest {
 
     @Test
     fun `when the old entries are deleted`() {
-        val ticketRepository = JdbcTicketRepository(jdbcTemplate, jacksonObjectMapper())
+        val ticketRepository = JdbcTicketRepository(jdbcTemplate, ObjectMapper())
         val keyStorage = JdbcKeyStorage(jdbcTemplate, Clock.systemDefaultZone())
 
         val uut = DatabaseTtlEntryCleanJob(jdbcTemplate, Clock.systemUTC())

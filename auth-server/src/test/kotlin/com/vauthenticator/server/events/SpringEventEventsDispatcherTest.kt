@@ -1,6 +1,5 @@
 package com.vauthenticator.server.events
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.events.EventFixture.vauthenticatorAuthEvent
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.login.LoginPageController
@@ -21,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
+import tools.jackson.databind.ObjectMapper
 
 @ExtendWith(MockKExtension::class)
 class SpringEventEventsDispatcherTest {

@@ -1,6 +1,5 @@
 package com.vauthenticator.server.i18n
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -13,6 +12,7 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.ui.ExtendedModelMap
 import org.springframework.ui.Model
 import org.springframework.web.servlet.LocaleResolver
+import tools.jackson.databind.ObjectMapper
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
