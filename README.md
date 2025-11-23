@@ -22,15 +22,15 @@ Right now it is based, as said before to the latest version on spring oauth2/ope
 - welcome mail: admin:welcome scope is required
 - email verification: admin:mail-verify scope is required
 - reset password: admin:reset-password scope is required
-- access_token/id_token customization via lambda, see [here](docs/lambda.md) for more details
+- access_token/id_token customization via lambda, see [here](auth-server/docs/lambda.md) for more details
 - MFA
   - mail
   - sms
-  - see [here](docs/mfa.md) for more details
+  - see [here](auth-server/docs/mfa.md) for more details
 - Post login flow 
   - force to reset password
 - back/front channel logout
-- management api: custom actuator endpoint for more details [look here](docs/management.md)
+- management api: custom actuator endpoint for more details [look here](auth-server/docs/management.md)
 
 **Storage:**
 
@@ -49,4 +49,4 @@ For more details please follow to this link [readme.md](local-environment%2Fread
 ### profiling
 
 The application configuration is very versatile and you can decide what persistence and key management provider to use AWS or not AWS native. 
-For more details please refer to the detailed page [here](docs/profiles.md)
+For more details please refer to the detailed page [here](auth-server/docs/profiles.md)

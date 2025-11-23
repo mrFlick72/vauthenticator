@@ -1,0 +1,35 @@
+#name: Release Charts
+#
+#on:
+#  workflow_dispatch: { }
+#
+#jobs:
+#  release:
+#    permissions:
+#      contents: write # to push chart release and create a release (helm/chart-releaser-action)
+#      packages: write # needed for ghcr access
+#      id-token: write # needed for keyless signing
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v3
+#
+#      - name: Fetch history
+#        run: git fetch --prune --unshallow
+#
+#      - name: Configure Git
+#        run: |
+#          git config user.name "$GITHUB_ACTOR"
+#          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+#
+#      - name: Install Helm
+#        uses: azure/setup-helm@v3
+#        with:
+#          version: v3.10.0
+#
+#      - name: Run chart-releaser
+#        uses: helm/chart-releaser-action@v1.4.1
+#        with:
+#          charts_repo_url: https://github.com/vauthenticator/vauthenticator-helm-charts
+#        env:
+#          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

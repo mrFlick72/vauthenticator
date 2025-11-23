@@ -1,7 +1,7 @@
 HELP.md
 /target/
-!.mvn/wrapper/maven-wrapper.jar
-local-environment/
+!auth-server/.mvn/wrapper/maven-wrapper.jar
+auth-server/local/
 ### STS ###
 .apt_generated
 .classpath

@@ -1,0 +1,280 @@
+in-namespace:
+  redis:
+    enabled: true
+
+redis:
+  auth:
+    enabled: false
+  replica:
+    replicaCount: 1
+
+aws:
+  region: xxxxxxxxx
+  iamUser:
+    accessKey: xxxxxxxxx
+    secretKey: xxxxxxxxx
+    enabled: false
+  eks:
+    serviceAccount:
+      enabled: false
+      iamRole:
+        arn: arn:aws:iam::ACCOUNT_ID:role/IAM_ROLE_NAME
+
+imagePullSecrets: [ ]
+
+application:
+  sessionTimeout: 24h
+  profiles: dynamo,kms
+  password:
+    history:
+      evaluationLimit: 1
+      maxHistoryAllowedSize: 3
+    generatorCriteria:
+      upperCaseCharactersSize: 2
+      lowerCaseCharactersSize: 2
+      specialCharactersSize: 2
+      numberCharactersSize: 2
+    policy:
+      minSize: 1
+      minSpecialSymbol: 1
+      enablePasswordReusePrevention: true
+
+  aws:
+    s3:
+      endpointOverride:
+    kms:
+      endpointOverride:
+    dynamodb:
+      endpointOverride:
+
+  keda:
+    enabled: false
+    spec:
+      minReplicaCount: 1
+      maxReplicaCount: 1
+      pollingInterval: 1
+      cooldownPeriod: 300
+    prometheus:
+      serverAddress: ""
+      metricName: ""
+      threshold: ""
+      query: ""
+
+
+  pod:
+    probes:
+      liveness:
+        initialDelaySeconds: 10
+        periodSeconds: 30
+      rediness:
+        initialDelaySeconds: 10
+        periodSeconds: 30
+
+  service:
+    type: ClusterIP
+
+  ingress:
+    host: "*"
+    annotations: { }
+    tls: { }
+    enabled: true
+    class: nginx
+
+
+  resources:
+    requests:
+      cpu: "256m"
+      memory: "256Mi"
+    limits:
+      cpu: "512m"
+      memory: "512Mi"
+  replicaCount: 1
+
+  image:
+    repository: mrflick72/vauthenticator-k8s
+    pullPolicy: Always
+    tag: "0.8"
+
+  lables: { }
+
+  selectorLabels:
+    app: vauthenticator
+
+  podAnnotations: { }
+
+  masterKey: ACCOUNT_KMS_KEY
+
+  redis:
+    database: 0
+    host: vauthenticator-redis-master.auth.svc.cluster.local
+
+  server:
+    port: 8080
+
+  baseUrl: http://application-example-host.com
+  backChannelBaseUrl: http://vauthenticator:8080
+
+
+  emailProvider:
+    enabled: false
+    host: localhost
+    port: 587
+    username: ""
+    password: ""
+    properties: { }
+
+  email:
+    from: ""
+    welcomeEMailSubject: ""
+    verificationEMailSubject: ""
+    resetPasswordEMailSubject: ""
+    mfaEMailSubject: ""
+
+  dynamoDb:
+    account:
+      tableName: your_VAuthenticator_Account_table_name
+      cache:
+        ttl: 1h
+        name: account_cache
+      role:
+        tableName: your_VAuthenticator_Account_Role_table_name
+    role:
+      tableName: your_VAuthenticator_Role_table_name
+      cache:
+        ttl: 1h
+        name: role_cache
+      protectedFromDelete: ROLE_USER,VAUTHENTICATOR_ADMIN
+    clientApplication:
+      tableName: your_VAuthenticator_ClientApplication_table_name
+      cache:
+        ttl: 1h
+        name: client_application
+    mfaAccountMethods:
+      tableName: your_VAuthenticator_mfaAccountMethods_table_name
+    defaultMfaAccountMethods:
+      tableName: your_VAuthenticator_defaultMfaAccountMethods_table_name
+    keys:
+      mfa:
+        tableName: your_VAuthenticator_Mfa_Keys_table_name
+      signature:
+        tableName: your_VAuthenticator_Signature_Keys_table_name
+    ticket:
+      tableName: your_VAuthenticator_Ticket_table_name
+    passwordHistory:
+      tableName: your_VAuthenticator_Password_History_table_name
+      historyEvaluationLimit: 1
+      maxHistoryAllowedSize: 3
+
+  documentRepository:
+    engine: s3
+    bucketName: test
+    fsBasePath: dist
+    documentType:
+      email:
+        cacheName:
+        cacheTtl: 1m
+      staticAsset:
+        cacheName:
+        cacheTtl: 1m
+
+  mfa:
+    otp:
+      otpLength: 6
+      otpTimeToLiveInSeconds: 30
+
+  assetServer:
+    onS3:
+      enabled: false
+      bundleVersion: ""
+    baseUrl: http://localhost:8080
+
+  events:
+    enableLoggerConsumer: false
+
+managementUi:
+  keda:
+    enabled: false
+    spec:
+      minReplicaCount: 1
+      maxReplicaCount: 1
+      pollingInterval: 1
+      cooldownPeriod: 300
+    prometheus:
+      serverAddress:
+      metricName:
+      threshold:
+      query:
+
+  pod:
+    probes:
+      liveness:
+        initialDelaySeconds: 10
+        periodSeconds: 30
+      rediness:
+        initialDelaySeconds: 10
+        periodSeconds: 30
+
+  service:
+    type: ClusterIP
+
+  ingress:
+    host: "*"
+    annotations: { }
+    tls: { }
+    enabled: true
+    class: nginx
+
+
+  resources:
+    requests:
+      cpu: "256m"
+      memory: "256Mi"
+    limits:
+      cpu: "512m"
+      memory: "512Mi"
+
+  replicaCount: 1
+
+  image:
+    repository: mrflick72/vauthenticator-management-ui-k8s
+    pullPolicy: Always
+    tag: "0.8"
+
+  lables: { }
+
+  selectorLabels:
+    app: vauthenticator-management-ui
+
+  podAnnotations: { }
+
+  redis:
+    database: 1
+    host: vauthenticator-redis-master.auth.svc.cluster.local
+
+  server:
+    port: 8080
+
+  documentRepository:
+    engine: s3
+    bucketName: test
+    fsBasePath: dist
+    documentType:
+      mail:
+        cacheName: mail-document-local-cache
+        cacheTtl: 1m
+      staticAsset:
+        cacheName: static-asset-document-local-cache
+        cacheTtl: 1m
+
+  sso:
+    clientApp:
+      clientId: vauthenticator-management-ui
+      clientSecret: secret
+
+  baseUrl: http://application-example-host.com
+
+  assetServer:
+    onS3:
+      enabled: false
+      bundleVersion: ""
+    baseUrl: http://localhost:8080
