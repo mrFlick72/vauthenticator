@@ -1,0 +1,281 @@
+{{- if eq .Values.managementUi.keda.enabled true }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "vauthenticator-management-ui.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    deploymentName: {{ include "vauthenticator-management-ui.name" . }}
+spec:
+  minReplicaCount: {{ .Values.managementUi.keda.spec.minReplicaCount }}
+  maxReplicaCount: {{ .Values.managementUi.keda.spec.maxReplicaCount }}
+  pollingInterval: {{ .Values.managementUi.keda.spec.pollingInterval }}
+  cooldownPeriod: {{ .Values.managementUi.keda.spec.cooldownPeriod }}
+  scaleTargetRef:
+    name: {{ include "vauthenticator-management-ui.name" . }}
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: {{ .Values.managementUi.keda.prometheus.serverAddress }}
+        metricName: {{ .Values.managementUi.keda.prometheus.metricName }}
+        threshold: {{ .Values.managementUi.keda.prometheus.threshold | quote }}
+        query: {{ .Values.managementUi.keda.prometheus.query }}
+
+  {{ end }}
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: management-ui-config
+  namespace: {{ .Release.Namespace }}
+data:
+  application.yml: |
+    oidcEndSessionUrl: {{ .Values.application.baseUrl }}/oidc/logout
+    auth.oidcIss: {{ .Values.application.baseUrl }}
+
+    postLogoutRedirectUri: {{ .Values.managementUi.baseUrl }}/secure/admin/index
+
+    document:
+      engine: {{ .Values.managementUi.documentRepository.engine }}
+      fs-base-path: {{ .Values.managementUi.documentRepository.fsBasePath }}
+      bucket-name: {{ .Values.managementUi.documentRepository.bucketName }}
+      document-type:
+        mail:
+          cache:
+            name: {{ .Values.managementUi.documentRepository.documentType.mail.cacheName }}
+            ttl: {{ .Values.managementUi.documentRepository.documentType.mail.cacheTtl }}
+        static-asset:
+          cache:
+            name: {{ .Values.managementUi.documentRepository.documentType.staticAsset.cacheName }}
+            ttl: {{ .Values.managementUi.documentRepository.documentType.staticAsset.cacheTtl }}
+
+    spring:
+      main:
+        lazy-initialization: false
+
+      security:
+        oauth2:
+          client:
+            registration:
+              client:
+                client-id: {{ .Values.managementUi.sso.clientApp.clientId }}
+                client-secret: {{ .Values.managementUi.sso.clientApp.clientSecret }}
+                client-name: VAuthenticator Management UI
+                provider: vauthenticator
+                scope:
+                  - openid
+                  - profile
+                  - email
+                  - mfa:always
+                  - admin:welcome
+                  - admin:email-verify
+                  - admin:reset-password
+                  - admin:change-password
+                  - admin:generate-password
+                  - admin:key-reader
+                  - admin:key-editor
+                  - admin:email-template-reader
+                  - admin:email-template-writer
+                  - mfa:enrollment
+                  - admin:client-app-reader
+                  - admin:client-app-writer
+                  - admin:client-app-eraser
+                redirect-uri: {{ .Values.managementUi.baseUrl }}/login/oauth2/code/client
+                authorization-grant-type: authorization_code
+            provider:
+              vauthenticator:
+                authorization-uri: {{ .Values.application.baseUrl }}/oauth2/authorize
+                token-uri: {{ .Values.application.backChannelBaseUrl }}/oauth2/token
+                user-info-uri: {{ .Values.application.backChannelBaseUrl }}/userinfo
+                jwk-set-uri: {{ .Values.application.backChannelBaseUrl }}/oauth2/jwks
+                user-name-attribute: email
+      data:
+        redis:
+          database: {{ .Values.managementUi.redis.database }}
+          host: {{ .Values.application.redis.host }}
+
+    server:
+      port: {{ .Values.managementUi.server.port }}
+      forward-headers-strategy: framework
+      servlet:
+        context-path: /
+      http2:
+        enabled: true
+      compression:
+        enabled: true
+        min-response-size: 1KB
+
+    management:
+      server:
+        port: 8081
+        servlet:
+          context-path: /
+      endpoints:
+        web:
+          exposure:
+            include: "*"
+      endpoint:
+        shutdown:
+          enabled: true
+        health:
+          show-details: ALWAYS
+
+    vauthenticator:
+      session-management:
+        enabled: true
+        rp-iframe:
+          host: {{ .Values.managementUi.baseUrl }}
+          polling-rate: 5s
+          origin: ${vauthenticator.host}
+          logout-uri: /logout
+      client:
+        registrationId: client
+      host: {{ .Values.application.baseUrl }}
+      backChannelHost: {{ .Values.application.backChannelBaseUrl }}
+
+    assetServer:
+      on-s3:
+        enabled: {{ .Values.managementUi.assetServer.onS3.enabled }}
+        bundle-version: {{ .Values.managementUi.assetServer.onS3.bundleVersion }}
+      baseUrl: {{ .Values.managementUi.assetServer.baseUrl }}
+
+   {{- if eq .Values.aws.iamUser.enabled true }}
+    iamUserAwsCredentialsProvider: true
+    {{ end }}
+
+    {{- if eq .Values.aws.eks.serviceAccount.enabled true }}
+    iamServiceAccountAwsCredentialsProvider: true
+    {{ end }}
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vauthenticator-management-ui.name" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.managementUi.replicaCount }}
+  selector:
+    matchLabels:
+  {{- include "vauthenticator-management-ui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.managementUi.podAnnotations }}
+      annotations:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+      {{- with .Values.managementUi.lables }}
+      {{- toYaml .Values.managementUi.lables | nindent 8 }}
+      {{ end }}
+    {{- include "vauthenticator-management-ui.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if eq .Values.aws.eks.serviceAccount.enabled true }}
+      serviceAccountName: {{ include "vauthenticator-management-ui.name" . }}
+        {{ end }}
+      volumes:
+        - name: application-logs
+          emptyDir: { }
+
+        - name: management-ui-config
+          configMap:
+            name: management-ui-config
+
+      containers:
+        - name: {{ .Chart.Name }}
+          volumeMounts:
+            - name: application-logs
+              mountPath: /var/log/onlyone-portal/logs/
+
+            - name: management-ui-config
+              subPath: application.yml
+              mountPath: /usr/local/onlyone-portal/config/application.yml
+
+          image: "{{ .Values.managementUi.image.repository }}:{{ .Values.managementUi.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.managementUi.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.managementUi.server.port }}
+            - containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: {{ .Values.managementUi.pod.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.managementUi.pod.probes.liveness.periodSeconds }}
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: {{ .Values.managementUi.pod.probes.rediness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.managementUi.pod.probes.rediness.periodSeconds }}
+          resources:
+          {{- toYaml .Values.managementUi.resources | nindent 12 }}
+          env:
+            {{- if eq .Values.aws.iamUser.enabled true }}
+            - name: AWS_ACCESS_KEY_ID
+              value: {{ .Values.aws.iamUser.accessKey }}
+
+            - name: AWS_SECRET_ACCESS_KEY
+              value: {{ .Values.aws.iamUser.secretKey }}
+            {{ end }}
+            - name: AWS_REGION
+              value: {{ .Values.aws.region }}
+
+            - name: spring.config.additional-location
+              value: /usr/local/onlyone-portal/config/   
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vauthenticator-management-ui.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vauthenticator-management-ui.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.managementUi.service.type }}
+  ports:
+    - port: {{ .Values.managementUi.server.port }}
+      name: http
+  selector:
+    {{- include "vauthenticator-management-ui.selectorLabels" . | nindent 4 }}
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "vauthenticator-management-ui.name" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.managementUi.ingress.class }}
+    {{- with .Values.managementUi.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "vauthenticator-management-ui.name" . }}
+                port:
+                  number: {{ .Values.managementUi.server.port }}
+      host: {{  .Values.managementUi.ingress.host }}
+    {{- with .Values.managementUi.ingress.tls }}
+  tls:
+  {{- toYaml . | nindent 4}}
+    {{- end }}
