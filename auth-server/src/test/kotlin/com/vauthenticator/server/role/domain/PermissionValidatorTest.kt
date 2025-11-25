@@ -99,5 +99,7 @@ class PermissionValidatorTest {
             ).build()
 
     private fun emptyHttpSession(): DefaultSavedRequest =
-        DefaultSavedRequest.Builder().build()
+        DefaultSavedRequest.Builder()
+            .
+            .build()
 }
