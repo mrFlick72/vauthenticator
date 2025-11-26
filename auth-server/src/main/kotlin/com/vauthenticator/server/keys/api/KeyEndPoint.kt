@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.api
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.vauthenticator.server.keys.domain.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -18,7 +18,7 @@ class KeyEndPoint(
     @GetMapping("/api/keys")
     fun loadAllKeys() =
         keyRepository.signatureKeys()
-            .keys.map { mapOf("masterKey" to it.masterKid, "kid" to it.kid, "ttl" to it.expirationDateTimestamp) }
+            .keys.map { mapOf("masterKey" to it.masterKid.content(), "kid" to it.kid.content(), "ttl" to it.expirationDateTimestamp) }
             .let { ResponseEntity.ok(it) }
 
 

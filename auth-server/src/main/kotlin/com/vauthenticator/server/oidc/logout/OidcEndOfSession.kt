@@ -37,7 +37,11 @@ class ClearSessionStateLogoutHandler(
 
 ) : LogoutHandler {
 
-    override fun logout(request: HttpServletRequest, response: HttpServletResponse, authentication: Authentication) {
+    override fun logout(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        authentication: Authentication?
+    ) {
         val sessionId = sessionFactory.sessionIdFor(request)
         val hashOperations = redisTemplate.opsForHash<String, String?>()
         ofNullable(hashOperations.get(sessionId, sessionId.toSha256()))

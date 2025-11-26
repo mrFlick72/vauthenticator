@@ -1,6 +1,6 @@
 package com.vauthenticator.server.oauth2.clientapp.adapter.jdbc
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.sql.ResultSet

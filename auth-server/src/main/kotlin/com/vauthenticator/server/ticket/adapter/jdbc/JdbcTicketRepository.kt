@@ -1,12 +1,10 @@
 package com.vauthenticator.server.ticket.adapter.jdbc
-
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.ticket.domain.TicketContext
 import com.vauthenticator.server.ticket.domain.TicketId
 import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.springframework.jdbc.core.JdbcTemplate
+import tools.jackson.databind.ObjectMapper
 import java.util.*
 
 class JdbcTicketRepository(

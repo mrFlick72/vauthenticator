@@ -1,15 +1,15 @@
 package com.vauthenticator.server.ticket.adapter.jdbc
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vauthenticator.server.support.JdbcUtils.jdbcTemplate
 import com.vauthenticator.server.support.JdbcUtils.resetDb
 import com.vauthenticator.server.ticket.adapter.AbstractTicketRepositoryTest
 import com.vauthenticator.server.ticket.domain.TicketRepository
+import tools.jackson.databind.ObjectMapper
 
 class JdbcTicketRepositoryTest : AbstractTicketRepositoryTest() {
 
     override fun initTicketRepository(): TicketRepository =
-        JdbcTicketRepository(jdbcTemplate, jacksonObjectMapper())
+        JdbcTicketRepository(jdbcTemplate, ObjectMapper())
 
 
     override fun resetDatabase() {

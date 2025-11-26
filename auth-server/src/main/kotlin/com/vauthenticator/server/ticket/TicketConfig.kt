@@ -1,6 +1,5 @@
 package com.vauthenticator.server.ticket
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.ticket.adapter.dynamodb.DynamoDbTicketRepository
 import com.vauthenticator.server.ticket.adapter.jdbc.JdbcTicketRepository
 import com.vauthenticator.server.ticket.domain.TicketCreator
@@ -12,6 +11,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.JdbcTemplate
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import tools.jackson.databind.ObjectMapper
 import java.time.Clock
 import java.time.Duration
 import java.util.*

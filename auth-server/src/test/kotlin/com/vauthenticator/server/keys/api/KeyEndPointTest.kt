@@ -1,8 +1,6 @@
 package com.vauthenticator.server.keys.api
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.keys.domain.*
-import com.vauthenticator.server.support.KeysUtils
 import com.vauthenticator.server.support.KeysUtils.aKid
 import com.vauthenticator.server.support.KeysUtils.aMasterKey
 import com.vauthenticator.server.support.KeysUtils.anotherKid
@@ -21,13 +19,14 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
+import tools.jackson.databind.ObjectMapper
 import java.security.KeyPairGenerator
 import java.time.Duration
 
 private const val API_PATH = "/api/keys"
 
 @ExtendWith(MockKExtension::class)
-internal class KeyEndPointTest {
+class KeyEndPointTest {
 
     private lateinit var mokMvc: MockMvc
 
@@ -43,12 +42,12 @@ internal class KeyEndPointTest {
     private val rotationPayload = mapOf("kid" to "A_KID", "master_kid" to "A_MASTER_KEY", "key_ttl" to 100L)
 
     @BeforeEach
-    internal fun setUp() {
+    fun setUp() {
         mokMvc = standaloneSetup(KeyEndPoint("A_MASTER_KEY", keyRepository, signatureKeyRotation)).build()
     }
 
     @Test
-    internal fun `when we are able to load master key, kid of all  keys`() {
+    fun `when we are able to load master key, kid of all  keys`() {
         val kpg = KeyPairGenerator.getInstance("RSA")
         kpg.initialize(2048)
 
@@ -66,13 +65,15 @@ internal class KeyEndPointTest {
             )
         )
 
+        println(mapper.writeValueAsString(listOf(payload)))
+
         mokMvc.perform(get(API_PATH))
             .andExpect(status().isOk)
             .andExpect(content().json(mapper.writeValueAsString(listOf(payload))))
     }
 
     @Test
-    internal fun `when we are able to create a new key`() {
+    fun `when we are able to create a new key`() {
         every { keyRepository.createKeyFrom(aMasterKey) } returns Kid("123")
 
         mokMvc.perform(post(API_PATH))
@@ -81,7 +82,7 @@ internal class KeyEndPointTest {
     }
 
     @Test
-    internal fun `when we are able to delete a new key`() {
+    fun `when we are able to delete a new key`() {
         every { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) } just runs
 
         mokMvc.perform(
@@ -93,7 +94,7 @@ internal class KeyEndPointTest {
     }
 
     @Test
-    internal fun `when we are not able to delete a new key`() {
+    fun `when we are not able to delete a new key`() {
         every { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) } throws KeyDeletionException("")
 
         mokMvc.perform(
@@ -105,7 +106,7 @@ internal class KeyEndPointTest {
     }
 
     @Test
-    internal fun `when we rotate a signature key`() {
+    fun `when we rotate a signature key`() {
         val expectedKid = anotherKid
 
         every {

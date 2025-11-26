@@ -1,12 +1,12 @@
 package com.vauthenticator.server.password.web
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import tools.jackson.databind.ObjectMapper
 
 @Controller
 class ResetPasswordController(
