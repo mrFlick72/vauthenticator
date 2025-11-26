@@ -35,6 +35,7 @@ object RegisteredClientRepositoryFixture {
         .postLogoutRedirectUri("http://post_logout_redirect_uri")
         .clientSettings(
             ClientSettings.builder()
+                .requireProofKey(!confidential)
             .build())
         .tokenSettings(
             TokenSettings.builder()
@@ -58,6 +59,7 @@ object RegisteredClientRepositoryFixture {
                 )
             ),
             confidential = confidential,
+            withPkce = WithPkce(!confidential),
             webServerRedirectUri = CallbackUri("http://a_call_back"),
             allowedOrigins = AllowedOrigins(setOf(AllowedOrigin("*"))),
             accessTokenValidity = TokenTimeToLive(100),
