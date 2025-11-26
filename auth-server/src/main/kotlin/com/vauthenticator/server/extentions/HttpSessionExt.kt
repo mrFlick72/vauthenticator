@@ -18,9 +18,10 @@ fun HttpSession.oauth2ClientId(): Optional<ClientAppId> =
          .map { ClientAppId(it) }
 
 
+//TODO boyscout improve it
 private fun clientIdFromSessionWithinA(defaultSavedRequest: DefaultSavedRequest): Optional<String> =
      if (defaultSavedRequest.parameterNames.contains("client_id")) {
-        ofNullable(defaultSavedRequest.getParameterValues("client_id").firstOrNull())
+        ofNullable(defaultSavedRequest.getParameterValues("client_id")?.firstOrNull())
     } else {
         empty()
     }

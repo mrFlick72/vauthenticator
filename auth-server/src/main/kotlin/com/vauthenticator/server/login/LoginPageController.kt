@@ -1,6 +1,5 @@
 package com.vauthenticator.server.login
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.extentions.hasEnoughScopes
 import com.vauthenticator.server.extentions.oauth2ClientId
 import com.vauthenticator.server.i18n.I18nMessageInjector
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.SessionAttributes
+import tools.jackson.databind.ObjectMapper
 import java.util.*
 
 

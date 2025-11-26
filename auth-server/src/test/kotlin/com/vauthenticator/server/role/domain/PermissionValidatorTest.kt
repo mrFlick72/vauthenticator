@@ -94,10 +94,17 @@ class PermissionValidatorTest {
 
     private fun httpSessionWithClientApp(): DefaultSavedRequest =
         DefaultSavedRequest.Builder()
+            .setRequestURI("http://localhost")
+            .setServerName("localhost")
+            .setScheme("http")
             .setParameters(
                 mutableMapOf("client_id" to arrayOf(clientAppId.content))
             ).build()
 
     private fun emptyHttpSession(): DefaultSavedRequest =
-        DefaultSavedRequest.Builder().build()
+        DefaultSavedRequest.Builder()
+            .setRequestURI("http://localhost")
+            .setServerName("localhost")
+            .setScheme("http")
+            .build()
 }

@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
+        <version>4.0.0</version>
         <relativePath/>
     </parent>
 
@@ -19,12 +19,11 @@
 
     <properties>
         <java.version>21</java.version>
-        <kotlin.version>1.9.25</kotlin.version>
+        <kotlin.version>2.2.21</kotlin.version>
 
-        <io.mockk.version>1.13.16</io.mockk.version>
-        <aws.sdk.version>2.36.2</aws.sdk.version>
-        <greenmail.version>2.1.2</greenmail.version>
-        <oauth2-authorization-server.version>1.5.3</oauth2-authorization-server.version>
+        <io.mockk.version>1.14.6</io.mockk.version>
+        <aws.sdk.version>2.39.2</aws.sdk.version>
+        <greenmail.version>2.1.7</greenmail.version>
         <wiremock.version>3.0.1</wiremock.version>
         <two-factor-auth.version>1.3</two-factor-auth.version>
     </properties>
@@ -157,13 +156,15 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpkix-jdk18on</artifactId>
-            <version>1.79</version>
+            <version>1.81</version>
         </dependency>
-
         <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-oauth2-authorization-server</artifactId>
-            <version>${oauth2-authorization-server.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-authorization-server</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -225,6 +226,21 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security-oauth2-authorization-server-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

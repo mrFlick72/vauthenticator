@@ -1,6 +1,5 @@
 package com.vauthenticator.server.password.web
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
 import io.mockk.every
@@ -16,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import tools.jackson.databind.ObjectMapper
 
 @ExtendWith(MockKExtension::class)
 class ResetPasswordControllerTest {

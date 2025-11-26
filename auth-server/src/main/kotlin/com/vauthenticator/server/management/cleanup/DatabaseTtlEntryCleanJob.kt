@@ -44,7 +44,7 @@ class DatabaseTtlEntryCleanJob(
         val ticketToBeDeleted =
             jdbcTemplate.queryForList<String>(
                 "SELECT ticket FROM TICKET WHERE ttl < ?",
-                arrayOf(now)
+                now
             )
         ticketToBeDeleted.forEach {
             jdbcTemplate.update("DELETE FROM TICKET WHERE ticket = ?", it)

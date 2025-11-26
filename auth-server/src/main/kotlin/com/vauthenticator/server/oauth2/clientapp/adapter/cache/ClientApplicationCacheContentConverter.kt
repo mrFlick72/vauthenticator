@@ -1,8 +1,8 @@
 package com.vauthenticator.server.oauth2.clientapp.adapter.cache
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.cache.CacheContentConverter
 import com.vauthenticator.server.oauth2.clientapp.domain.*
+import tools.jackson.databind.ObjectMapper
 
 class ClientApplicationCacheContentConverter(private val objectMapper: ObjectMapper) :
     CacheContentConverter<ClientApplication> {
