@@ -2,6 +2,7 @@ package com.vauthenticator.server.management.init
 
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import com.vauthenticator.server.oauth2.clientapp.domain.AuthorizedGrantType.*
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.ADMIN_FULL_ACCESS
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.AVAILABLE_SCOPES
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.MFA_ALWAYS
 import com.vauthenticator.server.oauth2.clientapp.domain.WithPkce.Companion.disabled
@@ -20,7 +21,7 @@ class ClientApplicationSetUpJob(
         clientAppId = ClientAppId("vauthenticator-management-ui"),
         clientAppName = ClientAppName("vauthenticator-management-ui"),
         secret = Secret(passwordEncoder.encode("secret")),
-        scopes = Scopes.from(*(AVAILABLE_SCOPES - MFA_ALWAYS).toTypedArray()),
+        scopes = Scopes.from(ADMIN_FULL_ACCESS),
         withPkce = disabled,
         authorizedGrantTypes = AuthorizedGrantTypes.from(AUTHORIZATION_CODE, REFRESH_TOKEN),
         webServerRedirectUri = CallbackUri("http://local.management.vauthenticator.com:8080/login/oauth2/code/client"),
@@ -37,7 +38,7 @@ class ClientApplicationSetUpJob(
         clientAppId = ClientAppId("admin"),
         clientAppName = ClientAppName("admin"),
         secret = Secret(passwordEncoder.encode("secret")),
-        scopes = Scopes.from(*(AVAILABLE_SCOPES - MFA_ALWAYS).toTypedArray()),
+        scopes = Scopes.from(ADMIN_FULL_ACCESS),
         withPkce = disabled,
         authorizedGrantTypes = AuthorizedGrantTypes.from(CLIENT_CREDENTIALS),
         allowedOrigins = AllowedOrigins.empty(),
