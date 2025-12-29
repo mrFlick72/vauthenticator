@@ -26,7 +26,7 @@ abstract class AbstractClientApplicationRepositoryTest {
     private lateinit var uut: ClientApplicationRepository
 
     abstract fun resetDatabase()
-    abstract fun initUnitUnderTest(allowedOriginRepository1: AllowedOriginRepository): ClientApplicationRepository
+    abstract fun initUnitUnderTest(allowedOriginRepository: AllowedOriginRepository): ClientApplicationRepository
 
     @MockK
     lateinit var allowedOriginRepository: AllowedOriginRepository
@@ -34,8 +34,8 @@ abstract class AbstractClientApplicationRepositoryTest {
     @BeforeEach
     fun setUp() {
         every { allowedOriginRepository.setAllowedOriginsFor(ClientAppId("client_id"), from(AllowedOrigin("*"))) } just runs
-        uut = initUnitUnderTest(allowedOriginRepository)
         resetDatabase()
+        uut = initUnitUnderTest(allowedOriginRepository)
     }
 
     @Test
