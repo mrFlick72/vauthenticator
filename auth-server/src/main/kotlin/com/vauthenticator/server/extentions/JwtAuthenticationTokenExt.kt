@@ -20,8 +20,8 @@ fun JwtAuthenticationToken.clientAppId(): ClientAppId {
     }
 }
 
-
+//todo add full-access scope logic
 fun JwtAuthenticationToken.hasEnoughScopes(scopes: Scopes) =
-    (this.tokenAttributes["scope"] as List<String>).stream().map { Scope(it) }.anyMatch { scopes.content.contains(it) }
+    (this.tokenAttributes["scope"] as List<String>).stream().map { Scope(it) }.anyMatch { scopes.content.contains(it) }.or(scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
 
 fun JwtAuthenticationToken.hasEnoughScopes(scope: Scope) = hasEnoughScopes(Scopes(setOf(scope)))

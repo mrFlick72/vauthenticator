@@ -16,8 +16,7 @@ fun Authorities.asDynamoAttribute(): AttributeValue =
 fun TokenTimeToLive.asDynamoAttribute(): AttributeValue =
     AttributeValue.builder().n(this.content.toString()).build()
 
-
 fun ClientApplication.hasEnoughScopes(scopes: Scopes) =
-    this.scopes.content.stream().anyMatch { scopes.content.contains(it) }
+    this.scopes.content.stream().anyMatch { scopes.content.contains(it) }.or(scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
 
 fun ClientApplication.hasEnoughScopes(scope: Scope) = hasEnoughScopes(Scopes(setOf(scope)))
