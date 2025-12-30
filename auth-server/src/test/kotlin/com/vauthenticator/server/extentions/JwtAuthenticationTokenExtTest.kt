@@ -11,42 +11,30 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 
 class JwtAuthenticationTokenExtTest {
-    @Test
-    fun `when full admin access scopes under evaluation over ClientApplication scopes`() {
-        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", listOf(SIGN_UP.content))
 
-        assertTrue { uut.hasEnoughScopes(Scopes(setOf(ADMIN_FULL_ACCESS, MFA_ALWAYS))) }
-        assertTrue { uut.hasEnoughScopes((ADMIN_FULL_ACCESS)) }
+    @Test
+    fun `when a jwt token scopes has full admin access`() {
+        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", scopes = listOf(ADMIN_FULL_ACCESS.content))
+        assertTrue { uut.hasEnoughScopes(Scopes(setOf(MFA_ALWAYS))) }
     }
 
     @Test
-    fun `when several scopes are under evaluation over ClientApplication scopes give a positive result`() {
-        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", listOf(RESET_PASSWORD.content))
-
+    fun `when jwt token  scopes check give a positive result without full access admin scope `() {
+        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", scopes = listOf(RESET_PASSWORD.content, MFA_ALWAYS.content))
         assertTrue { uut.hasEnoughScopes(Scopes(setOf(RESET_PASSWORD, MFA_ALWAYS))) }
     }
 
-
     @Test
-    fun `when a scope is under evaluation over ClientApplication scopes give a positive result`() {
-        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", listOf(RESET_PASSWORD.content))
-
-        assertTrue { uut.hasEnoughScopes(RESET_PASSWORD) }
-    }
-
-
-    @Test
-    fun `when several scopes are under evaluation over ClientApplication scopes give a negative result`() {
-        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", listOf(SIGN_UP.content))
-
-        assertFalse { uut.hasEnoughScopes(MFA_ALWAYS) }
+    fun `when jwt token  scopes check give a negative result because the use case require more scopes `() {
+        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", scopes = listOf(RESET_PASSWORD.content))
+        assertFalse { uut.hasEnoughScopes(Scopes(setOf(RESET_PASSWORD, MFA_ALWAYS))) }
     }
 
 
     @Test
     fun `when a scope is under evaluation over ClientApplication scopes give a negative result`() {
-        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", listOf(RESET_PASSWORD.content))
-
-        assertFalse { uut.hasEnoughScopes(Scopes(setOf(SIGN_UP, MFA_ALWAYS))) }
+        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", scopes = listOf(SIGN_UP.content))
+        assertFalse { uut.hasEnoughScopes(Scopes(setOf(MFA_ALWAYS))) }
     }
+
 }

@@ -5,6 +5,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import kotlin.text.get
 
 fun Authentication.clientAppId(): ClientAppId {
     val authentication = this as JwtAuthenticationToken
@@ -20,8 +21,9 @@ fun JwtAuthenticationToken.clientAppId(): ClientAppId {
     }
 }
 
-//todo add full-access scope logic
 fun JwtAuthenticationToken.hasEnoughScopes(scopes: Scopes) =
-    (this.tokenAttributes["scope"] as List<String>).stream().map { Scope(it) }.anyMatch { scopes.content.contains(it) }.or(scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
+    scopes.content.stream().allMatch { (this.tokenAttributes["scope"] as List<String>).contains(it.content) }
+        .or((this.tokenAttributes["scope"] as List<String>).contains(Scope.ADMIN_FULL_ACCESS.content))
+
 
 fun JwtAuthenticationToken.hasEnoughScopes(scope: Scope) = hasEnoughScopes(Scopes(setOf(scope)))

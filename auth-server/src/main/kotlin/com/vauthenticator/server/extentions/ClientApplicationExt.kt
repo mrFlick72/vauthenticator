@@ -5,7 +5,8 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 fun Scopes.asDynamoAttribute(): AttributeValue = AttributeValue.builder().ss(this.content.map { it.content }).build()
 
-fun AllowedOrigins.asDynamoAttribute(): AttributeValue = AttributeValue.builder().ss(this.content.map { it.content }).build()
+fun AllowedOrigins.asDynamoAttribute(): AttributeValue =
+    AttributeValue.builder().ss(this.content.map { it.content }).build()
 
 fun AuthorizedGrantTypes.asDynamoAttribute(): AttributeValue =
     AttributeValue.builder().ss(this.content.map { it.name }).build()
@@ -16,7 +17,13 @@ fun Authorities.asDynamoAttribute(): AttributeValue =
 fun TokenTimeToLive.asDynamoAttribute(): AttributeValue =
     AttributeValue.builder().n(this.content.toString()).build()
 
-fun ClientApplication.hasEnoughScopes(scopes: Scopes) =
-    this.scopes.content.stream().anyMatch { scopes.content.contains(it) }.or(scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
+fun ClientApplication.hasEnoughScopes(scopes: Scopes): Boolean {
+    println(scopes.content.stream().allMatch { this.scopes.content.contains(it) })
+    println(this.scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
+
+    return scopes.content.stream().allMatch { this.scopes.content.contains(it) }
+        .or(this.scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
+
+}
 
 fun ClientApplication.hasEnoughScopes(scope: Scope) = hasEnoughScopes(Scopes(setOf(scope)))

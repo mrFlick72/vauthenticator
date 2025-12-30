@@ -12,44 +12,31 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
 
 class ClientApplicationExtTest {
+    val uut = aClientApp(aClientAppId()).copy(scopes = Scopes(setOf(ADMIN_FULL_ACCESS)))
 
     @Test
-    fun `when full admin access scopes under evaluation over ClientApplication scopes`() {
-        val uut = aClientApp(aClientAppId())
-
-        assertTrue { uut.hasEnoughScopes(Scopes(setOf(ADMIN_FULL_ACCESS, MFA_ALWAYS))) }
-        assertTrue { uut.hasEnoughScopes((ADMIN_FULL_ACCESS)) }
+    fun `when ClientApplication scopes has full admin access`() {
+        val uut = aClientApp(aClientAppId()).copy(scopes = Scopes(setOf(ADMIN_FULL_ACCESS)))
+        assertTrue { uut.hasEnoughScopes(Scopes(setOf(MFA_ALWAYS))) }
     }
 
     @Test
-    fun `when several scopes are under evaluation over ClientApplication scopes give a positive result`() {
-        val uut = aClientApp(aClientAppId())
-
+    fun `when ClientApplication scopes check give a positive result without full access admin scope `() {
+        val uut = aClientApp(aClientAppId()).copy(scopes = Scopes(setOf(RESET_PASSWORD, MFA_ALWAYS)))
         assertTrue { uut.hasEnoughScopes(Scopes(setOf(RESET_PASSWORD, MFA_ALWAYS))) }
     }
 
-
     @Test
-    fun `when a scope is under evaluation over ClientApplication scopes give a positive result`() {
-        val uut = aClientApp(aClientAppId())
-
-        assertTrue { uut.hasEnoughScopes(RESET_PASSWORD) }
-    }
-
-
-    @Test
-    fun `when several scopes are under evaluation over ClientApplication scopes give a negative result`() {
-        val uut = aClientApp(aClientAppId())
-
-        assertFalse { uut.hasEnoughScopes(MFA_ALWAYS) }
+    fun `when ClientApplication scopes check give a negative result because the use case require more scopes `() {
+        val uut = aClientApp(aClientAppId()).copy(scopes = Scopes(setOf(RESET_PASSWORD)))
+        assertFalse { uut.hasEnoughScopes(Scopes(setOf(RESET_PASSWORD, MFA_ALWAYS))) }
     }
 
 
     @Test
     fun `when a scope is under evaluation over ClientApplication scopes give a negative result`() {
-        val uut = aClientApp(aClientAppId())
-
-        assertFalse { uut.hasEnoughScopes(Scopes(setOf(SIGN_UP, MFA_ALWAYS))) }
+        val uut = aClientApp(aClientAppId()).copy(scopes = Scopes(setOf(SIGN_UP)))
+        assertFalse { uut.hasEnoughScopes(Scopes(setOf(MFA_ALWAYS))) }
     }
 
 
