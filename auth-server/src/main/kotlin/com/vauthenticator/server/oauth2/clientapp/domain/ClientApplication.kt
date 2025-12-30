@@ -75,6 +75,8 @@ data class Scope(val content: String) {
         val PROFILE = Scope("profile")
         val EMAIL = Scope("email")
 
+        val ADMIN_FULL_ACCESS = Scope("admin:full-access")
+
         val SIGN_UP = Scope("admin:signup")
         val WELCOME = Scope("admin:welcome")
 
@@ -101,6 +103,8 @@ data class Scope(val content: String) {
             OPEN_ID,
             PROFILE,
             EMAIL,
+
+            ADMIN_FULL_ACCESS,
 
             SIGN_UP,
             WELCOME,
