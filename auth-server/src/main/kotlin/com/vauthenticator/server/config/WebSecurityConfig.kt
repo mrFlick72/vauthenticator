@@ -12,6 +12,7 @@ import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
 import com.vauthenticator.server.password.domain.changepassword.CHANGE_PASSWORD_URL
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
+import com.vauthenticator.server.role.domain.Role
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -112,7 +113,7 @@ class WebSecurityConfig(
                     .requestMatchers("/change-password").permitAll()
 
                     .requestMatchers(HttpMethod.POST, "/api/password")
-                    .hasAnyAuthority(Scope.GENERATE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.GENERATE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
 
                     .requestMatchers(HttpMethod.PUT, "/api/reset-password-challenge").permitAll()
@@ -122,31 +123,31 @@ class WebSecurityConfig(
                     .requestMatchers("/api/accounts").permitAll()
 
                     .requestMatchers(HttpMethod.PUT, "/api/sign-up/welcome")
-                    .hasAnyAuthority(Scope.WELCOME.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.WELCOME.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/verify-challenge")
-                    .hasAnyAuthority(Scope.MAIL_VERIFY.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.MAIL_VERIFY.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/accounts/password")
-                    .hasAnyAuthority(Scope.CHANGE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.CHANGE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.GET, "/api/email-template")
-                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/email-template")
-                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_WRITER.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_WRITER.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.GET, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_READER.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.KEY_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.POST, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.POST, "/api/keys/rotate")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.DELETE, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content)
+                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers("/api/**")
                     .authenticated()

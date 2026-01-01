@@ -8,7 +8,7 @@ type ApplicationConfig = {
 }
 export const applicationConfigLoader = async () => {
     const configData = {
-        scope: "openid email profile admin:full-access",
+        scope: "openid email profile",
         redirectUri: process.env.REDIRECT_URI,
         clientApplicationId: process.env.CLIENT_APPLICATION_ID,
         idpBaseUrl: process.env.IDP_BASE_URL,

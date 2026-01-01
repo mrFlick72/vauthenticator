@@ -10,7 +10,6 @@ class DynamicCorsConfigurationSource(private val corsConfigurationResolver: Cors
         val corsConfiguration = CorsConfiguration()
 
         val corsConfigurationTemplate = corsConfigurationResolver.configurationFor(request)
-        println(corsConfigurationTemplate)
         corsConfiguration.allowedOrigins = listOf(corsConfigurationTemplate.allowedOrigin)
         corsConfiguration.maxAge = corsConfigurationTemplate.maxAge
         corsConfiguration.allowedMethods = corsConfigurationTemplate.allowedMethods
