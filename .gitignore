@@ -1,4 +1,6 @@
 HELP.md
+auth-server/src/main/frontend/node_modules/
+auth-server/src/main/frontend/dist
 auth-server/dist/
 auth-server/target/
 auth-server/local/localstack

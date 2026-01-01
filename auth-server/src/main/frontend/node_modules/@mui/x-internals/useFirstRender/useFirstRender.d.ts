@@ -1,1 +1,0 @@
-export declare function useFirstRender(callback: () => void): void;
