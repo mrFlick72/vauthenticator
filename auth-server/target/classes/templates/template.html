@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>VAuthenticator</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <script defer th:src="@{${assetServerBaseUrl} + '/' + ${assetBundle}}"></script>
+</head>
+<body>
+
+<div id="hasServerSideErrors" th:text="${hasServerSideErrors}" style="display: none"></div>
+<div id="errors" th:text="${errors}" style="display: none"></div>
+<div id="features" th:text="${features}" style="display: none"></div>
+<div id="metadata" th:text="${metadata}" style="display: none"></div>
+<div id="i18nMessages" th:text="${i18nMessages}" style="display: none"></div>
+
+<div th:if="${_csrf != null}">
+    <div id="csrfName" th:text="${_csrf.parameterName}" style="display: none"></div>
+    <div id="csrfToken" th:text="${_csrf.token}" style="display: none"></div>
+</div>
+
+<div id="app"></div>
+
+</body>
+</html>

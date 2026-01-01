@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="/webjars/crypto-js/4.1.1/crypto-js.js"></script>
+    <meta charset="UTF-8">
+    <title>OP Session Management Checker IFrame</title>
+</head>
+<body>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.addEventListener("message", receiveMessage, false);
+
+    async function receiveMessage(e) { // e.data has client_id and session_state
+
+        const client_id = e.data.split(' ')[0];
+        const session_state = e.data.split(' ')[1];
+        const salt = session_state.split('.')[1];
+        const issuer = [[${issuer}]]
+
+
+        let console_debug = [[${console_debug}]]
+
+        if(console_debug){
+            console.log("client_id" + client_id)
+            console.log("session_state " + session_state)
+            console.log("salt " + salt)
+            console.log("issuer " + issuer)
+        }
+
+        // if message is syntactically invalid
+        //     postMessage('error', e.origin) and return
+
+        // if message comes an unexpected origin
+        //     postMessage('error', e.origin) and return
+
+        // get_op_user_agent_state() is an OP defined function
+        // that returns the User Agent's login status at the OP.
+        // How it is done is entirely up to the OP.
+        const opuas = await get_op_user_agent_state(issuer, session_state);
+        if(console_debug) {
+            console.log("opuas " + opuas)
+        }
+        // Here, the session_state is calculated in this particular way,
+        // but it is entirely up to the OP how to do it under the
+        // requirements defined in this specification.
+        const ss = CryptoJS.SHA256(client_id + ' ' + issuer + ' ' +
+            opuas + ' ' + salt) + "." + salt;
+        console.log("ss " + ss)
+
+        let stat = '';
+        if (String(session_state) === String(ss)) {
+            stat = 'unchanged';
+        } else {
+            stat = 'changed';
+        }
+
+        e.source.postMessage(stat, e.origin);
+    }
+
+    async function get_op_user_agent_state(issuer, session_state) {
+        // return document.cookie.split("=")[1] || ""
+        let response = await fetch(`${issuer}/check_session?state=${session_state}`,
+            {
+                method: 'GET',
+                credentials: 'same-origin'
+            }
+        );
+        let responseStatus = response.status
+        if(responseStatus === 200){
+            let sessionState = await response.json()
+            return sessionState.state
+        }else  {
+            return ""
+        }
+    }
+    /*]]>*/
+
+</script>
+
+</body>
+</html>

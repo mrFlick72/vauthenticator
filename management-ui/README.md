@@ -1,14 +1,8 @@
 # vauthenticator-management-ui
 
 
-### ui local environment
-In order to make it simple, the ui assets build for local development take in consideration to enable the following spring configuration properties:
 
-```yaml
-  document:
-    engine: file-system
-    fs-base-path: dist
-```
+### ui local environment
 
 in order to be sure to have the asset files in the correct path execute this script:
 
@@ -29,3 +23,5 @@ cd dist/asset
 cp * ../../../../../dist/static-asset/content/asset/
 
 ```
+
+to access to the application you can use the following link: **https://management.vauthenticator.com/secure/admin/index**

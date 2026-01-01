@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: vauthenticator
+
+mfa:
+  otp:
+    length: 6
+    timeToLiveInSeconds: 30
+
+iamUserAwsCredentialsProvider: true

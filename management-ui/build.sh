@@ -1,4 +1,4 @@
-#!/bin/bash
+#! /bin/bash
 mvn clean install -DskipTests
 
 cd src/main/frontend
