@@ -1,4 +1,5 @@
 HELP.md
+auth-server/dist/
 auth-server/target/
 auth-server/local/localstack
 auth-server/local/postgresql
