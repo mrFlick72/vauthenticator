@@ -1,5 +1,5 @@
 #! /bin/bash
-mvn clean install -DskipTests
 
-cd src/main/frontend
+cd src/
+npm install
 npm run-script build
