@@ -12,7 +12,7 @@ That's way we provide one docker compose with all the needed infrastructure and 
 - default admin user
     - link: http://local.management.vauthenticator.com:8080/secure/admin/index
     - username: admin@email.com
-    - password: secret
+    - password: secret!
 
 In order to have all the needed infrastructure you can avail on the [docker-compose.yml](..%2Fdocker-compose.yml)`, while the endpoint to provision a default local tenant is like below
 
@@ -40,26 +40,7 @@ In order to make simple the ui assets build for local development take in consid
     fs-base-path: dist
 ```
 
-in order to be sure to have the asset files in the correct path execute this script:
-
-```shell
-cd ../auth-server
-rm -rf dist
-
-mkdir -p dist/static-asset/content/asset/
-mkdir -p dist/email/templates
-
-cd src/main/frontend
-npm install
-npm run-script build
-
-cd dist/asset
-
-cp * ../../../../../dist/static-asset/content/asset/
-
-cd ../../../../../communication/default/email 
-cp *  ../../../dist/email/templates
-```
+in order to be sure to have the assets you can use the ```build-frontend.sh```
 
 ## Installation in a NON AWS Environment 
 
