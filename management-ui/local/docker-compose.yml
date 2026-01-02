@@ -1,0 +1,9 @@
+version: "3"
+services:
+  vauthenticator-management-ui:
+    image: nginx
+    volumes:
+      - ../dist:/usr/share/nginx/html
+      - ./conf.d/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8085:80"

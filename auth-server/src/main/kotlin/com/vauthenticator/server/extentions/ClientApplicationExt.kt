@@ -18,9 +18,6 @@ fun TokenTimeToLive.asDynamoAttribute(): AttributeValue =
     AttributeValue.builder().n(this.content.toString()).build()
 
 fun ClientApplication.hasEnoughScopes(scopes: Scopes): Boolean {
-    println(scopes.content.stream().allMatch { this.scopes.content.contains(it) })
-    println(this.scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
-
     return scopes.content.stream().allMatch { this.scopes.content.contains(it) }
         .or(this.scopes.content.contains(Scope.ADMIN_FULL_ACCESS))
 

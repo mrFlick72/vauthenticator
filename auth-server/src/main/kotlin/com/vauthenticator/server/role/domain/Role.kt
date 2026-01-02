@@ -7,6 +7,7 @@ import com.vauthenticator.server.cache.CacheContentConverter
 data class Role(val name: String, val description: String) {
     companion object {
         fun defaultRole() = Role("ROLE_USER", "ROLE_USER")
+        fun adminRole() = Role("VAUTHENTICATOR_ADMIN", "VAUTHENTICATOR_ADMIN")
     }
 }
 

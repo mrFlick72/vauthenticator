@@ -12,8 +12,10 @@ import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
 import com.vauthenticator.server.password.domain.changepassword.CHANGE_PASSWORD_URL
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
+import com.vauthenticator.server.role.domain.Role
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -32,6 +34,8 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.*
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
 import java.util.*
 
 
@@ -52,6 +56,8 @@ class WebSecurityConfig(
     private val providerSettings: AuthorizationServerSettings,
     private val redisTemplate: RedisTemplate<String, String?>
 ) {
+    @Autowired
+    lateinit var corsConfigurationSource: CorsConfigurationSource
 
     @Bean
     fun defaultSecurityFilterChain(
@@ -63,11 +69,12 @@ class WebSecurityConfig(
             it.requireCsrfProtectionMatcher(
                 OrRequestMatcher(
                     PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/login"),
-                    PathPatternRequestMatcher.pathPattern( HttpMethod.POST, "/mfa-challenge"),
-                    PathPatternRequestMatcher.pathPattern( HttpMethod.POST, "/change-password")
+                    PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/mfa-challenge"),
+                    PathPatternRequestMatcher.pathPattern(HttpMethod.POST, "/change-password")
                 )
             )
         }
+        http.cors { it.configurationSource(corsConfigurationSource) }
         http.headers { it.frameOptions { it.disable() } }
 
         http.formLogin {
@@ -106,7 +113,7 @@ class WebSecurityConfig(
                     .requestMatchers("/change-password").permitAll()
 
                     .requestMatchers(HttpMethod.POST, "/api/password")
-                    .hasAnyAuthority(Scope.GENERATE_PASSWORD.content)
+                    .hasAnyAuthority(Scope.GENERATE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
 
                     .requestMatchers(HttpMethod.PUT, "/api/reset-password-challenge").permitAll()
@@ -116,31 +123,31 @@ class WebSecurityConfig(
                     .requestMatchers("/api/accounts").permitAll()
 
                     .requestMatchers(HttpMethod.PUT, "/api/sign-up/welcome")
-                    .hasAnyAuthority(Scope.WELCOME.content)
+                    .hasAnyAuthority(Scope.WELCOME.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/verify-challenge")
-                    .hasAnyAuthority(Scope.MAIL_VERIFY.content)
+                    .hasAnyAuthority(Scope.MAIL_VERIFY.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/accounts/password")
-                    .hasAnyAuthority(Scope.CHANGE_PASSWORD.content)
+                    .hasAnyAuthority(Scope.CHANGE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.GET, "/api/email-template")
-                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content)
+                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/email-template")
-                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_WRITER.content)
+                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_WRITER.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.GET, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_READER.content)
+                    .hasAnyAuthority(Scope.KEY_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.POST, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content)
+                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.POST, "/api/keys/rotate")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content)
+                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers(HttpMethod.DELETE, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content)
+                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.defaultRole().name)
 
                     .requestMatchers("/api/**")
                     .authenticated()

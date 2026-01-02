@@ -1,0 +1,15 @@
+{
+  "clientAppName": "local.vauthenticatror.management.ui",
+  "secret": "",
+  "confidential": "false",
+  "withPkce": "true",
+  "storePassword": "true",
+  "scopes": ["openid", "email", "profile"],
+  "authorizedGrantTypes": ["authorization_code"],
+  "webServerRedirectUri": "http://local.management.vauthenticator.com:8085/callback",
+  "accessTokenValidity": "36000",
+  "refreshTokenValidity": "36000",
+  "postLogoutRedirectUri": "http://local.management.vauthenticator.com:8085",
+  "logoutUri": "http://local.management.vauthenticator.com:8085/logout",
+  "allowedOrigins": ["http://local.management.vauthenticator.com:8085"]
+}

@@ -14,6 +14,7 @@ class DynamicCorsConfigurationSource(private val corsConfigurationResolver: Cors
         corsConfiguration.maxAge = corsConfigurationTemplate.maxAge
         corsConfiguration.allowedMethods = corsConfigurationTemplate.allowedMethods
         corsConfiguration.allowCredentials = corsConfigurationTemplate.allowCredentials
+        corsConfiguration.allowedHeaders = listOf("*")
 
         return corsConfiguration
     }

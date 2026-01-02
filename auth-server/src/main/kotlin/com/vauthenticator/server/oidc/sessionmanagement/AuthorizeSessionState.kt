@@ -41,10 +41,6 @@ fun sendAuthorizationResponse(
 
     val sessionState = factory.sessionStateFor(request, authentication)
 
-    print("request.cookies")
-    print(request.cookies)
-    print("request.cookies")
-
     val sessionId = factory.sessionIdFor(request)
     redisTemplate.opsForHash<String, String?>().put(sessionId, sessionId.toSha256(), sessionState)
     redisTemplate.opsForHash<String, String?>()

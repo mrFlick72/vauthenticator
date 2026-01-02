@@ -26,7 +26,7 @@ class CorsConfigurationResolver(private val allowedOriginRepository: AllowedOrig
 
 data class AuthServerCorsConfiguration(
     val allowedOrigin: String,
-    val allowedMethods: List<String> = listOf("GET", "POST", "OPTIONS"),
+    val allowedMethods: List<String> = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS"),
     val maxAge: Long = 3600,
     val allowCredentials: Boolean = true
 )

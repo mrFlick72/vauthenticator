@@ -1,8 +1,15 @@
 HELP.md
-/target/
-!auth-server/.mvn/wrapper/maven-wrapper.jar
-auth-server/local/
-### STS ###
+auth-server/src/main/frontend/node_modules/
+auth-server/src/main/frontend/dist
+auth-server/dist/
+auth-server/target/
+auth-server/local/localstack
+auth-server/local/postgresql
+auth-server/target
+
+management-ui/dist/
+management-ui/src/node_modules/
+
 .apt_generated
 .classpath
 .factorypath

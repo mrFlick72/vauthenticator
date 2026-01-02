@@ -1,0 +1,124 @@
+### actuator root
+GET {{actuatorHost}}/actuator
+
+
+### acgtuator database-clean-up job
+POST {{actuatorHost}}/actuator/database-clean-up
+
+
+### acgtuator tenant setup job
+POST {{actuatorHost}}/actuator/tenant-setup
+
+
+### login page
+GET {{host}}/login
+
+### well-known/openid-configuration
+GET {{host}}/.well-known/openid-configuration
+
+### well-known/openid-configuration
+GET {{host}}/.well-known/oauth-authorization-server
+
+### gain a new access token for M2M interaction
+POST {{host}}/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+client_id=admin&client_secret=secret&grant_type=client_credentials&scope=admin:signup admin:client-app-writer
+
+> {%
+    client.global.set("auth_token", response.body.access_token);
+%}
+
+### sign up a new account
+
+POST {{host}}/api/accounts
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "email": "user@email.com",
+  "password": "secret!",
+  "firstName": "Admin",
+  "lastName": "",
+  "birthDate": "1990-01-01",
+  "phone": "+39 233 2323233",
+  "locale": "it",
+  "authorities": [
+    "ROLE_USER",
+    "VAUTHENTICATOR_ADMIN"
+  ]
+}
+
+
+### send a mail verify challenge
+
+PUT {{host}}/api/verify-challenge
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "email": "user@email.com"
+}
+
+
+### sign up a new account
+
+PUT {{host}}/api/client-applications/user-introspection
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "clientAppName": "user-introspection",
+  "secret": "",
+  "confidential": "false",
+  "withPkce": "true",
+  "storePassword": "true",
+  "scopes": ["openid", "email", "profile", "mfa:enrollment"],
+  "authorizedGrantTypes": ["authorization_code"],
+  "webServerRedirectUri": "http://user-introspection.com:7070/login/oauth2/code/client",
+  "accessTokenValidity": "360",
+  "refreshTokenValidity": "360",
+  "postLogoutRedirectUri": "http://user-introspection.com:7070",
+  "logoutUri": "http://user-introspection.com:7070",
+  "allowedOrigins": ["*"]
+}
+
+
+### enroll new email
+
+POST {{host}}/api/mfa/enrollment
+Content-Type: application/json
+Authorization: Bearer xxxx
+
+{
+  "mfaMethod": "EMAIL_MFA_METHOD",
+  "mfaChannel" : "xxxx@email.com"
+}
+
+### enroll new phone
+
+POST {{host}}/api/mfa/enrollment
+Content-Type: application/json
+Authorization: Bearer xxx
+
+{
+  "mfaMethod": "SMS_MFA_METHOD",
+  "mfaChannel" : "+39 233 2323233"
+}
+
+
+### associate new email
+
+POST {{host}}/api/mfa/associate
+Content-Type: application/json
+Authorization: Bearer xxx
+
+{
+  "ticket": "xxxx",
+  "code" : "xxxx"
+}
+
+
+### get all sms from SNS
+
+GET http://localhost:4566/_aws/sns/sms-messages?region=eu-central-1
