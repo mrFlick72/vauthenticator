@@ -10,9 +10,10 @@ That's way we provide one docker compose with all the needed infrastructure and 
     - username: vauthenticator-management-ui
     - password: secret
 - default admin user
-    - link: http://local.management.vauthenticator.com:8080/secure/admin/index
+    - link: http://local.management.vauthenticator.com:8085/secure/admin/index
     - username: admin@email.com
     - password: secret!
+    - the new user created by the tenant setup actuator endpoint need to be verified, it will make the user usable and will setup the required MFA to login to the management ui
 
 In order to have all the needed infrastructure you can avail on the [docker-compose.yml](..%2Fdocker-compose.yml)`, while the endpoint to provision a default local tenant is like below
 

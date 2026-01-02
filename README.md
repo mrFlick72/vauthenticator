@@ -3,15 +3,14 @@
 This project is actually a journey. This is a big evolution of the OAuth2 authorization server 
 developed during my master thesis to an OpenID Connect authentication server.
 In this new version I expand the initial project in order to use JWT token embracing OpenID Connect protocol,
-all written in Kotlin based on Spring Boot 3.x and more over to the latest spring based oauth2.1/openid connect framework:
-[spring-authorization-server](https://github.com/spring-projects-experimental/spring-authorization-server). 
+all written in Kotlin based on Spring Boot 4.x and more over to the latest spring based oauth2.1/openid connect framework embedded in spring security 7+
 
 ## The Architecture
 
 ![](https://github.com/mrFlick72/vauthenticator/blob/main/images/vauthenticator-architecture.png)
 
 ## Features
-Right now it is based, as said before to the latest version on spring oauth2/open id connect framework [spring-authorization-server](https://github.com/spring-projects-experimental/spring-authorization-server).
+Right now it is based, as said before to the latest version on spring oauth2/open id connect framework spring security 7+ 
 
 **API:**
 
