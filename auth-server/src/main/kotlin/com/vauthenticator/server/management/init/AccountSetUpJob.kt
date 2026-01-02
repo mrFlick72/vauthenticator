@@ -2,10 +2,8 @@ package com.vauthenticator.server.management.init
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountMandatoryAction
-import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
-import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.role.domain.RoleRepository
 import java.util.*
