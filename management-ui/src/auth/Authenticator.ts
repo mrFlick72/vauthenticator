@@ -65,8 +65,12 @@ export const authenticate = async (code: string) => {
         .then((data) => {
             let tokenResponse = data as TokenResponse
 
-            window.sessionStorage.setItem("ID_TOKEN", tokenResponse.id_token);
-            window.sessionStorage.setItem("ACCESS_TOKEN", tokenResponse.access_token);
+            if(tokenResponse.id_token){
+                window.sessionStorage.setItem("ID_TOKEN", tokenResponse.id_token);
+            }
+            if(tokenResponse.access_token){
+                window.sessionStorage.setItem("ACCESS_TOKEN", tokenResponse.access_token);
+            }
             window.sessionStorage.removeItem("codeVerifier")
         })
 }

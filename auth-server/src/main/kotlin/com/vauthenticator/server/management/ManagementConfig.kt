@@ -1,6 +1,7 @@
 package com.vauthenticator.server.management
 
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.KeyStorage
 import com.vauthenticator.server.management.cleanup.DatabaseTtlEntryCleanJob
@@ -22,10 +23,9 @@ class TenantInitConfig {
     @Bean
     fun accountSetUpJob(
         roleRepository: RoleRepository,
-        accountRepository: AccountRepository,
-        passwordEncoder: VAuthenticatorPasswordEncoder
+        signUpUse: SignUpUse
     ) = AccountSetUpJob(
-        roleRepository, accountRepository, passwordEncoder
+        roleRepository, signUpUse
     )
 
     @Bean
