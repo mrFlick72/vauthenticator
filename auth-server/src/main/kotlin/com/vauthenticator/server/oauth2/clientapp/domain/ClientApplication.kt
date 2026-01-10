@@ -16,7 +16,56 @@ data class ClientApplication(
     val autoApprove: AutoApprove = AutoApprove.approve,
     val postLogoutRedirectUri: PostLogoutRedirectUri,
     val logoutUri: LogoutUri,
-)
+) {
+    fun validate() {
+        isClientAppIdValid()
+        isConfidential()
+
+        isAuthorizationCodeFLowValid()
+        areTokenTtlValid()
+    }
+
+    private fun areTokenTtlValid() {
+        if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
+            if (accessTokenValidity.content > 0) {
+                throw InvalidAppDataException("Client app ${clientAppId.content} has access token ttl < 0")
+            }
+            if (authorizedGrantTypes.content.contains(AuthorizedGrantType.REFRESH_TOKEN) && refreshTokenValidity.content > 0) {
+                throw InvalidAppDataException("Client app ${clientAppId.content} support Refresh Token FLow but refresh token ttl is < 0")
+            }
+        }
+    }
+
+    private fun isAuthorizationCodeFLowValid() {
+        if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
+            if (webServerRedirectUri.content.isBlank() or webServerRedirectUri.content.isEmpty()) {
+                throw InvalidAppDataException("Client app ${clientAppId.content} support Authorization Code FLow but the redirect uri is blank empty")
+            }
+            if (postLogoutRedirectUri.content.isBlank() or postLogoutRedirectUri.content.isEmpty()) {
+                throw InvalidAppDataException("Client app ${clientAppId.content} support Authorization Code FLow but the post logout redirect uri is blank empty")
+            }
+            if (logoutUri.content.isBlank() or logoutUri.content.isEmpty()) {
+                throw InvalidAppDataException("Client app ${clientAppId.content} support Authorization Code FLow but the logout uri is blank empty")
+            }
+        }
+    }
+
+    private fun isClientAppIdValid() {
+        if (clientAppId.content.isBlank() or clientAppId.content.isEmpty()) {
+            throw InvalidAppDataException("Client app id cannot be blank or empty")
+        }
+    }
+
+    private fun isConfidential() {
+        if (confidential && secret.content.isBlank()) {
+            throw UnsupportedClientAppOperationException("Client app %${clientAppId} secret is empty or blank and it is not supported for confidential client applications")
+        }
+
+        if (!confidential && secret.content.isNotBlank()) {
+            throw UnsupportedClientAppOperationException("Client app %${clientAppId} secret is not empty or blank and it is not supported for public client applications")
+        }
+    }
+}
 
 @JvmInline
 value class ClientAppName(val content: String)
@@ -52,18 +101,19 @@ data class ClientAppId(val content: String) {
     }
 }
 
-data class AllowedOrigins(val content: Set<AllowedOrigin>){
+data class AllowedOrigins(val content: Set<AllowedOrigin>) {
     companion object {
         fun empty() = AllowedOrigins(setOf(AllowedOrigin("*")))
-        fun from(vararg allowedOrigin: AllowedOrigin ) = AllowedOrigins(setOf(*allowedOrigin))
+        fun from(vararg allowedOrigin: AllowedOrigin) = AllowedOrigins(setOf(*allowedOrigin))
     }
 }
+
 data class AllowedOrigin(val content: String)
 data class CallbackUri(val content: String)
 data class PostLogoutRedirectUri(val content: String)
 data class LogoutUri(val content: String)
 
-data class  Scopes(val content: Set<Scope>) {
+data class Scopes(val content: Set<Scope>) {
     companion object {
         fun from(vararg scope: Scope) = Scopes(setOf(*scope))
     }
