@@ -94,13 +94,13 @@ class ClientApplicationEndPointTest {
 
     }
     @Test
-    fun `store a new client app fails for unsupported action`() {
+    fun `store a new client app fails for invalid action`() {
         val clientAppId = aClientAppId()
         val clientApplication = aClientApp(clientAppId)
         val representation = ClientAppRepresentation.fromDomainToRepresentation(clientApplication, storePassword = true)
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_CLIENT_APPLICATION.content))
 
-        every { storeClientApplication.store(clientApplication, true) } throws UnsupportedClientAppOperationException("irrelevant")
+        every { storeClientApplication.store(clientApplication, true) } throws InvalidAppDataException("irrelevant")
 
         mockMvc.perform(
             put("/api/client-applications/${clientAppId.content}").content(
@@ -109,7 +109,7 @@ class ClientApplicationEndPointTest {
                 )
             ).contentType(MediaType.APPLICATION_JSON)
                 .principal(jwtAuthenticationToken)
-        ).andExpect(status().isInternalServerError)
+        ).andExpect(status().isBadRequest)
 
     }
 
