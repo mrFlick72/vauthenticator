@@ -8,7 +8,7 @@ class StoreClientApplication(
     private val passwordEncoder: VAuthenticatorPasswordEncoder
 ) {
     fun store(aClientApp: ClientApplication, storeWithPassword: Boolean) {
-        validate(aClientApp)
+        aClientApp.validate()
         clientApplicationRepository.save(clientApplication(storeWithPassword, aClientApp))
     }
 
@@ -33,16 +33,6 @@ class StoreClientApplication(
             clientApplicationRepository.findOne(clientAppId = aClientApp.clientAppId)
                 .map { app -> aClientApp.copy(secret = app.secret) }
                 .orElseThrow()
-        }
-    }
-
-    private fun validate(aClientApp: ClientApplication) {
-        if (aClientApp.confidential && aClientApp.secret.content.isBlank()) {
-            throw UnsupportedClientAppOperationException("Client app %${aClientApp.clientAppId} secret is empty or blank and it is not supported for confidential client applications")
-        }
-
-        if (!aClientApp.confidential && aClientApp.secret.content.isNotBlank()) {
-            throw UnsupportedClientAppOperationException("Client app %${aClientApp.clientAppId} secret is not empty or blank and it is not supported for public client applications")
         }
     }
 

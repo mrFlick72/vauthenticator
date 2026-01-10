@@ -1,5 +1,8 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
+import com.vauthenticator.server.web.ValidationResult
+import software.amazon.awssdk.services.kms.endpoints.internal.Value
+
 data class ClientApplication(
     val clientAppId: ClientAppId,
     val clientAppName: ClientAppName,
@@ -16,7 +19,66 @@ data class ClientApplication(
     val autoApprove: AutoApprove = AutoApprove.approve,
     val postLogoutRedirectUri: PostLogoutRedirectUri,
     val logoutUri: LogoutUri,
-)
+) {
+    fun validate() {
+        val errorMessaged = mutableMapOf<String, String>()
+        isClientAppIdValid(errorMessaged)
+        isConfidential(errorMessaged)
+
+        isAuthorizationCodeFLowValid(errorMessaged)
+        areTokenTtlValid(errorMessaged)
+
+
+        if (errorMessaged.isNotEmpty()) {
+            throw InvalidAppDataException.exceptionFrom(errorMessaged)
+        }
+    }
+
+    private fun areTokenTtlValid(errorMessaged: ValidationResult): ValidationResult {
+        if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
+            if (accessTokenValidity.content > 0) {
+                errorMessaged += mapOf("client_application.access_token.ttl.error_message" to "Client app ${clientAppId.content} has access token ttl < 0")
+            }
+            if (authorizedGrantTypes.content.contains(AuthorizedGrantType.REFRESH_TOKEN) && refreshTokenValidity.content > 0) {
+                errorMessaged += mapOf("client_application.refresh_token.ttl.error_message" to "Client app ${clientAppId.content} support Refresh Token FLow but refresh token ttl is < 0")
+            }
+        }
+        return errorMessaged
+    }
+
+    private fun isAuthorizationCodeFLowValid(errorMessaged: ValidationResult): ValidationResult {
+        if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
+            if (webServerRedirectUri.content.isBlank() or webServerRedirectUri.content.isEmpty()) {
+                errorMessaged += mapOf("client_application.callback_uri.error_message" to "Client app ${clientAppId.content} support Authorization Code FLow but the redirect uri is blank empty")
+            }
+            if (postLogoutRedirectUri.content.isBlank() or postLogoutRedirectUri.content.isEmpty()) {
+                errorMessaged += mapOf("client_application.post_logout_redirect_uri.error_message" to "Client app ${clientAppId.content} support Authorization Code FLow but the post logout redirect uri is blank empty")
+            }
+            if (logoutUri.content.isBlank() or logoutUri.content.isEmpty()) {
+                errorMessaged += mapOf("client_application.logout_uri.error_message" to "Client app ${clientAppId.content} support Authorization Code FLow but the logout uri is blank empty")
+            }
+        }
+        return errorMessaged
+    }
+
+    private fun isClientAppIdValid(errorMessaged: ValidationResult): ValidationResult {
+        if (clientAppId.content.isBlank() or clientAppId.content.isEmpty()) {
+            errorMessaged += mapOf("client_application.id.error_message" to "Client app id cannot be blank or empty")
+        }
+        return errorMessaged
+    }
+
+    private fun isConfidential(errorMessaged: ValidationResult): ValidationResult {
+        if (confidential && secret.content.isBlank()) {
+            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId} secret is empty or blank and it is not supported for confidential client applications")
+        }
+
+        if (!confidential && secret.content.isNotBlank()) {
+            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId} secret is not empty or blank and it is not supported for public client applications")
+        }
+        return errorMessaged
+    }
+}
 
 @JvmInline
 value class ClientAppName(val content: String)
@@ -52,18 +114,19 @@ data class ClientAppId(val content: String) {
     }
 }
 
-data class AllowedOrigins(val content: Set<AllowedOrigin>){
+data class AllowedOrigins(val content: Set<AllowedOrigin>) {
     companion object {
         fun empty() = AllowedOrigins(setOf(AllowedOrigin("*")))
-        fun from(vararg allowedOrigin: AllowedOrigin ) = AllowedOrigins(setOf(*allowedOrigin))
+        fun from(vararg allowedOrigin: AllowedOrigin) = AllowedOrigins(setOf(*allowedOrigin))
     }
 }
+
 data class AllowedOrigin(val content: String)
 data class CallbackUri(val content: String)
 data class PostLogoutRedirectUri(val content: String)
 data class LogoutUri(val content: String)
 
-data class  Scopes(val content: Set<Scope>) {
+data class Scopes(val content: Set<Scope>) {
     companion object {
         fun from(vararg scope: Scope) = Scopes(setOf(*scope))
     }

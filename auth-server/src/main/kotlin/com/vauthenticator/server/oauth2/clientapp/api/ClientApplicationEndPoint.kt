@@ -81,7 +81,12 @@ class ClientApplicationEndPoint(
     fun clientApplicationNotFoundHandler() = ResponseEntity.notFound().build<Unit>()
 
     @ExceptionHandler(UnsupportedClientAppOperationException::class)
-    fun clientApplicationUnsupportedClientAppOperationExceptionHandler() = ResponseEntity.internalServerError().build<Unit>()
+    fun clientApplicationUnsupportedClientAppOperationExceptionHandler() =
+        ResponseEntity.internalServerError().build<Unit>()
+
+    @ExceptionHandler(InvalidAppDataException::class)
+    fun clientApplicationInvalidAppDataExceptionExceptionHandler(ex: InvalidAppDataException) =
+        ResponseEntity.badRequest().body(ex.validationResult)
 
 }
 
