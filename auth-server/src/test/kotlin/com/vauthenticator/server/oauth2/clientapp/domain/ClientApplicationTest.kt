@@ -9,13 +9,13 @@ class ClientApplicationTest {
     @Test
     fun `when a client app is a configured to be public but has a client secret set`() {
         val aClientApplication = aClientApplication(confidential = false).get()
-        assertThrows(UnsupportedClientAppOperationException::class.java) { aClientApplication.validate() }
+        assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test
     fun `when a client app is a configured to be confidential but does not have a client secret set`() {
         val aClientApplication = aClientApplication().get().copy(secret = Secret(""))
-        assertThrows(UnsupportedClientAppOperationException::class.java) { aClientApplication.validate() }
+        assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test

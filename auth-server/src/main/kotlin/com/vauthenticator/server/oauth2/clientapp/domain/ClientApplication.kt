@@ -1,5 +1,8 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
+import com.vauthenticator.server.web.ValidationResult
+import software.amazon.awssdk.services.kms.endpoints.internal.Value
+
 data class ClientApplication(
     val clientAppId: ClientAppId,
     val clientAppName: ClientAppName,
@@ -18,52 +21,62 @@ data class ClientApplication(
     val logoutUri: LogoutUri,
 ) {
     fun validate() {
-        isClientAppIdValid()
-        isConfidential()
+        val errorMessaged = mutableMapOf<String, String>()
+        isClientAppIdValid(errorMessaged)
+        isConfidential(errorMessaged)
 
-        isAuthorizationCodeFLowValid()
-        areTokenTtlValid()
+        isAuthorizationCodeFLowValid(errorMessaged)
+        areTokenTtlValid(errorMessaged)
+
+
+        if (errorMessaged.isNotEmpty()) {
+            throw InvalidAppDataException.exceptionFrom(errorMessaged)
+        }
     }
 
-    private fun areTokenTtlValid() {
+    private fun areTokenTtlValid(errorMessaged: ValidationResult): ValidationResult {
         if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
             if (accessTokenValidity.content > 0) {
-                throw InvalidAppDataException("Client app ${clientAppId.content} has access token ttl < 0")
+                errorMessaged += mapOf("client_application.access_token.ttl.error_message" to "Client app ${clientAppId.content} has access token ttl < 0")
             }
             if (authorizedGrantTypes.content.contains(AuthorizedGrantType.REFRESH_TOKEN) && refreshTokenValidity.content > 0) {
-                throw InvalidAppDataException("Client app ${clientAppId.content} support Refresh Token FLow but refresh token ttl is < 0")
+                errorMessaged += mapOf("client_application.refresh_token.ttl.error_message" to "Client app ${clientAppId.content} support Refresh Token FLow but refresh token ttl is < 0")
             }
         }
+        return errorMessaged
     }
 
-    private fun isAuthorizationCodeFLowValid() {
+    private fun isAuthorizationCodeFLowValid(errorMessaged: ValidationResult): ValidationResult {
         if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
             if (webServerRedirectUri.content.isBlank() or webServerRedirectUri.content.isEmpty()) {
-                throw InvalidAppDataException("Client app ${clientAppId.content} support Authorization Code FLow but the redirect uri is blank empty")
+                errorMessaged += mapOf("client_application.callback_uri.error_message" to "Client app ${clientAppId.content} support Authorization Code FLow but the redirect uri is blank empty")
             }
             if (postLogoutRedirectUri.content.isBlank() or postLogoutRedirectUri.content.isEmpty()) {
-                throw InvalidAppDataException("Client app ${clientAppId.content} support Authorization Code FLow but the post logout redirect uri is blank empty")
+                errorMessaged += mapOf("client_application.post_logout_redirect_uri.error_message" to "Client app ${clientAppId.content} support Authorization Code FLow but the post logout redirect uri is blank empty")
             }
             if (logoutUri.content.isBlank() or logoutUri.content.isEmpty()) {
-                throw InvalidAppDataException("Client app ${clientAppId.content} support Authorization Code FLow but the logout uri is blank empty")
+                errorMessaged += mapOf("client_application.logout_uri.error_message" to "Client app ${clientAppId.content} support Authorization Code FLow but the logout uri is blank empty")
             }
         }
+        return errorMessaged
     }
 
-    private fun isClientAppIdValid() {
+    private fun isClientAppIdValid(errorMessaged: ValidationResult): ValidationResult {
         if (clientAppId.content.isBlank() or clientAppId.content.isEmpty()) {
-            throw InvalidAppDataException("Client app id cannot be blank or empty")
+            errorMessaged += mapOf("client_application.id.error_message" to "Client app id cannot be blank or empty")
         }
+        return errorMessaged
     }
 
-    private fun isConfidential() {
+    private fun isConfidential(errorMessaged: ValidationResult): ValidationResult {
         if (confidential && secret.content.isBlank()) {
-            throw UnsupportedClientAppOperationException("Client app %${clientAppId} secret is empty or blank and it is not supported for confidential client applications")
+            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId} secret is empty or blank and it is not supported for confidential client applications")
         }
 
         if (!confidential && secret.content.isNotBlank()) {
-            throw UnsupportedClientAppOperationException("Client app %${clientAppId} secret is not empty or blank and it is not supported for public client applications")
+            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId} secret is not empty or blank and it is not supported for public client applications")
         }
+        return errorMessaged
     }
 }
 
