@@ -1,7 +1,8 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
 import com.vauthenticator.server.web.ValidationResult
-import software.amazon.awssdk.services.kms.endpoints.internal.Value
+import org.slf4j.LoggerFactory
+import kotlin.collections.plusAssign
 
 data class ClientApplication(
     val clientAppId: ClientAppId,
@@ -20,28 +21,51 @@ data class ClientApplication(
     val postLogoutRedirectUri: PostLogoutRedirectUri,
     val logoutUri: LogoutUri,
 ) {
+    private val logger = LoggerFactory.getLogger(ClientApplication::class.java)
+
     fun validate() {
         val errorMessaged = mutableMapOf<String, String>()
         isClientAppIdValid(errorMessaged)
         isConfidential(errorMessaged)
 
+        hasAtLeastOneGrantFlowAndScope(errorMessaged)
+        hasAtLeastOneScope(errorMessaged)
+
         isAuthorizationCodeFLowValid(errorMessaged)
         areTokenTtlValid(errorMessaged)
 
+        logger.info("errorMessaged.toString()")
+        logger.info(errorMessaged.toString())
+
 
         if (errorMessaged.isNotEmpty()) {
+            logger.info(errorMessaged.toString())
             throw InvalidAppDataException.exceptionFrom(errorMessaged)
         }
     }
 
+    private fun hasAtLeastOneGrantFlowAndScope(errorMessaged: ValidationResult): ValidationResult  {
+         if (authorizedGrantTypes.content.isEmpty()){
+             errorMessaged += mapOf("client_application.authorized_grant_types.error_message" to "Client app ${clientAppId.content} has to have at least one authorized grant type")
+
+         }
+        return errorMessaged
+    }
+
+    private fun hasAtLeastOneScope(errorMessaged: ValidationResult): ValidationResult  {
+         if (scopes.content.isEmpty()){
+             errorMessaged += mapOf("client_application.scopes.error_message" to "Client app ${clientAppId.content} has to have at least one scope")
+
+         }
+        return errorMessaged
+    }
+
     private fun areTokenTtlValid(errorMessaged: ValidationResult): ValidationResult {
-        if (authorizedGrantTypes.content.contains(AuthorizedGrantType.AUTHORIZATION_CODE)) {
-            if (accessTokenValidity.content > 0) {
-                errorMessaged += mapOf("client_application.access_token.ttl.error_message" to "Client app ${clientAppId.content} has access token ttl < 0")
-            }
-            if (authorizedGrantTypes.content.contains(AuthorizedGrantType.REFRESH_TOKEN) && refreshTokenValidity.content > 0) {
-                errorMessaged += mapOf("client_application.refresh_token.ttl.error_message" to "Client app ${clientAppId.content} support Refresh Token FLow but refresh token ttl is < 0")
-            }
+        if (accessTokenValidity.content <= 0) {
+            errorMessaged += mapOf("client_application.access_token.ttl.error_message" to "Client app ${clientAppId.content} has access token ttl <= 0")
+        }
+        if (authorizedGrantTypes.content.contains(AuthorizedGrantType.REFRESH_TOKEN) && refreshTokenValidity.content <= 0) {
+            errorMessaged += mapOf("client_application.refresh_token.ttl.error_message" to "Client app ${clientAppId.content} support Refresh Token FLow but refresh token ttl is <= 0")
         }
         return errorMessaged
     }

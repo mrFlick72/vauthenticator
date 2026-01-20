@@ -7,6 +7,20 @@ import org.junit.jupiter.api.Test
 class ClientApplicationTest {
 
     @Test
+    fun `when a client app does not has a grant flow`() {
+        val aClientApplication = aClientApplication(confidential = false).get()
+            .copy(authorizedGrantTypes = AuthorizedGrantTypes(emptyList()))
+        assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
+    }
+
+    @Test
+    fun `when a client app does not has scopes`() {
+        val aClientApplication = aClientApplication(confidential = false).get()
+            .copy(scopes = Scopes(emptySet()))
+        assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
+    }
+
+    @Test
     fun `when a client app is a configured to be public but has a client secret set`() {
         val aClientApplication = aClientApplication(confidential = false).get()
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
