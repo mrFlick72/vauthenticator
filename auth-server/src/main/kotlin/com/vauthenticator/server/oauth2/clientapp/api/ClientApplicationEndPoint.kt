@@ -88,6 +88,7 @@ class ClientApplicationEndPoint(
     @ExceptionHandler(InvalidAppDataException::class)
     fun clientApplicationInvalidAppDataExceptionExceptionHandler(ex: InvalidAppDataException): ResponseEntity<ValidationResult>? {
         println(ex)
+        println(ex.validationResult)
         return ResponseEntity.badRequest().body(ex.validationResult)
     }
 
@@ -105,8 +106,8 @@ data class ClientAppRepresentation(
     var authorizedGrantTypes: List<String>,
     var webServerRedirectUri: String,
     var allowedOrigins: List<String>,
-    var accessTokenValidity: Long,
-    var refreshTokenValidity: Long,
+    var accessTokenValidity: Long?,
+    var refreshTokenValidity: Long?,
     var postLogoutRedirectUri: String,
     var logoutUri: String
 ) {
@@ -140,8 +141,8 @@ data class ClientAppRepresentation(
                     .map { AuthorizedGrantType.valueOf(it) }),
                 webServerRedirectUri = CallbackUri(representation.webServerRedirectUri),
                 allowedOrigins = AllowedOrigins(representation.allowedOrigins.map { AllowedOrigin(it) }.toSet()),
-                accessTokenValidity = TokenTimeToLive(representation.accessTokenValidity),
-                refreshTokenValidity = TokenTimeToLive(representation.refreshTokenValidity),
+                accessTokenValidity = representation.accessTokenValidity?.let { TokenTimeToLive(it) }?: TokenTimeToLive(0),
+                refreshTokenValidity = representation.refreshTokenValidity?.let { TokenTimeToLive(it) }?: TokenTimeToLive(0),
                 postLogoutRedirectUri = PostLogoutRedirectUri(representation.postLogoutRedirectUri),
                 logoutUri = LogoutUri(representation.logoutUri)
             )

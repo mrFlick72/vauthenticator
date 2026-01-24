@@ -93,6 +93,7 @@ class ClientApplicationEndPointTest {
         ).andExpect(status().isNoContent)
 
     }
+
     @Test
     fun `store a new client app fails for invalid action`() {
         val clientAppId = aClientAppId()
@@ -100,7 +101,10 @@ class ClientApplicationEndPointTest {
         val representation = ClientAppRepresentation.fromDomainToRepresentation(clientApplication, storePassword = true)
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_CLIENT_APPLICATION.content))
 
-        every { storeClientApplication.store(clientApplication, true) } throws InvalidAppDataException("irrelevant")
+        every { storeClientApplication.store(clientApplication, true) } throws InvalidAppDataException(
+            "irrelevant",
+            mutableMapOf()
+        )
 
         mockMvc.perform(
             put("/api/client-applications/${clientAppId.content}").content(
@@ -133,7 +137,12 @@ class ClientApplicationEndPointTest {
         val clientAppId = aClientAppId()
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_CLIENT_APPLICATION.content))
 
-        every { storeClientApplication.resetPassword(clientAppId, Secret("secret")) } throws UnsupportedClientAppOperationException("irrelevant")
+        every {
+            storeClientApplication.resetPassword(
+                clientAppId,
+                Secret("secret")
+            )
+        } throws UnsupportedClientAppOperationException("irrelevant")
 
         mockMvc.perform(
             patch("/api/client-applications/${clientAppId.content}/client-secret").contentType(MediaType.APPLICATION_JSON)

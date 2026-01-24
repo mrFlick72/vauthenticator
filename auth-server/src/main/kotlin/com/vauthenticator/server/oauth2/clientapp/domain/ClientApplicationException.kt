@@ -7,11 +7,10 @@ class InsufficientClientApplicationScopeException(message: String) : RuntimeExce
 
 class UnsupportedClientAppOperationException(message: String) : RuntimeException(message)
 
-class InvalidAppDataException(message: String) : RuntimeException(message) {
-    val validationResult: ValidationResult = mutableMapOf()
+class InvalidAppDataException(message: String, val validationResult: ValidationResult) : RuntimeException(message) {
 
     companion object {
         fun exceptionFrom(content: ValidationResult): InvalidAppDataException =
-            InvalidAppDataException(jacksonObjectMapper().writeValueAsString(content))
+            InvalidAppDataException(jacksonObjectMapper().writeValueAsString(content), content)
     }
 }
