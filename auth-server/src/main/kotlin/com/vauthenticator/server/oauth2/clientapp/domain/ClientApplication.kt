@@ -94,11 +94,11 @@ data class ClientApplication(
 
     private fun isConfidential(errorMessaged: ValidationResult): ValidationResult {
         if (confidential && secret.content.isBlank()) {
-            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId} secret is empty or blank and it is not supported for confidential client applications")
+            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId.content} secret is empty or blank and it is not supported for confidential client applications")
         }
 
         if (!confidential && secret.content.isNotBlank()) {
-            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId} secret is not empty or blank and it is not supported for public client applications")
+            errorMessaged += mapOf("client_application.confidential.error_message" to "Client app %${clientAppId.content} secret is not empty or blank and it is not supported for public client applications")
         }
         return errorMessaged
     }
