@@ -37,6 +37,14 @@ class ClientApplicationTest {
         val aClientApplication = aClientApplication().get().copy(clientAppId = ClientAppId(""))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
+    @Test
+    fun `when a client app has a client app id null or undefined `() {
+        var aClientApplication = aClientApplication().get().copy(clientAppId = ClientAppId("Null"))
+        assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
+
+        aClientApplication = aClientApplication().get().copy(clientAppId = ClientAppId("uNdefined"))
+        assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
+    }
 
     @Test
     fun `when a client app supports authorization code flow is invalid`() {

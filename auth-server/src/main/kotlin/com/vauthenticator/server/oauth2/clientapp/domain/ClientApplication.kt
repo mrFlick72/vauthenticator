@@ -153,6 +153,32 @@ data class ClientApplication(
 
             )
         }
+        if (clientAppId.content.lowercase() == "null") {
+            errorMessaged += mapOf(
+                "client_application.id" to
+                        ValidationResult(
+                            errorsCode = listOf(
+                                "client_application.id.invalid",
+                            ),
+                            errorMessage = "Client app id cannot be the string 'null'"
+                        )
+
+            )
+        }
+
+        if (clientAppId.content.lowercase() == "undefined") {
+            errorMessaged += mapOf(
+                "client_application.id" to
+                        ValidationResult(
+                            errorsCode = listOf(
+                                "client_application.id.invalid",
+                            ),
+                            errorMessage = "Client app id cannot be the string 'undefined'"
+                        )
+
+            )
+        }
+
         return errorMessaged
     }
 
