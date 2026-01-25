@@ -1,3 +1,8 @@
 package com.vauthenticator.server.web
 
-typealias ValidationResult = MutableMap<String,String>
+typealias ValidationResults = MutableMap<String, ValidationResult>
+
+data class ValidationResult(
+    val errorMessage: String,
+    val errorsCode: List<String>
+) {}

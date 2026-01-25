@@ -1,8 +1,6 @@
 import {SelectOption} from "../../../../components/FormSelect";
 import { ClientAppAuthorizedGrantType } from "./AuthorizedGrantTypes";
 
-//todo rename into ClientAppManagementPageDTO
-
 export type ClientAppManagementPageDTO = {
     clientApplicationId: string | undefined
     clientAppName: string

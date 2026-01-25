@@ -52,7 +52,7 @@ export async function findClientApplicationFor(clientAppId: string): Promise<Cli
     return await response.json() as ClientApplicationDetails
 }
 
-export async function saveClientApplicationFor(clientAppId: string, clientApp: ClientApplicationDetails) {
+export async function saveClientApplicationFor(clientAppId: string , clientApp: ClientApplicationDetails) {
     const baseUrl = await getIdpBaseUrl()
     return fetch(`${baseUrl}/api/client-applications/${clientAppId}`,
         {

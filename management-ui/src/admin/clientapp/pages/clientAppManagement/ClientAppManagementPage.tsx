@@ -139,7 +139,7 @@ const ClientAppManagementPage = () => {
                     navigate(-1);
                 } else if (response.status === 400 || response.status === 404) {
                     response.json().then(body => {
-                        setErrorMessage(Object.values(body).join("\n"))
+                        setErrorMessage(Object.values(body).map((value: any) => value.errorMessage).join("\n"))
                         setOpenFailureAlert(true)
                     }
                     )

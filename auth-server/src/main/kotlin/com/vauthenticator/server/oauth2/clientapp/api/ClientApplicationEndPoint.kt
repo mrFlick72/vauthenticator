@@ -2,7 +2,7 @@ package com.vauthenticator.server.oauth2.clientapp.api
 
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import com.vauthenticator.server.role.domain.PermissionValidator
-import com.vauthenticator.server.web.ValidationResult
+import com.vauthenticator.server.web.ValidationResults
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
@@ -86,10 +86,10 @@ class ClientApplicationEndPoint(
         ResponseEntity.internalServerError().build<Unit>()
 
     @ExceptionHandler(InvalidAppDataException::class)
-    fun clientApplicationInvalidAppDataExceptionExceptionHandler(ex: InvalidAppDataException): ResponseEntity<ValidationResult>? {
+    fun clientApplicationInvalidAppDataExceptionExceptionHandler(ex: InvalidAppDataException): ResponseEntity<ValidationResults>? {
         println(ex)
-        println(ex.validationResult)
-        return ResponseEntity.badRequest().body(ex.validationResult)
+        println(ex.validationResults)
+        return ResponseEntity.badRequest().body(ex.validationResults)
     }
 
 }
