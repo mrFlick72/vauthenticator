@@ -1,7 +1,7 @@
 import {SelectOption} from "../../../../components/FormSelect";
 import { ClientAppAuthorizedGrantType } from "./AuthorizedGrantTypes";
 
-export type ClientAppManagementPageTypes = {
+export type ClientAppManagementPageDTO = {
     clientApplicationId: string | undefined
     clientAppName: string
     secret: string

@@ -34,7 +34,7 @@ class StoreClientApplicationTest {
     fun `store a client application for public client with a non empty password`() {
         val aClientApp = aClientApp(clientAppId = ClientAppId("AN_ID"), confidential = false, password = Secret("A_SECRET"))
 
-        assertThrows(UnsupportedClientAppOperationException::class.java) {
+        assertThrows(InvalidAppDataException::class.java) {
             uut.store(aClientApp, true)
         }
 
@@ -57,7 +57,7 @@ class StoreClientApplicationTest {
     fun `store a client application for confidential client with empty password`() {
         val aClientApp = aClientApp(clientAppId = ClientAppId("AN_ID"), confidential = true, password = Secret(""))
 
-        assertThrows(UnsupportedClientAppOperationException::class.java) {
+        assertThrows(InvalidAppDataException::class.java) {
             uut.store(aClientApp, true)
         }
     }

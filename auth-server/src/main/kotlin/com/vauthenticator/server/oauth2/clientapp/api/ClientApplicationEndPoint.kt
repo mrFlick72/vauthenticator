@@ -2,6 +2,7 @@ package com.vauthenticator.server.oauth2.clientapp.api
 
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import com.vauthenticator.server.role.domain.PermissionValidator
+import com.vauthenticator.server.web.ValidationResults
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
@@ -81,7 +82,15 @@ class ClientApplicationEndPoint(
     fun clientApplicationNotFoundHandler() = ResponseEntity.notFound().build<Unit>()
 
     @ExceptionHandler(UnsupportedClientAppOperationException::class)
-    fun clientApplicationUnsupportedClientAppOperationExceptionHandler() = ResponseEntity.internalServerError().build<Unit>()
+    fun clientApplicationUnsupportedClientAppOperationExceptionHandler() =
+        ResponseEntity.internalServerError().build<Unit>()
+
+    @ExceptionHandler(InvalidAppDataException::class)
+    fun clientApplicationInvalidAppDataExceptionExceptionHandler(ex: InvalidAppDataException): ResponseEntity<ValidationResults>? {
+        println(ex)
+        println(ex.validationResults)
+        return ResponseEntity.badRequest().body(ex.validationResults)
+    }
 
 }
 
@@ -97,8 +106,8 @@ data class ClientAppRepresentation(
     var authorizedGrantTypes: List<String>,
     var webServerRedirectUri: String,
     var allowedOrigins: List<String>,
-    var accessTokenValidity: Long,
-    var refreshTokenValidity: Long,
+    var accessTokenValidity: Long?,
+    var refreshTokenValidity: Long?,
     var postLogoutRedirectUri: String,
     var logoutUri: String
 ) {
@@ -132,8 +141,8 @@ data class ClientAppRepresentation(
                     .map { AuthorizedGrantType.valueOf(it) }),
                 webServerRedirectUri = CallbackUri(representation.webServerRedirectUri),
                 allowedOrigins = AllowedOrigins(representation.allowedOrigins.map { AllowedOrigin(it) }.toSet()),
-                accessTokenValidity = TokenTimeToLive(representation.accessTokenValidity),
-                refreshTokenValidity = TokenTimeToLive(representation.refreshTokenValidity),
+                accessTokenValidity = representation.accessTokenValidity?.let { TokenTimeToLive(it) }?: TokenTimeToLive(0),
+                refreshTokenValidity = representation.refreshTokenValidity?.let { TokenTimeToLive(it) }?: TokenTimeToLive(0),
                 postLogoutRedirectUri = PostLogoutRedirectUri(representation.postLogoutRedirectUri),
                 logoutUri = LogoutUri(representation.logoutUri)
             )

@@ -14,20 +14,14 @@ class RoleTokenEnhancer(
     val roleClaimName: String,
 ) : OAuth2TokenCustomizer<JwtEncodingContext> {
 
-    private val logger = LoggerFactory.getLogger(RoleTokenEnhancer::class.java)
 
     override fun customize(context: JwtEncodingContext) {
 
-        logger.info("before teh evaluation")
-
         if (context.isATokenForAUserFrom()) {
-            logger.info("I'm a user token")
             if (tokenType == context.tokenType.value) {
-                logger.info("I'm there")
                 val attributes = context.authorization!!.attributes
                 val principal = attributes["java.security.Principal"] as Authentication
 
-                logger.info("principal.authorities: ${principal.authorities}")
                 context.claims.claim(
                     roleClaimName, principal.authorities
                         .stream()
