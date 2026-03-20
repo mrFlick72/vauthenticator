@@ -1,7 +1,5 @@
 package com.vauthenticator.server.role.adapter.dynamodb
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.extentions.asDynamoAttribute
 import com.vauthenticator.server.extentions.filterEmptyMetadata
 import com.vauthenticator.server.extentions.valueAsLongFor
@@ -10,6 +8,7 @@ import com.vauthenticator.server.role.domain.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
+import tools.jackson.databind.ObjectMapper
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 

@@ -1,8 +1,8 @@
 package com.vauthenticator.server.account.domain
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.cache.CacheContentConverter
 import com.vauthenticator.server.extentions.toSha256
+import tools.jackson.databind.ObjectMapper
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.*

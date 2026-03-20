@@ -1,11 +1,15 @@
 package com.vauthenticator.server.web
 
+import com.fasterxml.jackson.annotation.JsonSetter
+import com.fasterxml.jackson.annotation.Nulls
 import com.vauthenticator.server.oauth2.clientapp.domain.AllowedOriginRepository
 import com.vauthenticator.server.web.cors.CorsConfigurationResolver
 import com.vauthenticator.server.web.cors.DynamicCorsConfigurationSource
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.cors.CorsConfigurationSource
+import tools.jackson.databind.DeserializationFeature
 
 
 @Configuration(proxyBeanMethods = false)
