@@ -1,7 +1,7 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vauthenticator.server.web.ValidationResults
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 class InsufficientClientApplicationScopeException(message: String) : RuntimeException(message)
 

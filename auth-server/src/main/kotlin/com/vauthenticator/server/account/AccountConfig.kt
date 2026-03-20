@@ -153,7 +153,6 @@ class EMailVerificationConfig {
 
     @Bean
     fun sendVerifyMailChallenge(
-        clientAccountRepository: ClientApplicationRepository,
         accountRepository: AccountRepository,
         mfaMethodsEnrollment: MfaMethodsEnrollment,
         verificationMailSender: EMailSenderService,
