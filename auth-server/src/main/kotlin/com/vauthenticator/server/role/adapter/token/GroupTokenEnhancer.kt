@@ -3,10 +3,8 @@ package com.vauthenticator.server.role.adapter.token
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.extentions.isATokenForAUserFrom
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
-import java.util.stream.Collectors
 
 class GroupTokenEnhancer(
     val tokenType: String,
@@ -23,9 +21,12 @@ class GroupTokenEnhancer(
 
                 accountRepository.accountFor(principal.name)
                     .map {
-                        context.claims.claim(
-                            groupClaimName, it.groups
-                        )
+                        if (it.groups.isNotEmpty()) {
+                            context.claims.claim(
+                                groupClaimName, it.groups
+                            )
+                        }
+
                     }
 
             }
