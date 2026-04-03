@@ -1,0 +1,12 @@
+agents:
+  - path: auth-server
+    instructions: .codex/agents/kotlin-auth.md
+
+  - path: management-ui
+    instructions: .codex/agents/react-ui.md
+
+  - path: helm
+    instructions: .codex/agents/helm-chart.md
+
+policies:
+  - .codex/policies/no-cross-project.md
