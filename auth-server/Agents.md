@@ -6,6 +6,8 @@ This repository contains the VAuthenticator authorization server. It is a Spring
 
 The main application entry point is [src/main/kotlin/com/vauthenticator/server/VAuthenticatorApplication.kt](src/main/kotlin/com/vauthenticator/server/VAuthenticatorApplication.kt).
 
+Use this guide for any work under `auth-server`. Per the repo root instructions, this file takes precedence over the monorepo-level `Agents.md` for this subtree.
+
 ## Stack
 
 - Backend: Spring Boot 4.0.x, Kotlin 2.2, Java 21
