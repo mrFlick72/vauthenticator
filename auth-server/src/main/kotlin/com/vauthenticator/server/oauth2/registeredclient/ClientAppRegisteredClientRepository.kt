@@ -27,7 +27,9 @@ class ClientAppRegisteredClientRepository(
                 clientAppId = ClientAppId(registeredClient.clientId),
                 clientAppName = ClientAppName(registeredClient.clientName),
                 logoutUri = LogoutUri(registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()),
-                postLogoutRedirectUri = PostLogoutRedirectUri(registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()),
+                postLogoutRedirectUri = PostLogoutRedirectUri(
+                    registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()
+                ),
                 scopes = Scopes(registeredClient.scopes.map { Scope(it) }.toSet()),
                 accessTokenValidity = TokenTimeToLive(registeredClient.tokenSettings.accessTokenTimeToLive.toSeconds()),
                 refreshTokenValidity = TokenTimeToLive(registeredClient.tokenSettings.refreshTokenTimeToLive.toSeconds()),
@@ -54,7 +56,7 @@ class ClientAppRegisteredClientRepository(
 
 
     private fun registeredClient(id: String) = clientApplicationRepository.findOne(ClientAppId(id))
-        .map { clientApp ->
+        ?.let { clientApp ->
             val registeredClientAppDefinition = withId(id)
                 .clientId(id)
                 .clientName(clientApp.clientAppName.content)
@@ -92,10 +94,10 @@ class ClientAppRegisteredClientRepository(
                 )
 
             registeredClientAppDefinition.build()
-        }.orElseThrow {
-            logger.error("Application with id or client_id: $id not found")
-            RegisteredClientAppNotFound("Application with id or client_id: $id not found")
-        }
+        } ?: let {
+        logger.error("Application with id or client_id: $id not found")
+        throw RegisteredClientAppNotFound("Application with id or client_id: $id not found")
+    }
 
     private fun RegisteredClient.isConfidential() =
         !this.clientAuthenticationMethods.contains(ClientAuthenticationMethod.NONE)

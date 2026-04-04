@@ -17,8 +17,8 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 abstract class AbstractClientApplicationRepositoryTest {
@@ -40,17 +40,14 @@ abstract class AbstractClientApplicationRepositoryTest {
 
     @Test
     fun `when find one client application by empty client id`() {
-        val clientApp: Optional<ClientApplication> = uut.findOne(ClientAppId(""))
-        val expected = Optional.empty<ClientApplication>()
-        assertEquals(expected, clientApp)
+        val clientApp: ClientApplication? = uut.findOne(ClientAppId(""))
+        assertNull(clientApp)
     }
 
     @Test
     fun `when find one client application by client id that does not exist`() {
-        val clientApp: Optional<ClientApplication> =
-            uut.findOne(ClientAppId("not-existing-one"))
-        val expected = Optional.empty<ClientApplication>()
-        assertEquals(expected, clientApp)
+        val clientApp: ClientApplication?=  uut.findOne(ClientAppId("not-existing-one"))
+        assertNull(clientApp)
     }
 
     @Test
@@ -60,12 +57,12 @@ abstract class AbstractClientApplicationRepositoryTest {
         saveClientAppWith(expected)
         var actual = uut.findOne(clientAppId)
 
-        assertEquals(Optional.of(expected), actual)
+        assertEquals(expected, actual)
 
         deleteClientApplication(clientAppId)
         actual = uut.findOne(clientAppId)
 
-        assertEquals(Optional.empty<ClientApplication>(), actual)
+        assertNull(actual)
     }
 
     @Test
@@ -75,12 +72,12 @@ abstract class AbstractClientApplicationRepositoryTest {
         saveClientAppWith(expected)
         var actual = uut.findOne(clientAppId)
 
-        assertEquals(Optional.of(expected), actual)
+        assertEquals(expected, actual)
 
         deleteClientApplication(clientAppId)
         actual = uut.findOne(clientAppId)
 
-        assertEquals(Optional.empty<ClientApplication>(), actual)
+        assertNull(actual)
     }
 
     @Test
@@ -110,9 +107,9 @@ abstract class AbstractClientApplicationRepositoryTest {
         val expected = clientApplication.copy(allowedOrigins = from(AllowedOrigin("*")))
 
         saveClientAppWith(clientApplication)
-        var actual = uut.findOne(clientAppId)
+        val actual = uut.findOne(clientAppId)
 
-        assertEquals(Optional.of(expected), actual)
+        assertEquals(expected, actual)
     }
 
     private fun saveClientAppWith(expected: ClientApplication) {

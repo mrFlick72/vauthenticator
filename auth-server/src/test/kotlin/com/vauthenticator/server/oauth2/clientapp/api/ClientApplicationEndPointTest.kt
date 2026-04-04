@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class ClientApplicationEndPointTest {
@@ -246,7 +245,7 @@ class ClientApplicationEndPointTest {
         val body = ClientAppRepresentation.fromDomainToRepresentation(clientApplication)
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.READ_CLIENT_APPLICATION.content))
 
-        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns Optional.of(aClientApp(ClientAppId("clientApp")))
+        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns aClientApp(ClientAppId("clientApp"))
 
         mockMvc.perform(
             get("/api/client-applications/clientApp")
@@ -260,7 +259,7 @@ class ClientApplicationEndPointTest {
     fun `when a client app does not exist`() {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.READ_CLIENT_APPLICATION.content))
 
-        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns Optional.empty()
+        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns null
 
         mockMvc.perform(
             get("/api/client-applications/clientApp")
@@ -273,7 +272,7 @@ class ClientApplicationEndPointTest {
     fun `view a specific client app fails for insufficient scope`() {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
 
-        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns Optional.of(aClientApp(ClientAppId("clientApp")))
+        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns aClientApp(ClientAppId("clientApp"))
 
         mockMvc.perform(
             get("/api/client-applications/clientApp")

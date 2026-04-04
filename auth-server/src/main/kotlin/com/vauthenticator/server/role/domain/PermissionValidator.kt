@@ -45,10 +45,10 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
             ?: throw ClientApplicationNotFound("no client app found")
 
         clientApplicationRepository.findOne(clientAppId)
-            .ifPresent { clientApplication ->
+            ?.let { clientApplication ->
                 logger.debug("clientApplication.hasEnoughScopes(scopes) ${clientApplication.hasEnoughScopes(scopes)}")
-                logger.debug("scopes ${scopes}")
-                logger.debug("clientApplication.scopes ${clientApplication.scopes}")
+                logger.debug("scopes {}", scopes)
+                logger.debug("clientApplication.scopes {}", clientApplication.scopes)
                 if (!clientApplication.hasEnoughScopes(scopes)) {
                     throw InsufficientClientApplicationScopeException("The client app ${clientApplication.clientAppId.content} does not support this use case........ consider to add ${scopes.content.map { it.content }} as scope")
                 }
@@ -60,7 +60,7 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
         scopes: Scopes
     ) {
         logger.debug("principal.hasEnoughScopes(scopes) ${principal.hasEnoughScopes(scopes)}")
-        logger.debug("scopes ${scopes}")
+        logger.debug("scopes {}", scopes)
         logger.debug("principal.scopes ${principal.token.getClaimAsString("scope")}")
 
         if (!principal.hasEnoughScopes(scopes)) {

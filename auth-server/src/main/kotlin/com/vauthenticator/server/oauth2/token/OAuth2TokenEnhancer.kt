@@ -23,7 +23,7 @@ class OAuth2TokenEnhancer(
             if (context.authorizationGrantType.equals(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
                 val clientId = context.registeredClient.clientId
                 val findOne = clientApplicationRepository.findOne(ClientAppId(clientId))
-                findOne.ifPresent {
+                findOne?.let {
                     context.claims.claim("user_name", it.clientAppId.content)
                 }
             } else {

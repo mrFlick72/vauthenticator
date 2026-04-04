@@ -5,7 +5,6 @@ import com.vauthenticator.server.cache.CacheOperation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplication
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
-import java.util.Optional
 
 class CachedClientApplicationRepository(
     private val cacheContentConverter: CacheContentConverter<ClientApplication>,
@@ -13,16 +12,16 @@ class CachedClientApplicationRepository(
     private val delegate: ClientApplicationRepository
 ) : ClientApplicationRepository by delegate {
 
-    override fun findOne(clientAppId: ClientAppId): Optional<ClientApplication> {
+    override fun findOne(clientAppId: ClientAppId): ClientApplication? {
         val cachedClientApplication = cacheOperation.get(clientAppId.content)
             ?.let { cacheContentConverter.getObjectFromCacheContentFor(it) }
         if (cachedClientApplication != null) {
-            return Optional.of(cachedClientApplication)
+            return cachedClientApplication
         }
 
         val clientApp = delegate.findOne(clientAppId)
-        clientApp.ifPresent {
-            val loadableContentIntoCache = cacheContentConverter.loadableContentIntoCacheFor(it)
+        if (clientApp != null) {
+            val loadableContentIntoCache = cacheContentConverter.loadableContentIntoCacheFor(clientApp)
             cacheOperation.put(clientAppId.content, loadableContentIntoCache)
         }
         return clientApp

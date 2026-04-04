@@ -15,7 +15,6 @@ import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.Optional
 
 @ExtendWith(MockKExtension::class)
 class CachedClientApplicationRepositoryTest {
@@ -43,7 +42,7 @@ class CachedClientApplicationRepositoryTest {
     @Test
     internal fun `when a client app is not found into the cache then it is loaded from database and loaded into the cache`() {
         every { cacheOperation.get(clientAppId.content) } returns null
-        every { delegate.findOne(clientAppId) } returns Optional.of(clientApplication)
+        every { delegate.findOne(clientAppId) } returns clientApplication
         every { cacheContentConverter.loadableContentIntoCacheFor(clientApplication) } returns "content"
         every { cacheOperation.put(clientAppId.content, "content") } just runs
 

@@ -13,7 +13,6 @@ import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.ScanRequest
-import java.util.*
 
 class DynamoDbClientApplicationRepository(
     private val dynamoDbClient: DynamoDbClient,
@@ -25,23 +24,21 @@ class DynamoDbClientApplicationRepository(
         findAll().forEach { allowedOriginRepository.setAllowedOriginsFor(it.clientAppId, it.allowedOrigins) }
     }
 
-    override fun findOne(clientAppId: ClientAppId): Optional<ClientApplication> {
-        return  if (clientAppId.content.isEmpty()) Optional.empty() else Optional.of(clientAppId)
-            .map {
-                dynamoDbClient.getItem(
-                    GetItemRequest.builder()
-                        .tableName(dynamoClientApplicationTableName)
-                        .key(
-                            mutableMapOf(
-                                "client_id" to it.content.asDynamoAttribute()
-                            )
+    override fun findOne(clientAppId: ClientAppId): ClientApplication? {
+        return (if (clientAppId.content.isEmpty()) null else {
+            dynamoDbClient.getItem(
+                GetItemRequest.builder()
+                    .tableName(dynamoClientApplicationTableName)
+                    .key(
+                        mutableMapOf(
+                            "client_id" to clientAppId.content.asDynamoAttribute()
                         )
-                        .build()
-                )
-                    .item()
-            }
-            .flatMap { Optional.ofNullable(it.filterEmptyMetadata()) }
-            .map { fromDynamoToDomain(it) }
+                    )
+                    .build()
+            )
+                .item()
+        })?.filterEmptyMetadata()
+            ?.let { fromDynamoToDomain(it) }
     }
 
     override fun findAll(): Iterable<ClientApplication> {

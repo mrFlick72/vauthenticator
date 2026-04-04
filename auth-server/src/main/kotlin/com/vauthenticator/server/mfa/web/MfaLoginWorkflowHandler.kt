@@ -21,8 +21,8 @@ class MfaLoginWorkflowHandler(
     ): Boolean {
         val clientId = request.session.getAttribute("clientId") as String
         return clientApplicationRepository.findOne(ClientAppId(clientId))
-            .filter { it.hasEnoughScopes(Scope.MFA_ALWAYS) }
-            .isPresent
+            ?.hasEnoughScopes(Scope.MFA_ALWAYS)
+            ?: false
     }
 
 }

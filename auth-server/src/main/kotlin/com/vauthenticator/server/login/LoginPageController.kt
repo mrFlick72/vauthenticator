@@ -8,7 +8,6 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationFeatures
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -29,7 +28,7 @@ class LoginPageController(
     val logger: Logger = LoggerFactory.getLogger(LoginPageController::class.java)
 
     @GetMapping("/login")
-    fun loginPage(session: HttpSession, model: Model, httpServletRequest: HttpServletRequest): String {
+    fun loginPage(session: HttpSession, model: Model): String {
         val clientId = session.oauth2ClientId()
 
         val features = defaultFeature()
@@ -51,8 +50,8 @@ class LoginPageController(
         clientId?.let {
             model.addAttribute("clientId", it.content)
             clientApplicationRepository.findOne(it)
-                .map { clientApp ->
-                    logger.debug("clientApp.scopes.content: ${clientApp.scopes.content}")
+                ?.let { clientApp ->
+                    logger.debug("clientApp.scopes.content: {}", clientApp.scopes.content)
                     features[ClientApplicationFeatures.SIGNUP.value] = clientApp.hasEnoughScopes(Scope.SIGN_UP)
                     features[ClientApplicationFeatures.RESET_PASSWORD.value] =
                         clientApp.hasEnoughScopes(Scope.RESET_PASSWORD)
