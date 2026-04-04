@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriComponentsBuilder
-import java.util.*
 import java.util.Arrays.stream
+import java.util.UUID
 
 fun sendAuthorizationResponse(
     redisTemplate: RedisTemplate<String, String?>,
@@ -109,11 +109,12 @@ class SessionManagementIFrameController(
 class CheckSessionEndPoint(private val redisTemplate: RedisTemplate<String, String?>) {
 
     @GetMapping("/check_session")
-    fun checkSession(@RequestParam state: String): ResponseEntity<CheckSessionResponse> = Optional.ofNullable(
-        redisTemplate.opsForHash<String, String?>().get(state, state.toSha256())
-    )
-        .map { ResponseEntity.ok(CheckSessionResponse(it)) }
-        .orElseGet { ResponseEntity.notFound().build() }
+    fun checkSession(@RequestParam state: String): ResponseEntity<CheckSessionResponse> {
+        val sessionState = redisTemplate.opsForHash<String, String?>().get(state, state.toSha256())
+            ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok(CheckSessionResponse(sessionState))
+    }
 
 }
 

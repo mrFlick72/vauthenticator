@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import java.time.Duration
-import java.util.*
 
 class ClientAppRegisteredClientRepository(
     private val storeClientApplication: StoreClientApplication,
@@ -27,10 +26,8 @@ class ClientAppRegisteredClientRepository(
                 confidential = registeredClient.isConfidential(),
                 clientAppId = ClientAppId(registeredClient.clientId),
                 clientAppName = ClientAppName(registeredClient.clientName),
-                logoutUri = LogoutUri(
-                    Optional.ofNullable(registeredClient.postLogoutRedirectUris.firstOrNull()).orElseGet { "" }),
-                postLogoutRedirectUri = PostLogoutRedirectUri(
-                    Optional.ofNullable(registeredClient.postLogoutRedirectUris.firstOrNull()).orElseGet { "" }),
+                logoutUri = LogoutUri(registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()),
+                postLogoutRedirectUri = PostLogoutRedirectUri(registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()),
                 scopes = Scopes(registeredClient.scopes.map { Scope(it) }.toSet()),
                 accessTokenValidity = TokenTimeToLive(registeredClient.tokenSettings.accessTokenTimeToLive.toSeconds()),
                 refreshTokenValidity = TokenTimeToLive(registeredClient.tokenSettings.refreshTokenTimeToLive.toSeconds()),

@@ -43,7 +43,7 @@ class DynamoDbTicketRepository(
                     .build()
             ).item()
         )
-            .flatMap { it.filterEmptyMetadata() }
+            .flatMap { Optional.ofNullable(it.filterEmptyMetadata()) }
             .map {
                 Ticket(
                     TicketId(it.valueAsStringFor("ticket")),

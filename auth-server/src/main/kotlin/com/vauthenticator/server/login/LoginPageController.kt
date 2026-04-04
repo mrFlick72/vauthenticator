@@ -17,7 +17,6 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.SessionAttributes
 import tools.jackson.databind.ObjectMapper
-import java.util.*
 
 
 @Controller
@@ -45,11 +44,11 @@ class LoginPageController(
     }
 
     private fun clientAppFeaturesFor(
-        clientId: Optional<ClientAppId>,
+        clientId: ClientAppId?,
         model: Model,
         features: MutableMap<String, Boolean>
     ) {
-        clientId.ifPresent {
+        clientId?.let {
             model.addAttribute("clientId", it.content)
             clientApplicationRepository.findOne(it)
                 .map { clientApp ->

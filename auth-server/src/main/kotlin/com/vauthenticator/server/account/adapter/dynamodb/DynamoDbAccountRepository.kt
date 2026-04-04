@@ -21,7 +21,7 @@ class DynamoDbAccountRepository(
 
     override fun accountFor(username: String): Optional<Account> =
         ofNullable(findAccountFor(username))
-            .flatMap { it.filterEmptyMetadata() }
+            .flatMap { ofNullable(it.filterEmptyMetadata()) }
             .map(::fromDynamoToDomain)
             .map(::stealRoleCleanUpFor)
 

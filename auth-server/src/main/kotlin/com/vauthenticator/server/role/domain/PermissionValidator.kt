@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
-import java.util.*
 
 //todo to add scope validation for the admin:full-access scope
 class PermissionValidator(private val clientApplicationRepository: ClientApplicationRepository) {
@@ -25,11 +24,9 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
         session: HttpSession,
         scopes: Scopes
     ) {
-        Optional.ofNullable(principal)
-            .ifPresentOrElse(
-                { principalScopesValidation(it, scopes) },
-                { clientAppScopesValidation(session, scopes) }
-            )
+        principal?.let {
+            principalScopesValidation(it, scopes)
+        } ?: clientAppScopesValidation(session, scopes)
     }
 
     //todo to be tested
@@ -44,19 +41,18 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
         session: HttpSession,
         scopes: Scopes
     ) {
-        session.oauth2ClientId()
-            .ifPresentOrElse({ clientAppId ->
-                clientApplicationRepository.findOne(clientAppId)
-                    .ifPresent { clientApplication ->
-                        logger.debug("clientApplication.hasEnoughScopes(scopes) ${clientApplication.hasEnoughScopes(scopes)}")
-                        logger.debug("scopes ${scopes}")
-                        logger.debug("clientApplication.scopes ${clientApplication.scopes}")
-                        if (!clientApplication.hasEnoughScopes(scopes)) {
-                            throw InsufficientClientApplicationScopeException("The client app ${clientApplication.clientAppId.content} does not support this use case........ consider to add ${scopes.content.map { it.content }} as scope")
-                        }
-                    }
+        val clientAppId = session.oauth2ClientId()
+            ?: throw ClientApplicationNotFound("no client app found")
 
-            }, { throw ClientApplicationNotFound("no client app found") })
+        clientApplicationRepository.findOne(clientAppId)
+            .ifPresent { clientApplication ->
+                logger.debug("clientApplication.hasEnoughScopes(scopes) ${clientApplication.hasEnoughScopes(scopes)}")
+                logger.debug("scopes ${scopes}")
+                logger.debug("clientApplication.scopes ${clientApplication.scopes}")
+                if (!clientApplication.hasEnoughScopes(scopes)) {
+                    throw InsufficientClientApplicationScopeException("The client app ${clientApplication.clientAppId.content} does not support this use case........ consider to add ${scopes.content.map { it.content }} as scope")
+                }
+            }
     }
 
     private fun principalScopesValidation(

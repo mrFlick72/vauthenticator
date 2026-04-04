@@ -34,9 +34,7 @@ import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.*
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
-import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
-import java.util.*
 
 
 const val adminRole = "VAUTHENTICATOR_ADMIN"
@@ -185,8 +183,7 @@ class WebSecurityConfig(
                 .filter { scope -> scope != Scope.PROFILE.content }
                 .map { role: String -> SimpleGrantedAuthority(role) }
 
-            val authoritiesClaims = Optional.ofNullable(jwt.getClaim<List<String>>("authorities"))
-                .orElseGet { emptyList() }
+            val authoritiesClaims = (jwt.getClaim<List<String>>("authorities") ?: emptyList())
                 .map { role: String -> SimpleGrantedAuthority(role) }
 
             logger.debug("authorities: ${authoritiesClaims + scope}")

@@ -40,7 +40,7 @@ class DynamoDbClientApplicationRepository(
                 )
                     .item()
             }
-            .flatMap { it.filterEmptyMetadata() }
+            .flatMap { Optional.ofNullable(it.filterEmptyMetadata()) }
             .map { fromDynamoToDomain(it) }
     }
 

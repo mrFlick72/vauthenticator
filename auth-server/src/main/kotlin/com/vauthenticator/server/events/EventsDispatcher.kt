@@ -11,7 +11,6 @@ import org.springframework.security.authentication.event.AbstractAuthenticationE
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import java.time.Instant
-import java.util.*
 
 class VAuthenticatorEventsDispatcher(private val publisher: ApplicationEventPublisher) : EventsDispatcher {
     override fun dispatch(event: VAuthenticatorEvent) {
@@ -27,11 +26,12 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
     @EventListener
     fun handle(event: AbstractAuthenticationEvent) {
         val currentRequest = httpServletRequestFromRequestContextHolder()
-        clientIdForm(currentRequest)
-            .ifPresentOrElse(
-                { dispatchAdaptedEventFor(it.content, event) },
-                { logger.debug("PRE EVENT NOT PROCESSED") }
-            )
+        val clientAppId = clientIdForm(currentRequest)
+        if (clientAppId != null) {
+            dispatchAdaptedEventFor(clientAppId.content, event)
+        } else {
+            logger.debug("PRE EVENT NOT PROCESSED")
+        }
     }
 
     private fun httpServletRequestFromRequestContextHolder(): HttpServletRequest {
@@ -39,8 +39,8 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
         return (RequestContextHolder.getRequestAttributes() as ServletRequestAttributes).request
     }
 
-    private fun clientIdForm(currentRequest: HttpServletRequest): Optional<ClientAppId> =
-        currentRequest.oauth2ClientId().or { currentRequest.session.oauth2ClientId() }
+    private fun clientIdForm(currentRequest: HttpServletRequest): ClientAppId? =
+        currentRequest.oauth2ClientId() ?: currentRequest.session.oauth2ClientId()
 
     private fun dispatchAdaptedEventFor(
         it: String,
@@ -50,7 +50,7 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
 
         dispatch(
             VAuthenticatorAuthEvent(
-                Email((Optional.ofNullable(event.authentication.name)).orElseGet { "UNKNOWN" }),
+                Email(event.authentication.name ?: "UNKNOWN"),
                 ClientAppId(it),
                 Instant.now(),
                 event

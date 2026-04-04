@@ -35,7 +35,7 @@ class DynamoDbGroupRepository(
                         )
                     )
             }.item()
-        ).flatMap { it.filterEmptyMetadata() }
+        ).flatMap { Optional.ofNullable(it.filterEmptyMetadata()) }
             .map {
                 val roles = dynamoDbClient.getItem {
                     it.tableName(groupToRoleAssociationTableName)
