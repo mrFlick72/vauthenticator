@@ -22,10 +22,8 @@ class GroupTokenEnhancer(
                 val principal = attributes["java.security.Principal"] as Authentication
 
                 accountRepository.accountFor(principal.name)
-                    .map {
-                        context.claims.claim(
-                            groupClaimName, it.groups
-                        )
+                    ?.let {
+                        context.claims.claim(groupClaimName, it.groups)
                     }
 
             }

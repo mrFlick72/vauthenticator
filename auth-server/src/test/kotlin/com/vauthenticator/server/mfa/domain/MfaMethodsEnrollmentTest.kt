@@ -52,10 +52,10 @@ class MfaMethodsEnrollmentTest {
     private val ticketId = TicketId("A_TICKET")
     private val emailMfaAccountMethod = notAssociatedMfaAccountMethod(userName, email, EMAIL_MFA_METHOD)
 
-    private val defaultMfaDevice = emailMfaAccountMethod.get()
+    private val defaultMfaDevice = emailMfaAccountMethod!!
     private val anotherMfaDeviceId = MfaDeviceId("A_NEW_MFA_DEVICE_ID")
     private val anotherEmail = "irrelevant_$email"
-    private val anotherMfaDevice = emailMfaAccountMethod.get()
+    private val anotherMfaDevice = emailMfaAccountMethod!!
         .copy(mfaDeviceId = anotherMfaDeviceId, mfaChannel = anotherEmail)
 
 
@@ -81,7 +81,7 @@ class MfaMethodsEnrollmentTest {
                 email
             )
         } returns emailMfaAccountMethod
-        every { accountRepository.accountFor(userName) } returns Optional.of(account)
+        every { accountRepository.accountFor(userName) } returns account
         every {
             ticketCreator.createTicketFor(
                 account, clientAppId, ticketContext(
@@ -121,7 +121,7 @@ class MfaMethodsEnrollmentTest {
                 EMAIL_MFA_METHOD,
                 email
             )
-        } returns Optional.empty()
+        } returns null
         every {
             mfaAccountMethodsRepository.save(
                 userName,
@@ -129,9 +129,9 @@ class MfaMethodsEnrollmentTest {
                 email,
                 false
             )
-        } returns emailMfaAccountMethod.get()
+        } returns emailMfaAccountMethod!!
 
-        every { accountRepository.accountFor(userName) } returns Optional.of(account)
+        every { accountRepository.accountFor(userName) } returns account
         every {
             ticketCreator.createTicketFor(
                 account, clientAppId, ticketContext(
@@ -180,7 +180,7 @@ class MfaMethodsEnrollmentTest {
                 email
             )
         } returns emailMfaAccountMethod
-        every { accountRepository.accountFor(userName) } returns Optional.of(account)
+        every { accountRepository.accountFor(userName) } returns account
         every {
             ticketCreator.createTicketFor(
                 account, clientAppId, ticketContext(
@@ -226,7 +226,7 @@ class MfaMethodsEnrollmentTest {
 
     @Test
     fun `find all mfa enrollments for an account`() {
-        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns Optional.of(mfaDeviceId)
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
         every {
             mfaAccountMethodsRepository.findAll(userName)
         } returns listOf(
@@ -247,7 +247,7 @@ class MfaMethodsEnrollmentTest {
 
     @Test
     fun `find all mfa enrollments for an account with masked sensible information`() {
-        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns Optional.of(mfaDeviceId)
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
         every {
             mfaAccountMethodsRepository.findAll(userName)
         } returns listOf(

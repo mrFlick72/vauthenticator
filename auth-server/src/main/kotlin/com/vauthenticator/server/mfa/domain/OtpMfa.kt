@@ -24,14 +24,14 @@ class TaimosOtpMfa(
     private val tokenTimeWindow: Int = properties.timeToLiveInSeconds
     private val tokenTimeWindowMillis: Long = (tokenTimeWindow * 1000).toLong()
 
+
     override fun generateSecretKeyFor(account: Account, mfaMethod: MfaMethod, mfaChannel: String): MfaSecret {
-        val mfaAccountMethod =
-            mfaAccountMethodsRepository.findBy(account.email, mfaMethod, mfaChannel)
-                .orElseGet { null }
-        val encryptedSecret = keyRepository.keyFor(mfaAccountMethod.key, KeyPurpose.MFA)
-        val decryptKeyAsByteArray = keyDecrypter.decryptKey(encryptedSecret.dataKey.encryptedPrivateKeyAsString())
-        val decryptedKey = Hex.encodeHexString(decoder.decode(decryptKeyAsByteArray))
-        return MfaSecret(decryptedKey)
+        return mfaAccountMethodsRepository.findBy(account.email, mfaMethod, mfaChannel)
+            ?.let { mfaAccountMethod -> keyRepository.keyFor(mfaAccountMethod.key, KeyPurpose.MFA) }
+            ?.let { encryptedSecret -> keyDecrypter.decryptKey(encryptedSecret.dataKey.encryptedPrivateKeyAsString()) }
+            ?.let { decryptKeyAsByteArray -> Hex.encodeHexString(decoder.decode(decryptKeyAsByteArray)) }
+            ?.let { decryptedKey -> MfaSecret(decryptedKey) }
+            ?: throw MfaException("No secret key found for account ${account.email} with method ${mfaMethod.name} and channel $mfaChannel")
     }
 
     override fun getTOTPCode(secretKey: MfaSecret): MfaChallenge {
@@ -66,4 +66,3 @@ class TaimosOtpMfa(
     }
 
 }
-

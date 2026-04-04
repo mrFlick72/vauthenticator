@@ -8,7 +8,6 @@ import com.vauthenticator.server.mfa.domain.MfaMethod
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
 import java.sql.ResultSet
-import java.util.*
 
 @Transactional
 class JdbcMfaAccountMethodsRepository(
@@ -17,24 +16,20 @@ class JdbcMfaAccountMethodsRepository(
     private val masterKid: MasterKid,
     private val mfaDeviceIdGenerator: () -> MfaDeviceId
 ) : MfaAccountMethodsRepository {
-    override fun findBy(userName: String, mfaMfaMethod: MfaMethod, mfaChannel: String): Optional<MfaAccountMethod> =
-        Optional.ofNullable(
-            jdbcTemplate.query(
-                "SELECT * FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND mfa_method=? AND mfa_channel=?",
-                { rs, _ -> mfaAccountMethodFrom(rs) },
-                userName, mfaMfaMethod.name, mfaChannel
-            ).firstOrNull()
-        )
+    override fun findBy(userName: String, mfaMfaMethod: MfaMethod, mfaChannel: String): MfaAccountMethod? =
+        jdbcTemplate.query(
+            "SELECT * FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND mfa_method=? AND mfa_channel=?",
+            { rs, _ -> mfaAccountMethodFrom(rs) },
+            userName, mfaMfaMethod.name, mfaChannel
+        ).firstOrNull()
 
 
-    override fun findBy(deviceId: MfaDeviceId): Optional<MfaAccountMethod> =
-        Optional.ofNullable(
-            jdbcTemplate.query(
-                "SELECT * FROM MFA_ACCOUNT_METHODS WHERE mfa_device_id=?",
-                { rs, _ -> mfaAccountMethodFrom(rs) },
-                deviceId.content
-            ).firstOrNull()
-        )
+    override fun findBy(deviceId: MfaDeviceId): MfaAccountMethod? =
+        jdbcTemplate.query(
+            "SELECT * FROM MFA_ACCOUNT_METHODS WHERE mfa_device_id=?",
+            { rs, _ -> mfaAccountMethodFrom(rs) },
+            deviceId.content
+        ).firstOrNull()
 
     override fun findAll(userName: String): List<MfaAccountMethod> =
         jdbcTemplate.query("SELECT * FROM MFA_ACCOUNT_METHODS")
@@ -47,14 +42,9 @@ class JdbcMfaAccountMethodsRepository(
         mfaChannel: String,
         associated: Boolean
     ): MfaAccountMethod {
-        val (kid, mfaDeviceId) = findBy(userName, mfaMfaMethod, mfaChannel)
-            .map {
-                listOf(it.key, it.mfaDeviceId)
-            }.orElseGet {
-                val kid = keyRepository.createKeyFrom(masterKid, KeyType.SYMMETRIC, KeyPurpose.MFA)
-                val mfaDeviceId = mfaDeviceIdGenerator.invoke()
-                listOf(kid, mfaDeviceId)
-            }
+        val existingMethod = findBy(userName, mfaMfaMethod, mfaChannel)
+        val kid = existingMethod?.key ?: keyRepository.createKeyFrom(masterKid, KeyType.SYMMETRIC, KeyPurpose.MFA)
+        val mfaDeviceId = existingMethod?.mfaDeviceId ?: mfaDeviceIdGenerator.invoke()
 
         jdbcTemplate.update(
             """INSERT INTO MFA_ACCOUNT_METHODS (user_name, mfa_device_id, mfa_method, mfa_channel, key_id, associated) VALUES (?,?,?,?,?,?) 
@@ -65,10 +55,10 @@ class JdbcMfaAccountMethodsRepository(
                                 associated=?
                                 """,
             userName,
-            (mfaDeviceId as MfaDeviceId).content,
+            mfaDeviceId.content,
             mfaMfaMethod.name,
             mfaChannel,
-            (kid as Kid).content(),
+            kid.content(),
             associated,
             mfaDeviceId.content,
             mfaMfaMethod.name,
@@ -81,13 +71,11 @@ class JdbcMfaAccountMethodsRepository(
 
 
     override fun setAsDefault(userName: String, deviceId: MfaDeviceId) {
-        Optional.ofNullable(
-            jdbcTemplate.query(
-                "SELECT mfa_device_id FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND default_mfa_method=true",
-                { rs, _ -> MfaDeviceId(rs.getString("mfa_device_id")) },
-                userName
-            ).firstOrNull()
-        ).ifPresent {
+        jdbcTemplate.query(
+            "SELECT mfa_device_id FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND default_mfa_method=true",
+            { rs, _ -> MfaDeviceId(rs.getString("mfa_device_id")) },
+            userName
+        ).firstOrNull()?.let {
             jdbcTemplate.update(
                 "UPDATE MFA_ACCOUNT_METHODS SET default_mfa_method = false WHERE  user_name=? AND mfa_device_id=?",
                 userName, it.content
@@ -100,14 +88,12 @@ class JdbcMfaAccountMethodsRepository(
         )
     }
 
-    override fun getDefaultDevice(userName: String): Optional<MfaDeviceId> =
-        Optional.ofNullable(
-            jdbcTemplate.query(
-                "SELECT mfa_device_id FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND default_mfa_method=true",
-                { rs, _ -> MfaDeviceId(rs.getString("mfa_device_id")) },
-                userName
-            ).firstOrNull()
-        )
+    override fun getDefaultDevice(userName: String): MfaDeviceId? =
+        jdbcTemplate.query(
+            "SELECT mfa_device_id FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND default_mfa_method=true",
+            { rs, _ -> MfaDeviceId(rs.getString("mfa_device_id")) },
+            userName
+        ).firstOrNull()
 
     private fun mfaAccountMethodFrom(rs: ResultSet) = MfaAccountMethod(
         userName = rs.getString("user_name"),

@@ -41,7 +41,7 @@ class AccountUserDetailsServiceTest {
             account.accountNonLocked,
             account.authorities.map { SimpleGrantedAuthority(it) }
         )
-        every { accountRepository.accountFor(account.username) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.username) } returns account
 
         val actual = uut.loadUserByUsername(account.username)
         assertEquals(expected, actual)
@@ -49,7 +49,7 @@ class AccountUserDetailsServiceTest {
 
     @Test
     fun `when the user does not exist`() {
-        every { accountRepository.accountFor(account.username) } returns Optional.empty()
+        every { accountRepository.accountFor(account.username) } returns null
 
         assertThrows(UsernameNotFoundException::class.java) { uut.loadUserByUsername(account.username) }
     }

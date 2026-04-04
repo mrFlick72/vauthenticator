@@ -45,7 +45,7 @@ class OtpMfaVerifierAssociationTest {
             email,
             MfaMethod.EMAIL_MFA_METHOD
         )
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) } just runs
 
         underTest.verifyMfaChallengeToBeAssociatedFor(
@@ -64,7 +64,7 @@ class OtpMfaVerifierAssociationTest {
             email,
             MfaMethod.EMAIL_MFA_METHOD
         )
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) } throws MfaException("invalid code")
 
         assertThrows(MfaException::class.java) {
@@ -86,7 +86,7 @@ class OtpMfaVerifierAssociationTest {
             email,
             MfaMethod.EMAIL_MFA_METHOD
         )
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) } throws AssociatedMfaVerificationException("Mfa Challenge verification failed: this mfa method is already associated")
 
         assertThrows(AssociatedMfaVerificationException::class.java) {

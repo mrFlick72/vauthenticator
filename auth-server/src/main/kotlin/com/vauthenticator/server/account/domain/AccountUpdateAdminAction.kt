@@ -14,17 +14,16 @@ class AccountUpdateAdminAction(private val accountRepository: AccountRepository)
     fun execute(
         request: AdminAccountApiRequest
     ) {
-        accountRepository.accountFor(request.email)
-            .ifPresent { account ->
-                accountRepository.save(
-                    account.copy(
-                        accountNonLocked = !request.accountLocked,
-                        enabled = request.enabled,
-                        authorities = request.authorities,
-                        mandatoryAction = request.mandatoryAction
-                    )
+        accountRepository.accountFor(request.email)?.let { account ->
+            accountRepository.save(
+                account.copy(
+                    accountNonLocked = !request.accountLocked,
+                    enabled = request.enabled,
+                    authorities = request.authorities,
+                    mandatoryAction = request.mandatoryAction
                 )
-            }
+            )
+        }
     }
 
 }

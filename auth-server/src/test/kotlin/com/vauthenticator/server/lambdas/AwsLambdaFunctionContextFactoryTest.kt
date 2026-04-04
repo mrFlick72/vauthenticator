@@ -22,7 +22,7 @@ class AwsLambdaFunctionContextFactoryTest {
     @Test
     fun `happy path`() {
         val anAccount = anAccount()
-        every { accountRepository.accountFor(EMAIL) } returns Optional.of(anAccount)
+        every { accountRepository.accountFor(EMAIL) } returns anAccount
         val uut = AwsLambdaFunctionContextFactory(accountRepository)
 
         val emptyMap = emptyMap<String, Any>()

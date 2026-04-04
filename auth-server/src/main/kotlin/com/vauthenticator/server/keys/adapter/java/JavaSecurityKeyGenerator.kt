@@ -3,8 +3,6 @@ package com.vauthenticator.server.keys.adapter.java
 import com.vauthenticator.server.keys.domain.DataKey
 import com.vauthenticator.server.keys.domain.KeyGenerator
 import com.vauthenticator.server.keys.domain.MasterKid
-import java.util.*
-
 
 class JavaSecurityKeyGenerator(
     private val javaSecurityCryptographicOperations: JavaSecurityCryptographicOperations
@@ -15,7 +13,7 @@ class JavaSecurityKeyGenerator(
         val generateRSAKeyPair = javaSecurityCryptographicOperations.generateRSAKeyPair()
         return DataKey(
             javaSecurityCryptographicOperations.encryptKeyWith(masterKid, generateRSAKeyPair.private.encoded),
-            Optional.of(generateRSAKeyPair.public.encoded)
+            generateRSAKeyPair.public.encoded
         )
     }
 
@@ -23,7 +21,7 @@ class JavaSecurityKeyGenerator(
         val generateRSAKeyPair = javaSecurityCryptographicOperations.generateRSAKeyPair()
         return DataKey(
             javaSecurityCryptographicOperations.encryptKeyWith(masterKid, generateRSAKeyPair.private.encoded),
-            Optional.empty()
+            null
         )
     }
 

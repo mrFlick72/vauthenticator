@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 class SensitivePhoneMaskerTest {
-    private val accountPhone = anAccountWithPhoneNumber().phone.get().formattedPhone()
+    private val accountPhone = anAccountWithPhoneNumber().phone!!.formattedPhone()
 
 
     private val uut = SensitivePhoneMasker()

@@ -11,7 +11,7 @@ class SayWelcome(
 
     fun welcome(email: String): Unit =
         accountRepository.accountFor(email)
-            .map { welcomeMailSender.sendFor(it, emptyMap()) }
-            .orElseThrow { AccountNotFoundException("no account with email $email in the database") }
+            ?.let { welcomeMailSender.sendFor(it, emptyMap()) }
+            ?: throw AccountNotFoundException("no account with email $email in the database")
 
 }

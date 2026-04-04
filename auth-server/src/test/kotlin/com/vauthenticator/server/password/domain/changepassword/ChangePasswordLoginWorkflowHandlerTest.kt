@@ -42,7 +42,7 @@ class ChangePasswordLoginWorkflowHandlerTest {
         val uut = ChangePasswordLoginWorkflowHandler(accountRepository, handler)
 
         SecurityContextHolder.getContext().authentication = principalFor(account.email)
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
 
         val actual = uut.canHandle(request, response)
 
@@ -56,7 +56,7 @@ class ChangePasswordLoginWorkflowHandlerTest {
         val uut = ChangePasswordLoginWorkflowHandler(accountRepository, handler)
 
         SecurityContextHolder.getContext().authentication = principalFor(account.email)
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
 
         val actual = uut.canHandle(request, response)
 

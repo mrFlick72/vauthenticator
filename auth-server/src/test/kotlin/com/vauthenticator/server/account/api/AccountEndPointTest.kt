@@ -145,7 +145,7 @@ internal class AccountEndPointTest {
         )
         val clientAppId = A_CLIENT_APP_ID
 
-        every { accountRepository.accountFor(EMAIL) } returns Optional.of(masterAccount)
+        every { accountRepository.accountFor(EMAIL) } returns masterAccount
         every { accountRepository.save(masterAccount) } just runs
 
         mokMvc.perform(

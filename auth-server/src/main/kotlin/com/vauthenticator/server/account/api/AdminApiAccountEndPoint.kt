@@ -16,7 +16,7 @@ class AdminApiAccountEndPoint(
     fun findAccountFor(@PathVariable email: String, authentication: Authentication) =
         ok(
             accountRepository.accountFor(email)
-                .map { AdminApiAccountApiConverter.fromDomainToAccountAdminApiRepresentation(it) }
+                ?.let { AdminApiAccountApiConverter.fromDomainToAccountAdminApiRepresentation(it) }
         )
 
     @PutMapping("/api/admin/accounts")

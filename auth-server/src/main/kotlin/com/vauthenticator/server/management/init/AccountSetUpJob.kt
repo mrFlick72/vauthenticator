@@ -6,7 +6,6 @@ import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.role.domain.RoleRepository
-import java.util.*
 
 class AccountSetUpJob(
     private val roleRepository: RoleRepository,
@@ -28,9 +27,9 @@ class AccountSetUpJob(
             emailVerified = true,
             firstName = "Admin",
             lastName = "",
-            birthDate = Optional.empty(),
-            phone = Optional.empty(),
-            locale = Optional.empty(),
+            birthDate = null,
+            phone = null,
+            locale = null,
             mandatoryAction = AccountMandatoryAction.NO_ACTION
         )
 

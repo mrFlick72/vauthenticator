@@ -62,7 +62,7 @@ internal class SendVerifyEMailChallengeTest {
         val requestContext = mapOf("verificationEMailLink" to "https://vauthenticator.com/email-verify/A_TICKET")
 
 
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every {
             mfaMethodsEnrollment.enroll(
                 account.email,
@@ -87,7 +87,7 @@ internal class SendVerifyEMailChallengeTest {
         val clientApplication = aClientApp(clientAppId).copy(scopes = Scopes.from(Scope.MAIL_VERIFY))
 
         every { clientAccountRepository.findOne(clientAppId) } returns Optional.of(clientApplication)
-        every { accountRepository.accountFor(email) } returns Optional.empty()
+        every { accountRepository.accountFor(email) } returns null
 
         Assertions.assertThrows(AccountNotFoundException::class.java) {
             underTest.sendVerifyMail(email)

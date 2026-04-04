@@ -12,7 +12,7 @@ open class UserInfoEnhancer(private val accountRepository: AccountRepository) {
 
     open fun oidcUserInfoFrom(principal: OidcUserInfoAuthenticationContext): OidcUserInfo =
         accountRepository.accountFor(userName(principal))
-            .map { account ->
+            ?.let { account ->
                 val claims = mutableMapOf<String, Any>()
 
                 RoleClaimsProvider(account, claims)
@@ -20,8 +20,7 @@ open class UserInfoEnhancer(private val accountRepository: AccountRepository) {
                 EmailClaimsProvider(account, claims)
                 ProfileClaimsProvider(account, claims)
                 OidcUserInfo(claims)
-            }
-            .orElseThrow()
+            } ?: throw NoSuchElementException()
 
 }
 
@@ -55,14 +54,14 @@ object ProfileClaimsProvider : ClaimsProvider {
         claims["middle_name"] = ""
         claims["updated_at"] = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
 
-        account.phone.ifPresent {
+        account.phone?.let {
             claims["phone_number"] = it.formattedPhone()
             claims["phone_number_verified"] = true
         }
-        account.birthDate.ifPresent {
+        account.birthDate?.let {
             claims["birthdate"] = it.iso8601FormattedDate()
         }
-        account.locale.ifPresent {
+        account.locale?.let {
             claims["locale"] = it.formattedLocale()
         }
         return claims

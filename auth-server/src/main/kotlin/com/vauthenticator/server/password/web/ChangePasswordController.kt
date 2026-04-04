@@ -63,12 +63,10 @@ class ChangePasswordController(
     }
 
     private fun resetMandatoryActionToNoAction(authentication: Authentication) {
-        accountRepository.accountFor(authentication.name)
-            .map {
-                accountRepository.save(
-                    it.copy(mandatoryAction = AccountMandatoryAction.NO_ACTION)
-                )
-
-            }
+        accountRepository.accountFor(authentication.name)?.let {
+            accountRepository.save(
+                it.copy(mandatoryAction = AccountMandatoryAction.NO_ACTION)
+            )
+        }
     }
 }

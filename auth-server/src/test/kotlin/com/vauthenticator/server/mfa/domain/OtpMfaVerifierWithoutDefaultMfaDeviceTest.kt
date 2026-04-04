@@ -17,8 +17,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
-
 @ExtendWith(MockKExtension::class)
 class OtpMfaVerifierWithoutDefaultMfaDeviceTest {
 
@@ -42,24 +40,21 @@ class OtpMfaVerifierWithoutDefaultMfaDeviceTest {
     fun `when associated mfa challenge is successfully verified with default mfa device`() {
         val challenge = MfaChallenge("AN_MFA_CHALLENGE")
 
-        every { mfaAccountMethodsRepository.findBy(mfaDeviceId) } returns Optional.of(
+        every { mfaAccountMethodsRepository.findBy(mfaDeviceId) } returns
             MfaAccountMethod(
                 userName,
                 mfaDeviceId, keyId, MfaMethod.EMAIL_MFA_METHOD, email, true
             )
-        )
         every { mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, email) } returns
-                Optional.of(
-                    MfaAccountMethod(
-                        userName,
-                        mfaDeviceId,
-                        keyId,
-                        MfaMethod.EMAIL_MFA_METHOD,
-                        email,
-                        true
-                    )
-                )
-        every { accountRepository.accountFor(userName) } returns Optional.of(account)
+            MfaAccountMethod(
+                userName,
+                mfaDeviceId,
+                keyId,
+                MfaMethod.EMAIL_MFA_METHOD,
+                email,
+                true
+            )
+        every { accountRepository.accountFor(userName) } returns account
         every { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) } just runs
 
         underTest.verifyAssociatedMfaChallengeFor(userName, mfaDeviceId, challenge)
@@ -73,24 +68,21 @@ class OtpMfaVerifierWithoutDefaultMfaDeviceTest {
 
     @Test
     fun `when not associated mfa challenge fails on verification with default mfa device`() {
-        every { mfaAccountMethodsRepository.findBy(mfaDeviceId) } returns Optional.of(
+        every { mfaAccountMethodsRepository.findBy(mfaDeviceId) } returns
             MfaAccountMethod(
                 userName,
                 mfaDeviceId, keyId, MfaMethod.EMAIL_MFA_METHOD, email, false
             )
-        )
         every { mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, email) } returns
-                Optional.of(
-                    MfaAccountMethod(
-                        userName,
-                        mfaDeviceId,
-                        keyId,
-                        MfaMethod.EMAIL_MFA_METHOD,
-                        email,
-                        false
-                    )
-                )
-        every { accountRepository.accountFor(userName) } returns Optional.of(account)
+            MfaAccountMethod(
+                userName,
+                mfaDeviceId,
+                keyId,
+                MfaMethod.EMAIL_MFA_METHOD,
+                email,
+                false
+            )
+        every { accountRepository.accountFor(userName) } returns account
         every { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) } just runs
 
         assertThrows(UnAssociatedMfaVerificationException::class.java) {
@@ -108,25 +100,22 @@ class OtpMfaVerifierWithoutDefaultMfaDeviceTest {
 
     @Test
     fun `when associated mfa challenge fails on verification with default mfa device`() {
-        every { mfaAccountMethodsRepository.findBy(mfaDeviceId) } returns Optional.of(
+        every { mfaAccountMethodsRepository.findBy(mfaDeviceId) } returns
             MfaAccountMethod(
                 userName,
                 mfaDeviceId, keyId, MfaMethod.EMAIL_MFA_METHOD, email, true
             )
-        )
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) } throws MfaException("")
         every { mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, email) } returns
-                Optional.of(
-                    MfaAccountMethod(
-                        userName,
-                        mfaDeviceId,
-                        keyId,
-                        MfaMethod.EMAIL_MFA_METHOD,
-                        email,
-                        true
-                    )
-                )
+            MfaAccountMethod(
+                userName,
+                mfaDeviceId,
+                keyId,
+                MfaMethod.EMAIL_MFA_METHOD,
+                email,
+                true
+            )
         assertThrows(MfaException::class.java) {
             underTest.verifyAssociatedMfaChallengeFor(userName, mfaDeviceId, challenge)
         }

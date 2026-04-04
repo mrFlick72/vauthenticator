@@ -24,20 +24,20 @@ class ChangePassword(
 ) {
     fun resetPasswordFor(principal: Principal, request: ChangePasswordRequest) {
         passwordPolicy.accept(principal.name, request.newPassword)
-        accountRepository.accountFor(principal.name)
-            .map { account ->
-                val newEncodedPassword = passwordEncoder.encode(request.newPassword)
-                val updatedAccount = account.copy(password = newEncodedPassword)
-                accountRepository.save(updatedAccount)
-                eventsDispatcher.dispatch(
-                    ChangePasswordEvent(
-                        Email(principal.name),
-                        ClientAppId.empty(),
-                        Instant.now(),
-                        Password(newEncodedPassword)
-                    )
-                )
-            }.orElseThrow { AccountNotFoundException("account not found") }
+        val account = accountRepository.accountFor(principal.name)
+            ?: throw AccountNotFoundException("account not found")
+
+        val newEncodedPassword = passwordEncoder.encode(request.newPassword)
+        val updatedAccount = account.copy(password = newEncodedPassword)
+        accountRepository.save(updatedAccount)
+        eventsDispatcher.dispatch(
+            ChangePasswordEvent(
+                Email(principal.name),
+                ClientAppId.empty(),
+                Instant.now(),
+                Password(newEncodedPassword)
+            )
+        )
     }
 }
 

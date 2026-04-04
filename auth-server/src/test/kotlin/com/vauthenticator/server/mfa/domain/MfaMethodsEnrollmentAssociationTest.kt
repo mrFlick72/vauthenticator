@@ -80,8 +80,8 @@ class MfaMethodsEnrollmentAssociationTest {
                     "A_MFA_DEVICE_ID"
                 )
             )
-        every { ticketRepository.loadFor(ticketId) } returns Optional.of(ticketWithAutoAssociationFeatureEnabled)
-        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns Optional.of(notAssociatedMfaAccountMethod)
+        every { ticketRepository.loadFor(ticketId) } returns ticketWithAutoAssociationFeatureEnabled
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
 
         every {
             mfaAccountMethodsRepository.save(
@@ -111,8 +111,8 @@ class MfaMethodsEnrollmentAssociationTest {
 
     @Test
     fun `when mfa is associated`() {
-        every { ticketRepository.loadFor(ticketId) } returns Optional.of(ticket)
-        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns Optional.of(notAssociatedMfaAccountMethod)
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
 
         every {
             mfaVerifier.verifyMfaChallengeToBeAssociatedFor(
@@ -157,7 +157,7 @@ class MfaMethodsEnrollmentAssociationTest {
 
     @Test
     fun `when a ticket is expired`() {
-        every { ticketRepository.loadFor(ticketId) } returns Optional.empty()
+        every { ticketRepository.loadFor(ticketId) } returns null
 
         Assertions.assertThrows(InvalidTicketException::class.java) { underTest.associate(RAW_TICKET, CODE) }
 
@@ -166,8 +166,8 @@ class MfaMethodsEnrollmentAssociationTest {
 
     @Test
     fun `when a multiple ticket has been created after one association all the remaining ticket should be not valid anymore`() {
-        every { ticketRepository.loadFor(ticketId) } returns Optional.of(ticket)
-        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns Optional.of(mfaAccountMethod)
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns mfaAccountMethod
         every { ticketRepository.delete(ticket.ticketId) } just runs
 
         Assertions.assertThrows(InvalidTicketException::class.java) { underTest.associate(RAW_TICKET, CODE) }

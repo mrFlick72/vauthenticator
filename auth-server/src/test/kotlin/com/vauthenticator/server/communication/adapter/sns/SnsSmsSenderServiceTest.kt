@@ -31,7 +31,7 @@ class SnsSmsSenderServiceTest {
         val uut = SnsSmsSenderService(snsClient, smsMessageFactory)
 
         val account = anAccount().copy(phone = phoneFor("+39 339 2323233"))
-        every { smsMessageFactory.makeSmsMessageFor(account, emptyMap()) } returns SmsMessage(account.phone.get().formattedPhone(), "it is an sms message")
+        every { smsMessageFactory.makeSmsMessageFor(account, emptyMap()) } returns SmsMessage(account.phone!!.formattedPhone(), "it is an sms message")
         uut.sendFor(account, emptyMap())
 
         val actual = SmsUtils.getMessageFor("+393392323233")

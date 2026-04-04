@@ -47,17 +47,16 @@ class AwsLambdaFunctionContextFactory(private val accountRepository: AccountRepo
         generalContext["authorized_scope"] = authorizedScope
 
         input.authorization?.let {
-            accountRepository.accountFor(it.principalName)
-                .ifPresent { account ->
-                    userContext["sub"] = account.sub
-                    userContext["email"] = account.email
-                    userContext["first_name"] = account.firstName
-                    userContext["last_name"] = account.lastName
-                    userContext["birth_date"] = account.birthDate.map { it.formattedDate() }.orElse("")
-                    userContext["phone"] = account.phone.map { it.formattedPhone() }.orElse("")
-                    userContext["email_verified"] = account.emailVerified
-                    userContext["roles"] = account.authorities
-                }
+            accountRepository.accountFor(it.principalName)?.let { account ->
+                userContext["sub"] = account.sub
+                userContext["email"] = account.email
+                userContext["first_name"] = account.firstName
+                userContext["last_name"] = account.lastName
+                userContext["birth_date"] = account.birthDate?.formattedDate().orEmpty()
+                userContext["phone"] = account.phone?.formattedPhone().orEmpty()
+                userContext["email_verified"] = account.emailVerified
+                userContext["roles"] = account.authorities
+            }
         }
 
         val accessTokenContext = mutableMapOf<String, String>()

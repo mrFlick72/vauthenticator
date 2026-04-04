@@ -13,8 +13,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.*
-
 abstract class AbstractAccountRepositoryTest {
 
     private val role = Role("role", "description")
@@ -44,7 +42,7 @@ abstract class AbstractAccountRepositoryTest {
     @Test
     fun `find an account by email`() {
         uut.save(account)
-        val findByUsername: Account = uut.accountFor(account.username).orElseThrow()
+        val findByUsername: Account = uut.accountFor(account.username)!!
 
         assertEquals(account, findByUsername)
     }
@@ -53,7 +51,7 @@ abstract class AbstractAccountRepositoryTest {
     fun `find an account by email with reset password as mandatory action`() {
         val account = account.copy(mandatoryAction = RESET_PASSWORD)
         uut.save(account)
-        val actual: Account = uut.accountFor(account.username).orElseThrow()
+        val actual: Account = uut.accountFor(account.username)!!
 
         assertEquals(actual, account)
     }
@@ -63,7 +61,7 @@ abstract class AbstractAccountRepositoryTest {
         uut.save(account)
         roleRepository.delete(role.name)
 
-        val findByUsername: Account = uut.accountFor(account.username).orElseThrow()
+        val findByUsername: Account = uut.accountFor(account.username)!!
 
         assertEquals(findByUsername, account.copy(authorities = setOf(protectedRoleName)))
     }
@@ -71,23 +69,22 @@ abstract class AbstractAccountRepositoryTest {
     @Test
     fun `find an account by email when an account does not exist`() {
         uut.save(account)
-        val findByUsername: Optional<Account> = uut.accountFor("not-existing-user-name")
+        val findByUsername: Account? = uut.accountFor("not-existing-user-name")
 
-        val empty: Optional<Account> = Optional.empty()
-        assertEquals(findByUsername, empty)
+        assertEquals(findByUsername, null)
     }
 
     @Test
     fun `save an account by email`() {
         uut.save(account)
 
-        val findByUsername: Account = uut.accountFor(account.username).orElseThrow()
+        val findByUsername: Account = uut.accountFor(account.username)!!
         assertEquals(findByUsername, account)
 
         val accountUpdated = account.copy(firstName = "A_NEW_FIRSTNAME", lastName = "A_NEW_LASTNAME")
         uut.save(accountUpdated)
 
-        val updatedFindByUsername = uut.accountFor(account.username).orElseThrow()
+        val updatedFindByUsername = uut.accountFor(account.username)!!
         assertEquals(updatedFindByUsername, accountUpdated)
     }
 
@@ -100,14 +97,14 @@ abstract class AbstractAccountRepositoryTest {
         uut.save(account)
         uut.save(anotherAccount)
 
-        assertEquals(uut.accountFor(account.username), Optional.of(anotherAccount))
+        assertEquals(uut.accountFor(account.username), anotherAccount)
     }
 
     @Test
     internal fun `when a new account is created`() {
         uut.create(account)
 
-        assertEquals(uut.accountFor(account.username), Optional.of(account))
+        assertEquals(uut.accountFor(account.username), account)
     }
 
     @Test

@@ -37,7 +37,7 @@ internal class SayWelcomeTest {
     internal fun `happy path`() {
         val email = "email@domain.com"
         val anAccount = AccountTestFixture.anAccount()
-        every { accountRepository.accountFor(email) } returns Optional.of(anAccount)
+        every { accountRepository.accountFor(email) } returns anAccount
         every { welcomeMailSender.sendFor(anAccount, emptyMap()) } just runs
 
         underTest.welcome(email)
@@ -49,7 +49,7 @@ internal class SayWelcomeTest {
     internal fun `sed mail for a non registered account`() {
         val email = "email@domain.com"
         val anAccount = AccountTestFixture.anAccount()
-        every { accountRepository.accountFor(email) } returns Optional.empty()
+        every { accountRepository.accountFor(email) } returns null
 
         assertThrows(AccountNotFoundException::class.java) { underTest.welcome(email) }
 

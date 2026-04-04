@@ -5,7 +5,6 @@ import com.vauthenticator.server.ticket.domain.TicketId
 import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.springframework.jdbc.core.JdbcTemplate
 import tools.jackson.databind.ObjectMapper
-import java.util.*
 
 class JdbcTicketRepository(
     private val jdbcTemplate: JdbcTemplate,
@@ -24,7 +23,7 @@ class JdbcTicketRepository(
     }
 
 
-    override fun loadFor(ticketId: TicketId): Optional<Ticket> {
+    override fun loadFor(ticketId: TicketId): Ticket? {
         val queryResult = jdbcTemplate.query(
             "SELECT * FROM TICKET WHERE ticket = ?",
             { rs, _ ->
@@ -45,11 +44,7 @@ class JdbcTicketRepository(
             ticketId.content
         )
 
-        return if (queryResult.isEmpty()) {
-            Optional.empty()
-        } else {
-            Optional.of(queryResult.first())
-        }
+        return queryResult.firstOrNull()
     }
 
     override fun delete(ticketId: TicketId) {

@@ -7,13 +7,12 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.kms.KmsClient
 import software.amazon.awssdk.services.kms.model.*
 import java.net.URI
-import java.util.*
-
+import java.util.Optional
 
 object KeysUtils {
 
-    val aSignatureDataKey: DataKey = DataKey(ByteArray(2323), Optional.of(ByteArray(23)))
-    val aSimmetricDataKey: DataKey = DataKey(ByteArray(0), Optional.empty())
+    val aSignatureDataKey: DataKey = DataKey(ByteArray(2323), ByteArray(23))
+    val aSimmetricDataKey: DataKey = DataKey(ByteArray(0), null)
 
     val aKid: Kid = Kid("A_KID")
     val anotherKid: Kid = Kid("ANOTHER_KID")

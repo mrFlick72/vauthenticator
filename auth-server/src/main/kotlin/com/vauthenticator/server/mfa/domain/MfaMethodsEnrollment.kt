@@ -20,20 +20,19 @@ class MfaMethodsEnrollment(
     private val logger = LoggerFactory.getLogger(MfaMethodsEnrollment::class.java)
 
     fun getEnrollmentsFor(userName: String, withMaskedSensibleInformation: Boolean = false): List<MfaDevice> =
-        mfaAccountMethodsRepository.getDefaultDevice(userName)
-            .map { defaultMfaDevice ->
-                mfaAccountMethodsRepository.findAll(userName)
-                    .map {
-                        val sensitiveDataMasker = sensitiveDataMaskerResolver.getSensitiveDataMasker(it.mfaMethod)
-                        MfaDevice(
-                            if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.userName) else it.userName,
-                            it.mfaMethod,
-                            if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.mfaChannel) else it.mfaChannel,
-                            it.mfaDeviceId,
-                            it.mfaDeviceId.content == defaultMfaDevice.content
-                        )
-                    }
-            }.orElseGet { emptyList() }
+        mfaAccountMethodsRepository.getDefaultDevice(userName)?.let { defaultMfaDevice ->
+            mfaAccountMethodsRepository.findAll(userName)
+                .map {
+                    val sensitiveDataMasker = sensitiveDataMaskerResolver.getSensitiveDataMasker(it.mfaMethod)
+                    MfaDevice(
+                        if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.userName) else it.userName,
+                        it.mfaMethod,
+                        if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.mfaChannel) else it.mfaChannel,
+                        it.mfaDeviceId,
+                        it.mfaDeviceId.content == defaultMfaDevice.content
+                    )
+                }
+        } ?: emptyList()
 
 
     fun enroll(
@@ -44,28 +43,26 @@ class MfaMethodsEnrollment(
         sendChallengeCode: Boolean = true,
         ticketContextAdditionalProperties: Map<String, String> = emptyMap()
     ): TicketId {
-        return accountRepository.accountFor(userName)
-            .map {
-                val mfaAccountMethod = mfaAccountMethodsRepository.findBy(userName, mfaMethod, mfaChannel)
-                    .orElseGet { mfaAccountMethodsRepository.save(userName, mfaMethod, mfaChannel, false) }
-
-                if (sendChallengeCode) {
-                    mfaSender.sendMfaChallengeFor(mfaAccountMethod.userName, mfaAccountMethod.mfaDeviceId)
-                }
-
-                ticketCreator.createTicketFor(
-                    it,
-                    clientAppId,
-                    TicketContext.mfaContextFor(
-                        mfaDeviceId = mfaAccountMethod.mfaDeviceId.content,
-                        mfaMethod = mfaMethod,
-                        mfaChannel = mfaChannel,
-                        ticketContextAdditionalProperties = ticketContextAdditionalProperties
-                    )
-                )
-            }.orElseThrow {
+        val account = accountRepository.accountFor(userName) ?: run {
                 logger.warn("account not found")
-                AccountNotFoundException("account not found")
+                throw AccountNotFoundException("account not found")
             }
+        val mfaAccountMethod = mfaAccountMethodsRepository.findBy(userName, mfaMethod, mfaChannel)
+            ?: mfaAccountMethodsRepository.save(userName, mfaMethod, mfaChannel, false)
+
+        if (sendChallengeCode) {
+            mfaSender.sendMfaChallengeFor(mfaAccountMethod.userName, mfaAccountMethod.mfaDeviceId)
+        }
+
+        return ticketCreator.createTicketFor(
+            account,
+            clientAppId,
+            TicketContext.mfaContextFor(
+                mfaDeviceId = mfaAccountMethod.mfaDeviceId.content,
+                mfaMethod = mfaMethod,
+                mfaChannel = mfaChannel,
+                ticketContextAdditionalProperties = ticketContextAdditionalProperties
+            )
+        )
     }
 }

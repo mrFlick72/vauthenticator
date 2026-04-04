@@ -68,7 +68,7 @@ class ChangePasswordTest {
         )
 
         every { passwordPolicy.accept(EMAIL, "it is a new password") } just runs
-        every { accountRepository.accountFor(principal.name) } returns Optional.of(account)
+        every { accountRepository.accountFor(principal.name) } returns account
         every { passwordEncoder.encode("it is a new password") } returns "it is a encoded new password"
         every { accountRepository.save(account.copy(password = "it is a encoded new password")) } just runs
         every { eventsDispatcher.dispatch(any<ChangePasswordEvent>()) } just runs
@@ -92,7 +92,7 @@ class ChangePasswordTest {
         )
 
         every { passwordPolicy.accept(EMAIL, "it is a new password") } just runs
-        every { accountRepository.accountFor(principal.name) } returns Optional.empty()
+        every { accountRepository.accountFor(principal.name) } returns null
 
 
         assertThrows(AccountNotFoundException::class.java) {

@@ -56,7 +56,7 @@ AbstractKeyStorageTest {
                 .decodeToString(), actual["encrypted_private_key"]
         )
         assertEquals(
-            encoder.encode(aSignatureDataKey.publicKey.get()).decodeToString(),
+            encoder.encode(aSignatureDataKey.publicKey!!).decodeToString(),
             actual["public_key"]
         )
     }
