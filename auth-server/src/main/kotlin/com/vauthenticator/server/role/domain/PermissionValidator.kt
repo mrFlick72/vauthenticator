@@ -7,6 +7,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationNotFou
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.InsufficientClientApplicationScopeException
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
+import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
 import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

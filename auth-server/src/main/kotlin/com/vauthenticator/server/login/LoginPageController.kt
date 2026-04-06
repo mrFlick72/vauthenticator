@@ -1,6 +1,5 @@
 package com.vauthenticator.server.login
 
-import com.vauthenticator.server.extentions.hasEnoughScopes
 import com.vauthenticator.server.extentions.oauth2ClientId
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
@@ -8,6 +7,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationFeatures
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
+import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
 import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

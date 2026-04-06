@@ -85,6 +85,7 @@ class ClientAppRegisteredClientRepositoryTest {
                 aClientApplication()
                     .copy(
                         confidential = confidential,
+                        secret = if (confidential) Secret("A_SECRET") else Secret(""),
                         withPkce = WithPkce(!confidential),
                         allowedOrigins = AllowedOrigins.empty(),
                         postLogoutRedirectUri = PostLogoutRedirectUri("http://post_logout_redirect_uri"),

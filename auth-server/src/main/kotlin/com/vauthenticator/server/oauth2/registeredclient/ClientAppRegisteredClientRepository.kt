@@ -1,6 +1,8 @@
 package com.vauthenticator.server.oauth2.registeredclient
 
 import com.vauthenticator.server.oauth2.clientapp.domain.*
+import com.vauthenticator.server.oauth2.clientapp.ext.getClientSecretSafely
+import com.vauthenticator.server.oauth2.clientapp.ext.isConfidential
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.oauth2.core.AuthorizationGrantType
@@ -39,7 +41,7 @@ class ClientAppRegisteredClientRepository(
                         it.value.uppercase()
                     )
                 }),
-                secret = Secret(registeredClient.clientSecret!!),
+                secret = registeredClient.getClientSecretSafely(),
                 withPkce = WithPkce(registeredClient.clientSettings.isRequireProofKey),
                 webServerRedirectUri = CallbackUri(registeredClient.redirectUris.first()),
                 autoApprove = AutoApprove(registeredClient.clientSettings.isRequireAuthorizationConsent.not()),
@@ -98,8 +100,5 @@ class ClientAppRegisteredClientRepository(
         logger.error("Application with id or client_id: $id not found")
         throw RegisteredClientAppNotFound("Application with id or client_id: $id not found")
     }
-
-    private fun RegisteredClient.isConfidential() =
-        !this.clientAuthenticationMethods.contains(ClientAuthenticationMethod.NONE)
 
 }
