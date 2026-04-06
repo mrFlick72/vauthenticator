@@ -14,22 +14,24 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class WelcomeMailEndPoint(
+class WelcomeEMailEndPoint(
     private val permissionValidator: PermissionValidator,
     private val sayWelcome: SayWelcome
 ) {
 
     @PutMapping("/api/sign-up/welcome")
     fun welcome(
-        @RequestBody request: Map<String, String>,
+        @RequestBody request: WelcomeEMailRequest,
         session: HttpSession, principal: JwtAuthenticationToken
     ): ResponseEntity<Unit> {
         permissionValidator.validate(principal, session, Scopes.from(Scope.WELCOME))
-        sayWelcome.welcome(request["email"]!!)
+        sayWelcome.welcome(request.email)
         return ResponseEntity.noContent().build()
     }
 
     @ExceptionHandler(AccountNotFoundException::class)
-    fun noAccountExceptionHAndler() =
+    fun noAccountExceptionHandler() =
         ResponseEntity.notFound().build<Unit>()
 }
+
+data class WelcomeEMailRequest(val email: String)
