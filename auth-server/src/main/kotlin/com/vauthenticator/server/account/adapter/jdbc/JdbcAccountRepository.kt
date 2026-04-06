@@ -198,7 +198,7 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
             saveRoleFor(account.username, account.authorities)
             saveGroupFor(account.username, account.groups)
         } catch (e: DuplicateKeyException) {
-            throw AccountRegistrationException(e.message!!, e)
+            throw AccountRegistrationException(e.message ?: "", e)
         }
     }
 

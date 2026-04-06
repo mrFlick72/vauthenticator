@@ -12,11 +12,11 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class ChangePasswordLoginWorkflowHandlerTest {
@@ -36,6 +36,14 @@ class ChangePasswordLoginWorkflowHandlerTest {
 
     private val account = AccountTestFixture.anAccount()
 
+    lateinit var uut: ChangePasswordLoginWorkflowHandler
+
+    @BeforeEach
+    fun setUp() {
+        uut = ChangePasswordLoginWorkflowHandler(accountRepository, handler)
+    }
+
+
     @Test
     fun `when the change password is required`() {
         val account = account.copy(mandatoryAction = RESET_PASSWORD)
@@ -53,8 +61,6 @@ class ChangePasswordLoginWorkflowHandlerTest {
 
     @Test
     fun `when the change password is not required`() {
-        val uut = ChangePasswordLoginWorkflowHandler(accountRepository, handler)
-
         SecurityContextHolder.getContext().authentication = principalFor(account.email)
         every { accountRepository.accountFor(account.email) } returns account
 
@@ -62,6 +68,16 @@ class ChangePasswordLoginWorkflowHandlerTest {
 
         verify { accountRepository.accountFor(account.email) }
 
+        assertFalse(actual)
+    }
+
+    @Test
+    fun `when the no authentication context is setup`() {
+        SecurityContextHolder.getContext().authentication = null
+
+        val actual = uut.canHandle(request, response)
+
+        verify(exactly = 0) { accountRepository.accountFor(any()) }
         assertFalse(actual)
     }
 

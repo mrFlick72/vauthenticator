@@ -21,9 +21,13 @@ class ChangePasswordLoginWorkflowHandler(
         request: HttpServletRequest,
         response: HttpServletResponse,
     ): Boolean {
-        //TODO check it
-        val username = SecurityContextHolder.getContext().authentication!!.name
-        return accountRepository.accountFor(username)?.mandatoryAction === AccountMandatoryAction.RESET_PASSWORD
+        val username = getCurrentLoggedInUserName()
+        return username?.let {
+            accountRepository.accountFor(username)?.mandatoryAction === AccountMandatoryAction.RESET_PASSWORD
+        }
+            ?: false
     }
+
+    private fun getCurrentLoggedInUserName(): String? = SecurityContextHolder.getContext().authentication?.name
 
 }
