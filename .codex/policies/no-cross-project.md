@@ -3,27 +3,53 @@
 This repository is a monorepo composed of independent projects:
 - auth-server (Kotlin)
 - management-ui (React)
-- helm (Helm chart)
+- helm-charts (Helm)
 
-Rules:
-- Never modify more than ONE project per change
-- Do not update backend and UI in the same PR
-- Do not update Helm when modifying application code
-- If changes are required across projects, split into multiple commits
-- Ask for confirmation before cross-project refactors
+## Hard Rule
 
-Project boundaries:
+The agent MUST modify files in ONLY ONE project directory per task.
 
-auth-server/
-management-ui/
-helm/
+A project is identified by its root folder:
 
-Allowed:
-- auth-server only changes
-- management-ui only changes
-- helm only changes
+- auth-server/**
+- management-ui/**
+- helm-charts/**
 
-Forbidden:
-- auth-server + management-ui
-- auth-server + helm
-- management-ui + helm
+The agent MUST NOT:
+- edit files across multiple project folders
+- create commits touching multiple projects
+- refactor shared code affecting multiple projects
+- update Helm when changing application code
+- update UI when changing backend
+
+## Enforcement
+
+If a requested change requires modifying multiple projects:
+- STOP
+- Explain why multiple projects are required
+- Ask user confirmation
+- Propose split into multiple changes
+
+## Allowed Examples
+
+✔ Only:
+- auth-server/**
+
+✔ Only:
+- management-ui/**
+
+✔ Only:
+- helm-charts/**
+
+## Forbidden Examples
+
+✘ auth-server/** + management-ui/**  
+✘ auth-server/** + helm-charts/**  
+✘ management-ui/** + helm-charts/**
+
+## Exception
+
+Documentation files are allowed across projects:
+- README.md
+- docs/**
+- images/**
