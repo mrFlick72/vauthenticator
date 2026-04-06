@@ -8,8 +8,12 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
 import com.vauthenticator.server.support.SecurityFixture.principalFor
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import java.time.Instant
 import kotlin.test.assertFalse
 
 class JwtAuthenticationTokenExtTest {
@@ -47,6 +51,23 @@ class JwtAuthenticationTokenExtTest {
             )
         )
         assertTrue { uut.hasEnoughScopes(Scopes(setOf(MFA_ALWAYS))) }
+    }
+
+    @Test
+    fun `when jwt token has no aud claim then client app id resolution fails`() {
+        val uut = JwtAuthenticationToken(
+            Jwt(
+                "token-value",
+                Instant.now(),
+                Instant.now().plusSeconds(60),
+                mapOf("alg" to "none"),
+                mapOf("scope" to emptyList<String>())
+            )
+        )
+
+        assertThrows(RuntimeException::class.java) {
+            uut.clientAppId()
+        }
     }
 
 }

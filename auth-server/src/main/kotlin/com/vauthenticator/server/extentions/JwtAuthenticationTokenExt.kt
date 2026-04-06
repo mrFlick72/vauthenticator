@@ -14,11 +14,12 @@ fun Authentication.clientAppId(): ClientAppId {
 }
 
 fun JwtAuthenticationToken.clientAppId(): ClientAppId {
-    val aud = this.token.claims["aud"]!!
+    val clientAppId = this.token.claims["aud"]
+    ?: throw RuntimeException("JWT token has no aud claim") //todo it should be a custom exception
     return try {
-        ClientAppId((aud as String))
+        ClientAppId((clientAppId as String))
     } catch (e: RuntimeException) {
-        ClientAppId((aud as List<String>)[0])
+        ClientAppId((clientAppId as List<String>)[0])
     }
 }
 
