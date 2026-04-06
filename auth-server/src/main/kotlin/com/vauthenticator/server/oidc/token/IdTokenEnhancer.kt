@@ -18,9 +18,11 @@ class IdTokenEnhancer(
             val signatureKey = keyRepository.signatureKeys().peekOneAtRandomWithout(assignedKeys)
             context.jwsHeader.keyId(signatureKey.kid.content())
 
-            val attributes = context.authorization!!.attributes
-            val principle = attributes["java.security.Principal"] as Authentication
-            context.claims.claim("email", principle.name)
+            val attributes = context.authorization?.attributes
+            val principal = attributes?.let { it["java.security.Principal"] } as Authentication?
+            principal?.let {
+                context.claims.claim("email", principal.name)
+            }
         }
     }
 }
