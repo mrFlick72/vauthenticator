@@ -8,6 +8,10 @@ The main application entry point is [src/main/kotlin/com/vauthenticator/server/V
 
 Use this guide for any work under `auth-server`. Per the repo root instructions, this file takes precedence over the monorepo-level `Agents.md` for this subtree.
 
+The relevant skills if available, for working in this repository include: $kotlin-patterns $kotlin-specialist $kotlin-springboot  $kotlin-testing
+
+As additional capability I would suggest to use the context7 MCP server to gain more details if needed
+
 ## Stack
 
 - Backend: Spring Boot 4.0.x, Kotlin 2.2, Java 21

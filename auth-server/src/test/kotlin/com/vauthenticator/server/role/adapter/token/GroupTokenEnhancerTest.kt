@@ -52,6 +52,16 @@ class GroupTokenEnhancerTest {
         assertEquals(expected, actual)
     }
 
+    @Test
+    fun `when token is access token but authorization is null then the groups claims will be not added`() {
+        val uut = GroupTokenEnhancer("access_token", "groups", accountRepository)
+        val context = JwtEncodingContextFixture.newContextWithoutAuthorization
+
+        uut.customize(context)
+
+        verify(exactly = 0) { accountRepository.accountFor(any()) }
+        assertThrows(IllegalArgumentException::class.java) { context.claims.build().claims["groups"] }
+    }
 
     @Test
     fun `when the groups are not put in any token since that the principal is a client credential principal`() {

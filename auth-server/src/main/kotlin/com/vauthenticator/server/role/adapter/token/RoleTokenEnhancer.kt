@@ -1,13 +1,9 @@
 package com.vauthenticator.server.role.adapter.token
 
 import com.vauthenticator.server.extentions.isATokenForAUserFrom
-import org.apache.logging.log4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
-import java.util.stream.Collectors
 
 class RoleTokenEnhancer(
     val tokenType: String,
@@ -19,14 +15,15 @@ class RoleTokenEnhancer(
 
         if (context.isATokenForAUserFrom()) {
             if (tokenType == context.tokenType.value) {
-                val attributes = context.authorization!!.attributes
-                val principal = attributes["java.security.Principal"] as Authentication
+                val attributes = context.authorization?.attributes
+                attributes?.let {
+                    val principal = it["java.security.Principal"] as Authentication
 
-                context.claims.claim(
-                    roleClaimName, principal.authorities
-                        .stream()
-                        .map { obj: GrantedAuthority -> obj.authority }
-                        .collect(Collectors.toList()))
+                    context.claims.claim(
+                        roleClaimName,
+                        principal.authorities.map { authority -> authority.authority },
+                    )
+                }
             }
         }
     }
