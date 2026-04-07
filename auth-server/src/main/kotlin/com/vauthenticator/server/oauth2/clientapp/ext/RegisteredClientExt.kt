@@ -10,7 +10,7 @@ fun RegisteredClient.isConfidential() =
 
 fun RegisteredClient.getClientSecretSafely(): Secret {
     return if (isConfidential()) {
-        Secret(requireNotNull(clientSecret) {
+        Secret(requireNotNull(clientSecret) { //todo to be fixedI pre
             "Confidential client $clientId must define a clientSecret"
         })
     } else {

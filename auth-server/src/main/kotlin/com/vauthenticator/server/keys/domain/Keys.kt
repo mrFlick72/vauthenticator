@@ -19,6 +19,7 @@ value class MasterKid(private val content: String) {
 }
 
 class KeyDeletionException(message: String) : RuntimeException(message)
+class KeyNotFoundException(message: String) : RuntimeException(message)
 
 enum class KeyType { SYMMETRIC, ASYMMETRIC }
 enum class KeyPurpose { SIGNATURE, MFA }

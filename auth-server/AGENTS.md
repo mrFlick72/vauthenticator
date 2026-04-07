@@ -23,6 +23,11 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - Frontend assets: React 19, TypeScript, webpack, MUI
 - Testing: JUnit 5, Spring Boot Test, MockK, GreenMail, Jacoco
 
+## Preferred pattern
+
+- *Prefer* ?: throw pattern over the requireNotNull. or checkNotNull
+
+
 ## Repository Layout
 
 - `src/main/kotlin/com/vauthenticator/server`: backend source
