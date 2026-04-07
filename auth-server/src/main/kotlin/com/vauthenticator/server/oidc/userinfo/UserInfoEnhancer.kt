@@ -2,6 +2,7 @@ package com.vauthenticator.server.oidc.userinfo
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.token.ClaimsNotFoundException
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext
 import java.time.LocalDateTime
@@ -78,4 +79,4 @@ object OpenIdClaimsProvider : ClaimsProvider {
 }
 
 fun userName(principal: OidcUserInfoAuthenticationContext) =
-    principal.authorization.accessToken.claims!!["sub"] as String
+    (principal.authorization.accessToken.claims?.get("sub") ?: throw ClaimsNotFoundException("sub claims not found")) as String
