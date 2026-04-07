@@ -23,7 +23,7 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - Frontend assets: React 19, TypeScript, webpack, MUI
 - Testing: JUnit 5, Spring Boot Test, MockK, GreenMail, Jacoco
 
-## Preferred pattern
+## Architecture decisions and conventions
 
 - *Prefer* ?: throw pattern over the requireNotNull. or checkNotNull
 

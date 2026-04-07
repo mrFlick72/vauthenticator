@@ -1,7 +1,7 @@
 package com.vauthenticator.server.oauth2.registeredclient
 
 import com.vauthenticator.server.oauth2.clientapp.domain.*
-import com.vauthenticator.server.oauth2.clientapp.ext.getClientSecretSafely
+import com.vauthenticator.server.oauth2.clientapp.ext.clientSecret
 import com.vauthenticator.server.oauth2.clientapp.ext.isConfidential
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -41,7 +41,7 @@ class ClientAppRegisteredClientRepository(
                         it.value.uppercase()
                     )
                 }),
-                secret = registeredClient.getClientSecretSafely(),
+                secret = registeredClient.clientSecret(),
                 withPkce = WithPkce(registeredClient.clientSettings.isRequireProofKey),
                 webServerRedirectUri = CallbackUri(registeredClient.redirectUris.first()),
                 autoApprove = AutoApprove(registeredClient.clientSettings.isRequireAuthorizationConsent.not()),
