@@ -51,7 +51,7 @@ class RedisOAuth2AuthorizationService(private val redisTemplate: RedisTemplate<A
         Assert.hasText(token, "token cannot be empty")
         logger.debug("findByToken")
 
-        val id = redisTemplate.opsForHash<String, String>().get(token, token.toSha256())!!
+        val id = redisTemplate.opsForHash<String, String>().get(token, token.toSha256())
         return redisTemplate.opsForHash<String, OAuth2Authorization>().get(id, id.toSha256())
     }
 

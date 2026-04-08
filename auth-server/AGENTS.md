@@ -26,7 +26,8 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 ## Architecture decisions and conventions
 
 - *Prefer* ?: throw pattern over the requireNotNull. or checkNotNull
-
+- *Prefer* Custom exceptions over generic ones, even if they are unchecked. This helps with error handling and makes it easier to understand the context of the error when it is thrown.
+- *Prefer* domain-specific packages and classes over generic ones. This helps to keep the code organized and makes it easier to find the relevant code when working on a specific feature or bug.
 
 ## Repository Layout
 

@@ -11,14 +11,16 @@ private val logger = LoggerFactory.getLogger(StringExt::class.java.name)
 class StringExt
 
 fun String.toSha256(): String {
-    var messageDigest: MessageDigest? = null
     try {
-        messageDigest = MessageDigest.getInstance("SHA-256")
+        val messageDigest = MessageDigest.getInstance("SHA-256")
+        val digest = messageDigest.digest(this.toByteArray())
+        return java.lang.String.format("%064x", BigInteger(1, digest))
     } catch (e: NoSuchAlgorithmException) {
         logger.error(e.message, e)
+        throw Sha255CodingException(e.message ?: "Error while encoding string to sha-256")
     }
-    val digest = messageDigest!!.digest(this.toByteArray())
-    return java.lang.String.format("%064x", BigInteger(1, digest))
 }
+
+class Sha255CodingException(message: String) : RuntimeException(message)
 
 fun String.asDynamoAttribute(): AttributeValue = AttributeValue.builder().s(this).build()
