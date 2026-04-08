@@ -22,7 +22,6 @@ import junit.framework.TestCase.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 
 @ExtendWith(MockKExtension::class)
@@ -52,10 +51,10 @@ class MfaMethodsEnrollmentTest {
     private val ticketId = TicketId("A_TICKET")
     private val emailMfaAccountMethod = notAssociatedMfaAccountMethod(userName, email, EMAIL_MFA_METHOD)
 
-    private val defaultMfaDevice = emailMfaAccountMethod!!
+    private val defaultMfaDevice = emailMfaAccountMethod
     private val anotherMfaDeviceId = MfaDeviceId("A_NEW_MFA_DEVICE_ID")
     private val anotherEmail = "irrelevant_$email"
-    private val anotherMfaDevice = emailMfaAccountMethod!!
+    private val anotherMfaDevice = emailMfaAccountMethod
         .copy(mfaDeviceId = anotherMfaDeviceId, mfaChannel = anotherEmail)
 
 
@@ -129,7 +128,7 @@ class MfaMethodsEnrollmentTest {
                 email,
                 false
             )
-        } returns emailMfaAccountMethod!!
+        } returns emailMfaAccountMethod
 
         every { accountRepository.accountFor(userName) } returns account
         every {

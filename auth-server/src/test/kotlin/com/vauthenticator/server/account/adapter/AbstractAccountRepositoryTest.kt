@@ -42,7 +42,7 @@ abstract class AbstractAccountRepositoryTest {
     @Test
     fun `find an account by email`() {
         uut.save(account)
-        val findByUsername: Account = uut.accountFor(account.username)!!
+        val findByUsername = uut.accountFor(account.username)
 
         assertEquals(account, findByUsername)
     }
@@ -51,7 +51,7 @@ abstract class AbstractAccountRepositoryTest {
     fun `find an account by email with reset password as mandatory action`() {
         val account = account.copy(mandatoryAction = RESET_PASSWORD)
         uut.save(account)
-        val actual: Account = uut.accountFor(account.username)!!
+        val actual = uut.accountFor(account.username)
 
         assertEquals(actual, account)
     }
@@ -61,7 +61,7 @@ abstract class AbstractAccountRepositoryTest {
         uut.save(account)
         roleRepository.delete(role.name)
 
-        val findByUsername: Account = uut.accountFor(account.username)!!
+        val findByUsername = uut.accountFor(account.username)
 
         assertEquals(findByUsername, account.copy(authorities = setOf(protectedRoleName)))
     }
@@ -69,7 +69,7 @@ abstract class AbstractAccountRepositoryTest {
     @Test
     fun `find an account by email when an account does not exist`() {
         uut.save(account)
-        val findByUsername: Account? = uut.accountFor("not-existing-user-name")
+        val findByUsername = uut.accountFor("not-existing-user-name")
 
         assertEquals(findByUsername, null)
     }
@@ -78,13 +78,13 @@ abstract class AbstractAccountRepositoryTest {
     fun `save an account by email`() {
         uut.save(account)
 
-        val findByUsername: Account = uut.accountFor(account.username)!!
+        val findByUsername = uut.accountFor(account.username)
         assertEquals(findByUsername, account)
 
         val accountUpdated = account.copy(firstName = "A_NEW_FIRSTNAME", lastName = "A_NEW_LASTNAME")
         uut.save(accountUpdated)
 
-        val updatedFindByUsername = uut.accountFor(account.username)!!
+        val updatedFindByUsername = uut.accountFor(account.username)
         assertEquals(updatedFindByUsername, accountUpdated)
     }
 

@@ -21,7 +21,7 @@ abstract class AbstractTicketRepositoryTest {
 
     abstract fun initTicketRepository(): TicketRepository
     abstract fun resetDatabase()
-    abstract fun getActual(): Map<String, Any>
+    abstract fun getActual(): Map<String, String?>
 
     @BeforeEach
     fun setUp() {

@@ -24,8 +24,7 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlin.test.assertNotNull
 
-abstract class
-AbstractKeyStorageTest {
+abstract class AbstractKeyStorageTest {
 
     private val masterKid = aMasterKey
     private val now = Instant.now()
@@ -56,7 +55,7 @@ AbstractKeyStorageTest {
                 .decodeToString(), actual["encrypted_private_key"]
         )
         assertEquals(
-            encoder.encode(aSignatureDataKey.publicKey!!).decodeToString(),
+            encoder.encode(aSignatureDataKey.publicKey).decodeToString(),
             actual["public_key"]
         )
     }

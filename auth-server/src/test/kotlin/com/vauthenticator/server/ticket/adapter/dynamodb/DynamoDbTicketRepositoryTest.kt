@@ -31,7 +31,7 @@ class DynamoDbTicketRepositoryTest : AbstractTicketRepositoryTest() {
         resetDynamoDb()
     }
 
-    override fun getActual(): Map<String, Any> {
+    override fun getActual(): Map<String, String?> {
         val ticketGenerator = getTicketGenerator()
         val item = DynamoDbUtils.dynamoDbClient.getItem(
             GetItemRequest.builder()
@@ -45,8 +45,8 @@ class DynamoDbTicketRepositoryTest : AbstractTicketRepositoryTest() {
         ).item()
 
         return mapOf(
-            "ticket" to item["ticket"]!!.s(),
-            "ttl" to item["ttl"]!!.n()
+            "ticket" to item["ticket"]?.s(),
+            "ttl" to item["ttl"]?.n()
         )
     }
 

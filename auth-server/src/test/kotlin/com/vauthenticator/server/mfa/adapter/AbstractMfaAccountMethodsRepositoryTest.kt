@@ -98,19 +98,19 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
     @Test
     fun `when a mfa account method is stored and then enabled`() {
         uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, false)
-        val beforeToBeAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)!!
+        val beforeToBeAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)
 
         uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
-        val afterAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)!!
+        val afterAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)
 
 
-        assertEquals(afterAssociated.mfaDeviceId, beforeToBeAssociated.mfaDeviceId)
-        assertEquals(afterAssociated.mfaChannel, beforeToBeAssociated.mfaChannel)
-        assertEquals(afterAssociated.mfaMethod, beforeToBeAssociated.mfaMethod)
-        assertEquals(beforeToBeAssociated.associated, false)
-        assertEquals(afterAssociated.associated, true)
-        assertEquals(afterAssociated.key, beforeToBeAssociated.key)
-        assertEquals(afterAssociated.userName, beforeToBeAssociated.userName)
+        assertEquals(afterAssociated?.mfaDeviceId, beforeToBeAssociated?.mfaDeviceId)
+        assertEquals(afterAssociated?.mfaChannel, beforeToBeAssociated?.mfaChannel)
+        assertEquals(afterAssociated?.mfaMethod, beforeToBeAssociated?.mfaMethod)
+        assertEquals(beforeToBeAssociated?.associated, false)
+        assertEquals(afterAssociated?.associated, true)
+        assertEquals(afterAssociated?.key, beforeToBeAssociated?.key)
+        assertEquals(afterAssociated?.userName, beforeToBeAssociated?.userName)
     }
 
 }
