@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @ConditionalOnProperty("embedded-asset-cdn.enabled", havingValue = "true", matchIfMissing = true)
 class StaticController(
-    @field:Value("\${asset-server.on-s3.bundle-version:}") private val bundleVersionPath: String,
+    @Value("\${asset-server.on-s3.bundle-version:}") private val bundleVersionPath: String,
     private val staticAssetDocumentLocalCache: CaffeineCache,
 ) {
 
