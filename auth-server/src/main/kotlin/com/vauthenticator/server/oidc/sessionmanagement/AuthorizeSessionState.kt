@@ -32,9 +32,13 @@ fun sendAuthorizationResponse(
       authentication: Authentication ->
 
     val authorizationCodeRequestAuthentication = authentication as OAuth2AuthorizationCodeRequestAuthenticationToken
+    val redirectUri = authorizationCodeRequestAuthentication.redirectUri
+        ?: throw SendAuthorizationResponseException("Missing redirect uri in authorization response")
+    val authorizationCode = authorizationCodeRequestAuthentication.authorizationCode?.tokenValue
+        ?: throw SendAuthorizationResponseException("Missing authorization code in authorization response")
     val uriBuilder = UriComponentsBuilder
-        .fromUriString(authorizationCodeRequestAuthentication.redirectUri!!)
-        .queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.authorizationCode!!.tokenValue)
+        .fromUriString(redirectUri)
+        .queryParam(OAuth2ParameterNames.CODE, authorizationCode)
     if (StringUtils.hasText(authorizationCodeRequestAuthentication.state)) {
         uriBuilder.queryParam(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.state)
     }
@@ -49,6 +53,8 @@ fun sendAuthorizationResponse(
     uriBuilder.queryParam("session_state", sessionState)
     redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString())
 }
+
+class SendAuthorizationResponseException(message: String) : RuntimeException(message)
 
 class SessionManagementFactory(private val providerSettings: AuthorizationServerSettings) {
     private val logger: Logger = LoggerFactory.getLogger(SessionManagementFactory::class.java)
