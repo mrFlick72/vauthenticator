@@ -109,20 +109,24 @@ data class Phone(private val countryPrefix: String, private val prefix: String, 
 
         fun phoneFor(phoneNumber: String): Phone? = try {
             val split = phoneNumber.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            if (split.size == 3) {
-                Phone(
-                    split[0],
-                    split[1],
-                    split[2]
-                )
-            } else if (split.size == 2) {
-                Phone(
-                    "",
-                    split[0],
-                    split[1]
-                )
-            } else {
-                null
+            when (split.size) {
+                3 -> {
+                    Phone(
+                        split[0],
+                        split[1],
+                        split[2]
+                    )
+                }
+                2 -> {
+                    Phone(
+                        "",
+                        split[0],
+                        split[1]
+                    )
+                }
+                else -> {
+                    null
+                }
             }
         } catch (e: RuntimeException) {
             empty()

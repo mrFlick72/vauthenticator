@@ -31,7 +31,6 @@ class VerifyEMailChallenge(
             }
         }
         enableAccountFrom(storedTicket.userName)
-
     }
 
     private fun enableAccountFrom(email: String): Account =
