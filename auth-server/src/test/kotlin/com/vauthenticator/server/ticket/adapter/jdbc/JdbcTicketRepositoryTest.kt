@@ -16,7 +16,7 @@ class JdbcTicketRepositoryTest : AbstractTicketRepositoryTest() {
         resetDb()
     }
 
-    override fun getActual(): Map<String, Any> {
+    override fun getActual(): Map<String, String?> {
         val query = jdbcTemplate.query(
             "SELECT * FROM TICKET WHERE ticket = ?", { rs, _ ->
                 mapOf(

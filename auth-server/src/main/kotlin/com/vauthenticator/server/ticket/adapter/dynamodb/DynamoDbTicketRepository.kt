@@ -9,7 +9,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
-import java.util.*
 
 class DynamoDbTicketRepository(
     private val dynamoDbClient: DynamoDbClient,
@@ -34,17 +33,15 @@ class DynamoDbTicketRepository(
     }
 
 
-    override fun loadFor(ticketId: TicketId): Optional<Ticket> {
-        return Optional.ofNullable(
-            dynamoDbClient.getItem(
-                GetItemRequest.builder()
-                    .tableName(tableName)
-                    .key(mapOf("ticket" to ticketId.content.asDynamoAttribute()))
-                    .build()
-            ).item()
-        )
-            .flatMap { it.filterEmptyMetadata() }
-            .map {
+    override fun loadFor(ticketId: TicketId): Ticket? =
+        dynamoDbClient.getItem(
+            GetItemRequest.builder()
+                .tableName(tableName)
+                .key(mapOf("ticket" to ticketId.content.asDynamoAttribute()))
+                .build()
+        ).item()
+            ?.filterEmptyMetadata()
+            ?.let {
                 Ticket(
                     TicketId(it.valueAsStringFor("ticket")),
                     it.valueAsStringFor("user_name"),
@@ -53,7 +50,6 @@ class DynamoDbTicketRepository(
                     TicketContext(it.valueAsMapFor("context"))
                 )
             }
-    }
 
     override fun delete(ticketId: TicketId) {
         dynamoDbClient.deleteItem(

@@ -11,6 +11,7 @@ import io.mockk.impl.annotations.MockK
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNull
 import java.util.*
 
 abstract class AbstractMfaAccountMethodsRepositoryTest {
@@ -58,7 +59,7 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
         uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
         val mfaAccountMethods = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)
         assertEquals(
-            Optional.of(MfaAccountMethod(email, mfaDeviceId, key, MfaMethod.EMAIL_MFA_METHOD, email, true)),
+            MfaAccountMethod(email, mfaDeviceId, key, MfaMethod.EMAIL_MFA_METHOD, email, true),
             mfaAccountMethods
         )
     }
@@ -71,7 +72,7 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
         val mfaAccountMethods = uut.findBy(savedMfaAccountMethod.mfaDeviceId)
 
         assertEquals(
-            Optional.of(MfaAccountMethod(email, mfaDeviceId, key, MfaMethod.EMAIL_MFA_METHOD, email, true)),
+            MfaAccountMethod(email, mfaDeviceId, key, MfaMethod.EMAIL_MFA_METHOD, email, true),
             mfaAccountMethods
         )
 
@@ -80,15 +81,14 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
     @Test
     fun `when one specific enrolment association is not found`() {
         val mfaAccountMethods = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)
-        val expected = Optional.empty<Any>()
-        assertEquals(expected, mfaAccountMethods)
+        assertNull(mfaAccountMethods)
     }
 
     @Test
     fun `when decide what mfa use as default`() {
         uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
 
-        val expected = Optional.of(mfaDeviceId)
+        val expected = mfaDeviceId
         uut.setAsDefault(email, mfaDeviceId)
         val defaultDevice = uut.getDefaultDevice(email)
 
@@ -98,19 +98,19 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
     @Test
     fun `when a mfa account method is stored and then enabled`() {
         uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, false)
-        val beforeToBeAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email).get()
+        val beforeToBeAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)
 
         uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
-        val afterAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email).get()
+        val afterAssociated = uut.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email)
 
 
-        assertEquals(afterAssociated.mfaDeviceId, beforeToBeAssociated.mfaDeviceId)
-        assertEquals(afterAssociated.mfaChannel, beforeToBeAssociated.mfaChannel)
-        assertEquals(afterAssociated.mfaMethod, beforeToBeAssociated.mfaMethod)
-        assertEquals(beforeToBeAssociated.associated, false)
-        assertEquals(afterAssociated.associated, true)
-        assertEquals(afterAssociated.key, beforeToBeAssociated.key)
-        assertEquals(afterAssociated.userName, beforeToBeAssociated.userName)
+        assertEquals(afterAssociated?.mfaDeviceId, beforeToBeAssociated?.mfaDeviceId)
+        assertEquals(afterAssociated?.mfaChannel, beforeToBeAssociated?.mfaChannel)
+        assertEquals(afterAssociated?.mfaMethod, beforeToBeAssociated?.mfaMethod)
+        assertEquals(beforeToBeAssociated?.associated, false)
+        assertEquals(afterAssociated?.associated, true)
+        assertEquals(afterAssociated?.key, beforeToBeAssociated?.key)
+        assertEquals(afterAssociated?.userName, beforeToBeAssociated?.userName)
     }
 
 }

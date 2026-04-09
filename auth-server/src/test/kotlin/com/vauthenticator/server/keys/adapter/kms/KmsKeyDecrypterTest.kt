@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import software.amazon.awssdk.services.kms.model.DataKeySpec
 import software.amazon.awssdk.services.kms.model.GenerateDataKeyRequest
-import java.util.*
-
 internal class KmsKeyDecrypterTest {
 
     @Test
@@ -21,7 +19,7 @@ internal class KmsKeyDecrypterTest {
             .keySpec(DataKeySpec.AES_256)
             .build()
         val kmsDataKey = kmsClient.generateDataKey(dataKeyRequest)
-        val dataKey = DataKey(kmsDataKey.ciphertextBlob().asByteArray(), Optional.empty())
+        val dataKey = DataKey(kmsDataKey.ciphertextBlob().asByteArray(), null)
 
         val expected = encoder.encode(kmsDataKey.plaintext().asByteArray()).decodeToString()
         val actual = kmsKeyDecrypter.decryptKey(dataKey.encryptedPrivateKeyAsString())

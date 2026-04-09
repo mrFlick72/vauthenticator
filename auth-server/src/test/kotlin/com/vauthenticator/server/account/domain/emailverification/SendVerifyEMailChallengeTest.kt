@@ -2,7 +2,6 @@ package com.vauthenticator.server.account.domain.emailverification
 
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.account.domain.emailverification.SendVerifyEMailChallenge
 import com.vauthenticator.server.communication.domain.EMailSenderService
 import com.vauthenticator.server.mfa.domain.MfaMethod
 import com.vauthenticator.server.mfa.domain.MfaMethodsEnrollment
@@ -26,7 +25,6 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 internal class SendVerifyEMailChallengeTest {
@@ -62,7 +60,7 @@ internal class SendVerifyEMailChallengeTest {
         val requestContext = mapOf("verificationEMailLink" to "https://vauthenticator.com/email-verify/A_TICKET")
 
 
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every {
             mfaMethodsEnrollment.enroll(
                 account.email,
@@ -86,8 +84,8 @@ internal class SendVerifyEMailChallengeTest {
         val clientAppId = ClientAppId(A_CLIENT_APP_ID)
         val clientApplication = aClientApp(clientAppId).copy(scopes = Scopes.from(Scope.MAIL_VERIFY))
 
-        every { clientAccountRepository.findOne(clientAppId) } returns Optional.of(clientApplication)
-        every { accountRepository.accountFor(email) } returns Optional.empty()
+        every { clientAccountRepository.findOne(clientAppId) } returns clientApplication
+        every { accountRepository.accountFor(email) } returns null
 
         Assertions.assertThrows(AccountNotFoundException::class.java) {
             underTest.sendVerifyMail(email)

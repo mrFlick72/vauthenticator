@@ -13,18 +13,15 @@ class CachedRoleRepository(
     private val delegate: RoleRepository
 ) : RoleRepository by delegate {
 
-    override fun findAll(): List<Role> {
-        return cacheOperation.get(ROLES_CACHE_KEY)
-            .map { cacheContentConverter.getObjectFromCacheContentFor(it) }
-            .orElseGet {
-                val loadedRoles = delegate.findAll()
+    override fun findAll(): List<Role> =
+        cacheOperation.get(ROLES_CACHE_KEY)
+            ?.let { cacheContentConverter.getObjectFromCacheContentFor(it) }
+            ?: delegate.findAll().also { loadedRoles ->
                 cacheOperation.put(
                     ROLES_CACHE_KEY,
                     cacheContentConverter.loadableContentIntoCacheFor(loadedRoles)
                 )
-                loadedRoles
             }
-    }
 
     override fun save(role: Role) {
         cacheOperation.evict(ROLES_CACHE_KEY)

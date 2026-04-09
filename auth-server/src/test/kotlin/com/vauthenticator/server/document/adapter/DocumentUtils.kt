@@ -42,7 +42,7 @@ object DocumentUtils {
                 .bucket(documentBucket)
                 .key("mail/templates/index.html")
                 .build(),
-            RequestBody.fromFile(Paths.get(resource!!.path))
+            resource?.let { RequestBody.fromFile(Paths.get(resource.path)) }
         )
     }
 }

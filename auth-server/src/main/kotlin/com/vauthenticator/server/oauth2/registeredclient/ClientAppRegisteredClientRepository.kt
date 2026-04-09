@@ -1,6 +1,8 @@
 package com.vauthenticator.server.oauth2.registeredclient
 
 import com.vauthenticator.server.oauth2.clientapp.domain.*
+import com.vauthenticator.server.oauth2.clientapp.ext.clientSecret
+import com.vauthenticator.server.oauth2.clientapp.ext.isConfidential
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.oauth2.core.AuthorizationGrantType
@@ -11,7 +13,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import java.time.Duration
-import java.util.*
 
 class ClientAppRegisteredClientRepository(
     private val storeClientApplication: StoreClientApplication,
@@ -27,10 +28,10 @@ class ClientAppRegisteredClientRepository(
                 confidential = registeredClient.isConfidential(),
                 clientAppId = ClientAppId(registeredClient.clientId),
                 clientAppName = ClientAppName(registeredClient.clientName),
-                logoutUri = LogoutUri(
-                    Optional.ofNullable(registeredClient.postLogoutRedirectUris.firstOrNull()).orElseGet { "" }),
+                logoutUri = LogoutUri(registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()),
                 postLogoutRedirectUri = PostLogoutRedirectUri(
-                    Optional.ofNullable(registeredClient.postLogoutRedirectUris.firstOrNull()).orElseGet { "" }),
+                    registeredClient.postLogoutRedirectUris.firstOrNull().orEmpty()
+                ),
                 scopes = Scopes(registeredClient.scopes.map { Scope(it) }.toSet()),
                 accessTokenValidity = TokenTimeToLive(registeredClient.tokenSettings.accessTokenTimeToLive.toSeconds()),
                 refreshTokenValidity = TokenTimeToLive(registeredClient.tokenSettings.refreshTokenTimeToLive.toSeconds()),
@@ -40,7 +41,7 @@ class ClientAppRegisteredClientRepository(
                         it.value.uppercase()
                     )
                 }),
-                secret = Secret(registeredClient.clientSecret!!),
+                secret = registeredClient.clientSecret(),
                 withPkce = WithPkce(registeredClient.clientSettings.isRequireProofKey),
                 webServerRedirectUri = CallbackUri(registeredClient.redirectUris.first()),
                 autoApprove = AutoApprove(registeredClient.clientSettings.isRequireAuthorizationConsent.not()),
@@ -57,7 +58,7 @@ class ClientAppRegisteredClientRepository(
 
 
     private fun registeredClient(id: String) = clientApplicationRepository.findOne(ClientAppId(id))
-        .map { clientApp ->
+        ?.let { clientApp ->
             val registeredClientAppDefinition = withId(id)
                 .clientId(id)
                 .clientName(clientApp.clientAppName.content)
@@ -95,12 +96,9 @@ class ClientAppRegisteredClientRepository(
                 )
 
             registeredClientAppDefinition.build()
-        }.orElseThrow {
-            logger.error("Application with id or client_id: $id not found")
-            RegisteredClientAppNotFound("Application with id or client_id: $id not found")
-        }
-
-    private fun RegisteredClient.isConfidential() =
-        !this.clientAuthenticationMethods.contains(ClientAuthenticationMethod.NONE)
+        } ?: let {
+        logger.error("Application with id or client_id: $id not found")
+        throw RegisteredClientAppNotFound("Application with id or client_id: $id not found")
+    }
 
 }

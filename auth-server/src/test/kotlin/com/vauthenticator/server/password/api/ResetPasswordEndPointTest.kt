@@ -26,7 +26,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class ResetPasswordEndPointTest {
@@ -81,13 +80,13 @@ class ResetPasswordEndPointTest {
     @Test
     fun `when a password is reset as anonymous but starting from ui`() {
         every { sendResetPasswordMailChallenge.sendResetPasswordMailFor(EMAIL) } just runs
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(
-            aClientApp(
-                ClientAppId(
-                    A_CLIENT_APP_ID
+        every { clientApplicationRepository.findOne(clientAppId) } returns
+                aClientApp(
+                    ClientAppId(
+                        A_CLIENT_APP_ID
+                    )
                 )
-            )
-        )
+
 
         mokMvc.perform(
             put("/api/reset-password-challenge")

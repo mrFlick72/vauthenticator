@@ -6,8 +6,6 @@ import jakarta.servlet.http.HttpSession
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
-import java.util.*
-import kotlin.jvm.optionals.getOrElse
 
 interface LoginWorkflowEngine {
     fun workflowsNextHop(session: HttpSession): LoginWorkflowHandler
@@ -29,7 +27,7 @@ class CompositeLoginWorkflowEngine(
     }
 
     override fun workflowsNextHop(session: HttpSession): LoginWorkflowHandler {
-        val index = Optional.ofNullable(session.getAttribute("CompositeLoginWorkflowEngine_index")).getOrElse { 0 } as Int
+        val index = (session.getAttribute("CompositeLoginWorkflowEngine_index") as? Int) ?: 0
         val nextHandlerIndex = index + 1
 
         logger.debug("CompositeLoginWorkflowEngine_index $nextHandlerIndex")
@@ -46,9 +44,8 @@ class CompositeLoginWorkflowEngine(
     }
 
     override fun workflowsHasNextHop(session: HttpSession): Boolean {
-        val index = Optional.ofNullable(session.getAttribute("CompositeLoginWorkflowEngine_index")).getOrElse { 0 } as Int
+        val index = (session.getAttribute("CompositeLoginWorkflowEngine_index") as? Int) ?: 0
         return index < handlers.size
     }
 
 }
-

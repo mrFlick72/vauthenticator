@@ -3,7 +3,6 @@ package com.vauthenticator.server.account.api
 import com.vauthenticator.server.account.domain.*
 import org.springframework.http.ResponseEntity.noContent
 import org.springframework.http.ResponseEntity.ok
-import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -13,10 +12,10 @@ class AdminApiAccountEndPoint(
 ) {
 
     @GetMapping("/api/admin/accounts/{email}/email")
-    fun findAccountFor(@PathVariable email: String, authentication: Authentication) =
+    fun findAccountFor(@PathVariable email: String) =
         ok(
             accountRepository.accountFor(email)
-                .map { AdminApiAccountApiConverter.fromDomainToAccountAdminApiRepresentation(it) }
+                ?.let { AdminApiAccountApiConverter.fromDomainToAccountAdminApiRepresentation(it) }
         )
 
     @PutMapping("/api/admin/accounts")

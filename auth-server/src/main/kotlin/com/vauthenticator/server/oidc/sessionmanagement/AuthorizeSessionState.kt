@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriComponentsBuilder
-import java.util.*
 import java.util.Arrays.stream
+import java.util.UUID
 
 fun sendAuthorizationResponse(
     redisTemplate: RedisTemplate<String, String?>,
@@ -32,9 +32,13 @@ fun sendAuthorizationResponse(
       authentication: Authentication ->
 
     val authorizationCodeRequestAuthentication = authentication as OAuth2AuthorizationCodeRequestAuthenticationToken
+    val redirectUri = authorizationCodeRequestAuthentication.redirectUri
+        ?: throw SendAuthorizationResponseException("Missing redirect uri in authorization response")
+    val authorizationCode = authorizationCodeRequestAuthentication.authorizationCode?.tokenValue
+        ?: throw SendAuthorizationResponseException("Missing authorization code in authorization response")
     val uriBuilder = UriComponentsBuilder
-        .fromUriString(authorizationCodeRequestAuthentication.redirectUri!!)
-        .queryParam(OAuth2ParameterNames.CODE, authorizationCodeRequestAuthentication.authorizationCode!!.tokenValue)
+        .fromUriString(redirectUri)
+        .queryParam(OAuth2ParameterNames.CODE, authorizationCode)
     if (StringUtils.hasText(authorizationCodeRequestAuthentication.state)) {
         uriBuilder.queryParam(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.state)
     }
@@ -49,6 +53,8 @@ fun sendAuthorizationResponse(
     uriBuilder.queryParam("session_state", sessionState)
     redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString())
 }
+
+class SendAuthorizationResponseException(message: String) : RuntimeException(message)
 
 class SessionManagementFactory(private val providerSettings: AuthorizationServerSettings) {
     private val logger: Logger = LoggerFactory.getLogger(SessionManagementFactory::class.java)
@@ -109,11 +115,12 @@ class SessionManagementIFrameController(
 class CheckSessionEndPoint(private val redisTemplate: RedisTemplate<String, String?>) {
 
     @GetMapping("/check_session")
-    fun checkSession(@RequestParam state: String): ResponseEntity<CheckSessionResponse> = Optional.ofNullable(
-        redisTemplate.opsForHash<String, String?>().get(state, state.toSha256())
-    )
-        .map { ResponseEntity.ok(CheckSessionResponse(it)) }
-        .orElseGet { ResponseEntity.notFound().build() }
+    fun checkSession(@RequestParam state: String): ResponseEntity<CheckSessionResponse> {
+        val sessionState = redisTemplate.opsForHash<String, String?>().get(state, state.toSha256())
+            ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity.ok(CheckSessionResponse(sessionState))
+    }
 
 }
 

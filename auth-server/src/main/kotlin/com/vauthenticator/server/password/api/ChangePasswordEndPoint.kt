@@ -18,10 +18,10 @@ class ChangePasswordEndPoint(val changePassword: ChangePassword) {
 
     @PutMapping("/api/accounts/password")
     fun sendVerifyMail(
-        @RequestBody request: Map<String, String>,
+        @RequestBody request: ChangePasswordRequestRepresentation,
         principal: JwtAuthenticationToken
     ): ResponseEntity<Unit> {
-        changePassword.resetPasswordFor(principal, ChangePasswordRequest(request["pwd"]!!))
+        changePassword.resetPasswordFor(principal, ChangePasswordRequest(request.pwd))
         return noContent().build()
     }
 
@@ -31,3 +31,4 @@ class ChangePasswordEndPoint(val changePassword: ChangePassword) {
     }
 }
 
+data class ChangePasswordRequestRepresentation(val pwd: String)

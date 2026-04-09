@@ -12,7 +12,6 @@ fun messageContextFrom(account: Account) =
         "email" to account.email,
         "firstName" to account.firstName,
         "lastName" to account.lastName,
-        "birthDate" to account.birthDate.map { it.iso8601FormattedDate() }.orElse(""),
-        "phone" to account.phone.map { it.formattedPhone() }.orElse("")
+        "birthDate" to account.birthDate?.iso8601FormattedDate().orEmpty(),
+        "phone" to account.phone?.formattedPhone().orEmpty()
     )
-

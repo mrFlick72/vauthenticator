@@ -3,7 +3,6 @@ package com.vauthenticator.server.lambdas
 import com.vauthenticator.server.account.domain.AccountRepository
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
-import java.util.*
 
 
 class LambdaTokenEnhancer(
@@ -47,20 +46,18 @@ class AwsLambdaFunctionContextFactory(private val accountRepository: AccountRepo
         generalContext["grant_flow"] = grantFlow
         generalContext["authorized_scope"] = authorizedScope
 
-        Optional.ofNullable(input.authorization)
-            .map {
-                accountRepository.accountFor(it.principalName)
-                    .map { account ->
-                        userContext["sub"] = account.sub
-                        userContext["email"] = account.email
-                        userContext["first_name"] = account.firstName
-                        userContext["last_name"] = account.lastName
-                        userContext["birth_date"] = account.birthDate.map { it.formattedDate() }.orElseGet { "" }
-                        userContext["phone"] = account.phone.map { it.formattedPhone() }.orElseGet { "" }
-                        userContext["email_verified"] = account.emailVerified
-                        userContext["roles"] = account.authorities
-                    }
+        input.authorization?.let {
+            accountRepository.accountFor(it.principalName)?.let { account ->
+                userContext["sub"] = account.sub
+                userContext["email"] = account.email
+                userContext["first_name"] = account.firstName
+                userContext["last_name"] = account.lastName
+                userContext["birth_date"] = account.birthDate?.formattedDate().orEmpty()
+                userContext["phone"] = account.phone?.formattedPhone().orEmpty()
+                userContext["email_verified"] = account.emailVerified
+                userContext["roles"] = account.authorities
             }
+        }
 
         val accessTokenContext = mutableMapOf<String, String>()
         val idTokenContext = mutableMapOf<String, String>()

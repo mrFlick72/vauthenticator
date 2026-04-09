@@ -1,10 +1,9 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
-import java.util.*
 
 interface ClientApplicationRepository {
 
-    fun findOne(clientAppId: ClientAppId): Optional<ClientApplication>
+    fun findOne(clientAppId: ClientAppId): ClientApplication?
 
     fun findAll(): Iterable<ClientApplication>
 

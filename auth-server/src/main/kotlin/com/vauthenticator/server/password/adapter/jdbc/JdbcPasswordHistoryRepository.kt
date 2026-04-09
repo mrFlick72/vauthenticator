@@ -40,7 +40,7 @@ class JdbcPasswordHistoryRepository(
         val allowedPassword = items.take(historyEvaluationLimit)
 
         deleteUselessPasswordHistory(items)
-        return allowedPassword.map { Password(it["password"]!! as String) }
+        return allowedPassword.map { Password(it["password"] as String) }
     }
 
     private fun deleteUselessPasswordHistory(itemsInTheHistory: List<Map<String, Any>>) {

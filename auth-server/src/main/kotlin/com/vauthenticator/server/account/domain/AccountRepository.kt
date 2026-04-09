@@ -1,9 +1,7 @@
 package com.vauthenticator.server.account.domain
 
-import java.util.*
-
 interface AccountRepository {
-    fun accountFor(username: String): Optional<Account>
+    fun accountFor(username: String): Account?
     fun save(account: Account)
     fun create(account: Account)
 }

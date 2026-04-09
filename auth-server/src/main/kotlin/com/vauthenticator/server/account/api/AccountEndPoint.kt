@@ -19,8 +19,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.status
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
-import java.util.*
-import java.util.Optional.ofNullable
 
 @RestController
 @SessionAttributes("clientId")
@@ -39,17 +37,18 @@ class AccountEndPoint(
     ): ResponseEntity<Unit> {
         permissionValidator.validate(principal, session, Scopes.from(Scope.SIGN_UP))
         val account = fromRepresentationToSignedUpAccount(representation)
-        clientAppIdFrom(principal, session)
-            .map { signUpUse.execute(it, account) }
-            .orElseThrow()
+        signUpUse.execute(
+            clientAppIdFrom(principal, session) ?: throw IllegalStateException("client app id not found"),
+            account
+        )
         return status(HttpStatus.CREATED).build()
     }
 
     private fun clientAppIdFrom(
         principal: JwtAuthenticationToken?,
         session: HttpSession
-    ): Optional<ClientAppId> =
-        ofNullable(principal).map { it.clientAppId() }.or { session.oauth2ClientId() }
+    ): ClientAppId? =
+        principal?.clientAppId() ?: session.oauth2ClientId()
 
     @PutMapping("/api/accounts")
     fun save(

@@ -5,7 +5,6 @@ import com.vauthenticator.server.account.domain.Date
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
-import java.util.*
 
 private const val SAVE_QUERY: String = """
         INSERT INTO Account (
@@ -96,7 +95,7 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
 
 
     @Transactional(readOnly = true)
-    override fun accountFor(username: String): Optional<Account> {
+    override fun accountFor(username: String): Account? {
 
         val authorities: Set<String> = getUserRoleFor(username)
         val groups: Set<String> = getUserGroupFor(username)
@@ -130,7 +129,7 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
 
             )
         }, username)
-        return Optional.ofNullable(queryResult.firstOrNull())
+        return queryResult.firstOrNull()
     }
 
     private fun getUserRoleFor(username: String) =
@@ -152,9 +151,9 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
             account.emailVerified,
             account.firstName,
             account.lastName,
-            account.birthDate.map { it.localDate }.orElse(null),
-            account.phone.map { it.formattedPhone() }.orElse(""),
-            account.locale.map { it.formattedLocale() }.orElse(""),
+            account.birthDate?.localDate,
+            account.phone?.formattedPhone().orEmpty(),
+            account.locale?.formattedLocale().orEmpty(),
             account.mandatoryAction.name,
 
 
@@ -167,9 +166,9 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
             account.emailVerified,
             account.firstName,
             account.lastName,
-            account.birthDate.map { it.localDate }.orElse(null),
-            account.phone.map { it.formattedPhone() }.orElse(""),
-            account.locale.map { it.formattedLocale() }.orElse(""),
+            account.birthDate?.localDate,
+            account.phone?.formattedPhone().orEmpty(),
+            account.locale?.formattedLocale().orEmpty(),
             account.mandatoryAction.name
         )
 
@@ -191,15 +190,15 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
                 account.emailVerified,
                 account.firstName,
                 account.lastName,
-                account.birthDate.map { it.localDate }.orElse(null),
-                account.phone.map { it.formattedPhone() }.orElse(""),
-                account.locale.map { it.formattedLocale() }.orElse(""),
+                account.birthDate?.localDate,
+                account.phone?.formattedPhone().orEmpty(),
+                account.locale?.formattedLocale().orEmpty(),
                 account.mandatoryAction.name
             )
             saveRoleFor(account.username, account.authorities)
             saveGroupFor(account.username, account.groups)
         } catch (e: DuplicateKeyException) {
-            throw AccountRegistrationException(e.message!!, e)
+            throw AccountRegistrationException(e.message ?: "", e)
         }
     }
 

@@ -43,7 +43,7 @@ class RedisCacheOperationTest {
         redisTemplate.opsForHash<String, String>().put("a_cache_$key", "a_cache_$key".toSha256(), value)
         val actual = underTest.get(key)
 
-        Assertions.assertEquals(Optional.of(value), actual)
+        Assertions.assertEquals(value, actual)
     }
 
     @Test

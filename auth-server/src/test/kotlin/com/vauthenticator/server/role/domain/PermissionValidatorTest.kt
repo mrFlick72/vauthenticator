@@ -17,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.web.savedrequest.DefaultSavedRequest
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class PermissionValidatorTest {
@@ -43,11 +42,10 @@ class PermissionValidatorTest {
     @Test
     fun `when scopes are validate on client app scopes`() {
         every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns httpSessionWithClientApp()
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(
-            aClientApp(clientAppId).copy(
-                scopes = scopes
-            )
-        )
+        every { clientApplicationRepository.findOne(clientAppId) } returns
+                aClientApp(clientAppId).copy(
+                    scopes = scopes
+                )
 
         uut.validate(null, session, scopes)
     }
@@ -55,9 +53,8 @@ class PermissionValidatorTest {
     @Test
     fun `when scopes are not validate on client app scopes`() {
         every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns httpSessionWithClientApp()
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(
-            aClientApp(clientAppId)
-        )
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(clientAppId)
+
 
         assertThrows(InsufficientClientApplicationScopeException::class.java) { uut.validate(null, session, scopes) }
     }

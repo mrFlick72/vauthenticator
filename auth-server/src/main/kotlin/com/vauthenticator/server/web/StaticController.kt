@@ -14,24 +14,28 @@ import org.springframework.web.bind.annotation.RestController
 @ConditionalOnProperty("embedded-asset-cdn.enabled", havingValue = "true", matchIfMissing = true)
 class StaticController(
     @Value("\${asset-server.on-s3.bundle-version:}") private val bundleVersionPath: String,
-    private val staticAssetDocumentLocalCache: CaffeineCache
+    private val staticAssetDocumentLocalCache: CaffeineCache,
 ) {
 
-    private val logger = LoggerFactory.getLogger(StaticController::class.java)
+    companion object {
+        private val logger = LoggerFactory.getLogger(StaticController::class.java)
+    }
 
     @GetMapping("/static/content/asset/{assetName}")
-    fun assetContent(@PathVariable assetName: String): ResponseEntity<*> {
-            var finalAssetName = assetName
-            logger.debug("assetName : $assetName")
-            if (bundleVersionPath.isNotBlank()) {
-                finalAssetName = "$bundleVersionPath/$assetName"
+    fun assetContent(@PathVariable assetName: String): ResponseEntity<ByteArray> {
+        val finalAssetName = resolvedAssetName(assetName)
+        logger.debug("assetName: {}", assetName)
+        logger.debug("finalAssetName: {}", finalAssetName)
+
+        return staticAssetDocumentLocalCache.get(finalAssetName, Document::class.java)
+            ?.let { document ->
+                ResponseEntity.ok()
+                    .header("Content-Type", document.contentType)
+                    .body(document.content)
             }
-            logger.debug("finalAssetName : $finalAssetName")
+            ?: ResponseEntity.notFound().build()
+    }
 
-            val document = staticAssetDocumentLocalCache.get(finalAssetName, Document::class.java)!!
-
-            return ResponseEntity.ok()
-                .header("Content-Type", document.contentType)
-                .body(document.content)
-        }
+    private fun resolvedAssetName(assetName: String): String =
+        if (bundleVersionPath.isBlank()) assetName else "$bundleVersionPath/$assetName"
 }

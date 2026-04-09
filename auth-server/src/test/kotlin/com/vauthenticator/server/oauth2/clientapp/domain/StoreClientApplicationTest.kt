@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class StoreClientApplicationTest {
@@ -79,7 +78,7 @@ class StoreClientApplicationTest {
         val clientAppId = ClientAppId("AN_ID")
         val aClientApp = aClientApp(clientAppId)
 
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(aClientApp)
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp
         every { clientApplicationRepository.save(aClientApp) } just runs
 
         uut.store(aClientApp, false)
@@ -94,7 +93,7 @@ class StoreClientApplicationTest {
         val clientAppId = ClientAppId("AN_ID")
         val aClientApp = aClientApp(clientAppId=clientAppId, confidential = false, password =  Secret(""))
 
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(aClientApp)
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp
 
         assertThrows(UnsupportedClientAppOperationException::class.java) {
             uut.resetPassword(clientAppId, Secret("A_NEW_PASSWORD"))
@@ -108,7 +107,7 @@ class StoreClientApplicationTest {
         val aClientApp = aClientApp(clientAppId)
         val updatedClientApp = aClientApp(clientAppId, password = Secret("A_NEW_PASSWORD"))
 
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(aClientApp)
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp
         every { passwordEncoder.encode("A_NEW_PASSWORD") } returns "A_NEW_PASSWORD"
         every { clientApplicationRepository.save(updatedClientApp) } just runs
 
@@ -123,7 +122,7 @@ class StoreClientApplicationTest {
     fun `reset password for a not found client application`() {
         val clientAppId = ClientAppId("AN_ID")
 
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.empty()
+        every { clientApplicationRepository.findOne(clientAppId) } returns null
 
         assertThrows(ClientApplicationNotFound::class.java) {
             uut.resetPassword(clientAppId, Secret("A_NEW_PASSWORD"))

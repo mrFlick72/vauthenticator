@@ -35,7 +35,7 @@ class AccountUpdateAdminActionTest {
     @Test
     fun `when we change account data`() {
         val account = anAccount.copy(accountNonLocked = false, enabled = true, authorities = setOf("A_ROLE"))
-        every { accountRepository.accountFor(account.email) } returns Optional.of(anAccount())
+        every { accountRepository.accountFor(account.email) } returns anAccount()
         every { accountRepository.save(account) } just runs
 
         underTest.execute(request)
@@ -47,7 +47,7 @@ class AccountUpdateAdminActionTest {
     @Test
     fun `when the account is not found`() {
         val account = anAccount.copy(accountNonLocked = false, enabled = true, authorities = setOf("A_ROLE"))
-        every { accountRepository.accountFor(account.email) } returns Optional.empty()
+        every { accountRepository.accountFor(account.email) } returns null
 
         underTest.execute(request)
 

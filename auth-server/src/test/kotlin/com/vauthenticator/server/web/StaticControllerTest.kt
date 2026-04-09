@@ -11,6 +11,7 @@ import org.springframework.cache.caffeine.CaffeineCache
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 
 @ExtendWith(MockKExtension::class)
@@ -23,7 +24,7 @@ class StaticControllerTest {
 
     @BeforeEach
     internal fun setUp() {
-        mokMvc = MockMvcBuilders.standaloneSetup(StaticController("",staticContentLocalCache)).build()
+        mokMvc = MockMvcBuilders.standaloneSetup(StaticController("", staticContentLocalCache)).build()
     }
 
     @Test
@@ -37,5 +38,13 @@ class StaticControllerTest {
         mokMvc.perform(
             get("/static/content/asset/asset.js")
         ).andExpect(content().bytes(ByteArray(0)))
+    }
+
+    @Test
+    fun `when the content is missing then return 404`() {
+        every { staticContentLocalCache.get("no-such-asset.js", Document::class.java) } returns null
+
+        mokMvc.perform(get("/static/content/asset/no-such-asset.js"))
+            .andExpect(status().isNotFound)
     }
 }

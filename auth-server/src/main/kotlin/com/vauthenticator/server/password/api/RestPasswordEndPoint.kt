@@ -22,12 +22,12 @@ class ResetPasswordEndPoint(
 
     @PutMapping("/api/reset-password-challenge")
     fun sendVerifyMail(
-        @RequestBody request: Map<String, String>,
+        @RequestBody request: ResetPasswordSendVerifyMailRequest,
         session: HttpSession,
         principal: JwtAuthenticationToken?
     ): ResponseEntity<Unit> {
         permissionValidator.validate(principal, session, Scopes.from(Scope.RESET_PASSWORD))
-        sendResetPasswordMailChallenge.sendResetPasswordMailFor(request["email"]!!)
+        sendResetPasswordMailChallenge.sendResetPasswordMailFor(request.email)
         return noContent().build()
     }
 
@@ -40,3 +40,4 @@ class ResetPasswordEndPoint(
 }
 
 data class ResetPasswordRequest(val newPassword: String)
+data class ResetPasswordSendVerifyMailRequest(val email: String)

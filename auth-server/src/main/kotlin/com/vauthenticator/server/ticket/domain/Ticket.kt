@@ -52,9 +52,20 @@ data class TicketContext(val content: Map<String, String>) {
     }
 
     fun isMfaNotSelfAssociable() = content[MFA_SELF_ASSOCIATION_CONTEXT_KEY] != MFA_SELF_ASSOCIATION_CONTEXT_VALUE
-    fun mfaMethod() = MfaMethod.valueOf(content[MFA_METHOD_CONTEXT_KEY]!!)
-    fun mfaChannel() = content[MFA_CHANNEL_CONTEXT_KEY]!!
-    fun mfaDeviceId() = MfaDeviceId(content[MFA_DEVICE_ID_CONTEXT_KEY]!!)
+    fun mfaMethod(): MfaMethod {
+        val mfaMethod = requiredValue(MFA_METHOD_CONTEXT_KEY)
+        return try {
+            MfaMethod.valueOf(mfaMethod)
+        } catch (_: IllegalArgumentException) {
+            throw InvalidTicketException("The ticket context is not valid, invalid $MFA_METHOD_CONTEXT_KEY value: $mfaMethod")
+        }
+    }
+
+    fun mfaChannel() = requiredValue(MFA_CHANNEL_CONTEXT_KEY)
+    fun mfaDeviceId() = MfaDeviceId(requiredValue(MFA_DEVICE_ID_CONTEXT_KEY))
+
+    private fun requiredValue(key: String) =
+        content[key] ?: throw InvalidTicketException("The ticket context is not valid, missing $key")
 }
 
 data class TicketId(val content: String)

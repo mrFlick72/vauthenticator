@@ -33,7 +33,8 @@ class JavaSecurityCryptographicOperations(
     }
 
     fun encryptKeyWith(masterKid: MasterKid, encodedPlainText: ByteArray): ByteArray {
-        val masterKey = decoder.decode(repository.maskerKeyFor(masterKid));
+        val maskerKeyFor = repository.maskerKeyFor(masterKid)
+        val masterKey = decoder.decode(maskerKeyFor)
         val key = SecretKeySpec(masterKey, "AES")
         val cipher = Cipher.getInstance("AES")
         cipher.init(Cipher.ENCRYPT_MODE, key)

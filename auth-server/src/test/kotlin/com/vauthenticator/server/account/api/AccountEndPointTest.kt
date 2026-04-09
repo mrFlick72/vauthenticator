@@ -32,7 +32,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
-import java.util.*
 
 private const val ENDPOINT = "/api/accounts"
 
@@ -86,11 +85,10 @@ internal class AccountEndPointTest {
     internal fun `sign up a new account`() {
         val clientAppId = ClientAppId(A_CLIENT_APP_ID)
         every { signUpUse.execute(clientAppId, masterAccount) } just runs
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(
+        every { clientApplicationRepository.findOne(clientAppId) } returns
             ClientAppFixture.aClientApp(
                 ClientAppId(A_CLIENT_APP_ID)
             )
-        )
 
         mokMvc.perform(
             post(ENDPOINT)
@@ -116,11 +114,11 @@ internal class AccountEndPointTest {
     internal fun `sign up a new account like form ui with client app id in the session`() {
         val clientAppId = ClientAppId(A_CLIENT_APP_ID)
         every { signUpUse.execute(clientAppId, masterAccount) } just runs
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(
+        every { clientApplicationRepository.findOne(clientAppId) } returns
             ClientAppFixture.aClientApp(
                 ClientAppId(A_CLIENT_APP_ID),
             ).copy(scopes = Scopes.from(Scope.SIGN_UP))
-        )
+
 
         mokMvc.perform(
             post(ENDPOINT)
@@ -145,7 +143,7 @@ internal class AccountEndPointTest {
         )
         val clientAppId = A_CLIENT_APP_ID
 
-        every { accountRepository.accountFor(EMAIL) } returns Optional.of(masterAccount)
+        every { accountRepository.accountFor(EMAIL) } returns masterAccount
         every { accountRepository.save(masterAccount) } just runs
 
         mokMvc.perform(

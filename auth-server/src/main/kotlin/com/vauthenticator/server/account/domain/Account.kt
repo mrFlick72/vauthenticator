@@ -5,7 +5,7 @@ import com.vauthenticator.server.cache.CacheContentConverter
 import com.vauthenticator.server.extentions.toSha256
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Locale
 
 data class Account(
     var accountNonExpired: Boolean = false,
@@ -24,9 +24,9 @@ data class Account(
     var firstName: String,
     var lastName: String,
 
-    val birthDate: Optional<Date>,
-    val phone: Optional<Phone>,
-    val locale: Optional<UserLocale>,
+    val birthDate: Date?,
+    val phone: Phone?,
+    val locale: UserLocale?,
     val mandatoryAction: AccountMandatoryAction
 ) {
     val sub: String
@@ -51,14 +51,13 @@ data class UserLocale(val locale: Locale) {
             if (locale.toLanguageTag() == "und") {
                 empty()
             } else {
-                Optional.of(UserLocale(locale))
+                UserLocale(locale)
             }
         } catch (e: Exception) {
             empty()
         }
 
-        fun empty(): Optional<UserLocale> =
-            Optional.empty()
+        fun empty(): UserLocale? = null
 
     }
 }
@@ -82,15 +81,13 @@ data class Date(
 
     companion object {
         val USER_INFO_DEFAULT_DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        fun empty(): Optional<Date> = Optional.empty()
+        fun empty(): Date? = null
 
-        fun isoDateFor(date: String): Optional<Date> = try {
-            Optional.of(
-                Date(
-                    LocalDate.parse(
-                        date,
-                        USER_INFO_DEFAULT_DATE_TIME_FORMATTER
-                    )
+        fun isoDateFor(date: String): Date? = try {
+            Date(
+                LocalDate.parse(
+                    date,
+                    USER_INFO_DEFAULT_DATE_TIME_FORMATTER
                 )
             )
         } catch (e: RuntimeException) {
@@ -110,32 +107,32 @@ data class Phone(private val countryPrefix: String, private val prefix: String, 
             return Phone("", "", "")
         }
 
-        fun phoneFor(phoneNumber: String): Optional<Phone> = try {
-            var phone = Optional.empty<Phone>()
+        fun phoneFor(phoneNumber: String): Phone? = try {
             val split = phoneNumber.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            if (split.size == 3) {
-                phone = Optional.of(
+            when (split.size) {
+                3 -> {
                     Phone(
                         split[0],
                         split[1],
                         split[2]
                     )
-                )
-            } else if (split.size == 2) {
-                phone = Optional.of(
+                }
+                2 -> {
                     Phone(
                         "",
                         split[0],
                         split[1]
                     )
-                )
+                }
+                else -> {
+                    null
+                }
             }
-            phone
         } catch (e: RuntimeException) {
             empty()
         }
 
-        fun empty(): Optional<Phone> = Optional.empty()
+        fun empty(): Phone? = null
     }
 }
 
@@ -186,9 +183,9 @@ class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : Cac
                 "emailVerified" to source.emailVerified,
                 "firstName" to source.firstName,
                 "lastName" to source.lastName,
-                "birthDate" to source.birthDate.map { it.iso8601FormattedDate() }.orElseGet { "" },
-                "phone" to source.phone.map { it.formattedPhone() }.orElseGet { "" },
-                "locale" to source.locale.map { it.formattedLocale() }.orElseGet { "" },
+                "birthDate" to source.birthDate?.iso8601FormattedDate().orEmpty(),
+                "phone" to source.phone?.formattedPhone().orEmpty(),
+                "locale" to source.locale?.formattedLocale().orEmpty(),
                 "mandatory_action" to source.mandatoryAction.name
             )
         )

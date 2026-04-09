@@ -56,9 +56,9 @@ object DynamoAccountConverter {
             "authorities" to account.authorities.asDynamoAttribute(),
             "firstName" to account.firstName.asDynamoAttribute(),
             "lastName" to account.lastName.asDynamoAttribute(),
-            "birthDate" to account.birthDate.map { it.asDynamoAttribute() }.orElse("".asDynamoAttribute()),
-            "phone" to account.phone.map { it.asDynamoAttribute() }.orElse("".asDynamoAttribute()),
-            "locale" to account.locale.map { it.formattedLocale().asDynamoAttribute() }.orElse("".asDynamoAttribute()),
+            "birthDate" to (account.birthDate?.asDynamoAttribute() ?: "".asDynamoAttribute()),
+            "phone" to (account.phone?.asDynamoAttribute() ?: "".asDynamoAttribute()),
+            "locale" to (account.locale?.formattedLocale()?.asDynamoAttribute() ?: "".asDynamoAttribute()),
             "mandatory_action" to account.mandatoryAction.let { it.name }.asDynamoAttribute()
         )
 }

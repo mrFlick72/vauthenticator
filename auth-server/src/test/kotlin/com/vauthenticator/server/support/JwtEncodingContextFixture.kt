@@ -34,6 +34,15 @@ object JwtEncodingContextFixture {
         .registeredClient(registeredClient)
         .build()
 
+    val newContextWithoutAuthorization: JwtEncodingContext = JwtEncodingContext.with(
+        JwsHeader.with(MacAlgorithm.HS256),
+        JwtClaimsSet.builder()
+    )
+        .tokenType(OAuth2TokenType.ACCESS_TOKEN)
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+        .registeredClient(registeredClient)
+        .build()
+
     val newIdTokenContext: JwtEncodingContext = JwtEncodingContext.with(
         JwsHeader.with(MacAlgorithm.HS256),
         JwtClaimsSet.builder()
@@ -41,6 +50,15 @@ object JwtEncodingContextFixture {
         .tokenType(OAuth2TokenType("id_token"))
         .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
         .authorization(authorization)
+        .registeredClient(registeredClient)
+        .build()
+
+    val newIdTokenContextWithoutAuthorization: JwtEncodingContext = JwtEncodingContext.with(
+        JwsHeader.with(MacAlgorithm.HS256),
+        JwtClaimsSet.builder()
+    )
+        .tokenType(OAuth2TokenType("id_token"))
+        .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
         .registeredClient(registeredClient)
         .build()
 

@@ -8,7 +8,6 @@ import software.amazon.awssdk.services.kms.model.DataKeyPairSpec
 import software.amazon.awssdk.services.kms.model.DataKeySpec
 import software.amazon.awssdk.services.kms.model.GenerateDataKeyPairRequest
 import software.amazon.awssdk.services.kms.model.GenerateDataKeyRequest
-import java.util.*
 
 class KmsKeyGenerator(private val kmsClient: KmsClient) : KeyGenerator {
 
@@ -20,7 +19,7 @@ class KmsKeyGenerator(private val kmsClient: KmsClient) : KeyGenerator {
     ).let {
         DataKey(
             encryptedPrivateKey = it.privateKeyCiphertextBlob().asByteArray(),
-            publicKey = Optional.of(it.publicKey().asByteArray())
+            publicKey = it.publicKey().asByteArray()
         )
     }
 
@@ -29,7 +28,7 @@ class KmsKeyGenerator(private val kmsClient: KmsClient) : KeyGenerator {
     ).let {
         DataKey(
             encryptedPrivateKey = it.ciphertextBlob().asByteArray(),
-            publicKey = Optional.empty<ByteArray>()
+            publicKey = null
         )
     }
 

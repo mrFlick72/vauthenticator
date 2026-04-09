@@ -44,7 +44,7 @@ class SendResetPasswordMailChallengeTest {
     fun `when the reset password challenge is sent`() {
         val anAccount = anAccount()
 
-        every { accountRepository.accountFor(anAccount.email) } returns Optional.of(anAccount)
+        every { accountRepository.accountFor(anAccount.email) } returns anAccount
         every { ticketCreator.createTicketFor(anAccount, ClientAppId.empty()) } returns TicketId("A_TICKET")
         every {
             emailSenderService.sendFor(

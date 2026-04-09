@@ -19,35 +19,30 @@ class VerifyEMailChallenge(
     private val logger: Logger = LoggerFactory.getLogger(VerifyEMailChallenge::class.java)
 
     fun verifyMail(ticket: String) {
-        ticketRepository.loadFor(TicketId(ticket))
-            .map {
-                try {
-                    mfaMethodsEnrollmentAssociation.associate(ticket, true)
-                } catch (e: InvalidTicketException) {
-                    logger.debug(e.message, e)
-                    logger.debug("Reason: ${e.reason.name}")
-                    if (e.reason != InvalidTicketCause.ALREADY_ASSOCIATED_MFA) {
-                        throw e
-                    }
-                }
-                enableAccountFrom(it.userName)
+        val storedTicket = ticketRepository.loadFor(TicketId(ticket))
+            ?: throw InvalidTicketException("The ticket $ticket is not a valid ticket")
+        try {
+            mfaMethodsEnrollmentAssociation.associate(ticket, true)
+        } catch (e: InvalidTicketException) {
+            logger.debug(e.message, e)
+            logger.debug("Reason: ${e.reason.name}")
+            if (e.reason != InvalidTicketCause.ALREADY_ASSOCIATED_MFA) {
+                throw e
             }
-            .orElseThrow { throw InvalidTicketException("The ticket $ticket is not a valid ticket") }
-
+        }
+        enableAccountFrom(storedTicket.userName)
     }
 
     private fun enableAccountFrom(email: String): Account =
         accountRepository.accountFor(email)
-            .map { account ->
+            ?.let { account ->
                 val enabledAccount = makeAnAccountEnableForm(account)
                 accountRepository.save(enabledAccount)
                 enabledAccount
-            }
-            .orElseThrow { throw InvalidTicketException("The ticket associated with the username $email is not a valid ticket") }
+            } ?: throw InvalidTicketException("The ticket associated with the username $email is not a valid ticket")
 
 
     private fun makeAnAccountEnableForm(account: Account) =
         account.copy(accountNonLocked = true, enabled = true, emailVerified = true)
 
 }
-

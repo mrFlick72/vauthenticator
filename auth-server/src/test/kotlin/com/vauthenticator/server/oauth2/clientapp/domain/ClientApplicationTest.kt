@@ -8,47 +8,47 @@ class ClientApplicationTest {
 
     @Test
     fun `when a client app does not has a grant flow`() {
-        val aClientApplication = aClientApplication(confidential = false).get()
+        val aClientApplication = aClientApplication(confidential = false)
             .copy(authorizedGrantTypes = AuthorizedGrantTypes(emptyList()))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test
     fun `when a client app does not has scopes`() {
-        val aClientApplication = aClientApplication(confidential = false).get()
+        val aClientApplication = aClientApplication(confidential = false)
             .copy(scopes = Scopes(emptySet()))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test
     fun `when a client app is a configured to be public but has a client secret set`() {
-        val aClientApplication = aClientApplication(confidential = false).get()
+        val aClientApplication = aClientApplication(confidential = false)
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test
     fun `when a client app is a configured to be confidential but does not have a client secret set`() {
-        val aClientApplication = aClientApplication().get().copy(secret = Secret(""))
+        val aClientApplication = aClientApplication().copy(secret = Secret(""))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test
     fun `when a client app has a client app id blank `() {
-        val aClientApplication = aClientApplication().get().copy(clientAppId = ClientAppId(""))
+        val aClientApplication = aClientApplication().copy(clientAppId = ClientAppId(""))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
     @Test
     fun `when a client app has a client app id null or undefined `() {
-        var aClientApplication = aClientApplication().get().copy(clientAppId = ClientAppId("Null"))
+        var aClientApplication = aClientApplication().copy(clientAppId = ClientAppId("Null"))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
 
-        aClientApplication = aClientApplication().get().copy(clientAppId = ClientAppId("uNdefined"))
+        aClientApplication = aClientApplication().copy(clientAppId = ClientAppId("uNdefined"))
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
     }
 
     @Test
     fun `when a client app supports authorization code flow is invalid`() {
-        val aClientApplication = aClientApplication().get().copy(
+        val aClientApplication = aClientApplication().copy(
             webServerRedirectUri = CallbackUri(""),
             postLogoutRedirectUri = PostLogoutRedirectUri(""),
             logoutUri = LogoutUri("")
@@ -58,7 +58,7 @@ class ClientApplicationTest {
 
     @Test
     fun `when a client app supports refresh token code flow is invalid`() {
-        val aClientApplication = aClientApplication().get().copy(
+        val aClientApplication = aClientApplication().copy(
             refreshTokenValidity = TokenTimeToLive(0)
         )
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }
@@ -66,7 +66,7 @@ class ClientApplicationTest {
 
     @Test
     fun `when a client app has access token ttl less than 0`() {
-        val aClientApplication = aClientApplication().get().copy(
+        val aClientApplication = aClientApplication().copy(
             accessTokenValidity = TokenTimeToLive(0)
         )
         assertThrows(InvalidAppDataException::class.java) { aClientApplication.validate() }

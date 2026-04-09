@@ -1,6 +1,5 @@
 package com.vauthenticator.server.login
 
-import com.vauthenticator.server.extentions.hasEnoughScopes
 import com.vauthenticator.server.extentions.oauth2ClientId
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
@@ -8,7 +7,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationFeatures
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
-import jakarta.servlet.http.HttpServletRequest
+import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
 import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,7 +16,6 @@ import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.SessionAttributes
 import tools.jackson.databind.ObjectMapper
-import java.util.*
 
 
 @Controller
@@ -30,7 +28,7 @@ class LoginPageController(
     val logger: Logger = LoggerFactory.getLogger(LoginPageController::class.java)
 
     @GetMapping("/login")
-    fun loginPage(session: HttpSession, model: Model, httpServletRequest: HttpServletRequest): String {
+    fun loginPage(session: HttpSession, model: Model): String {
         val clientId = session.oauth2ClientId()
 
         val features = defaultFeature()
@@ -45,15 +43,15 @@ class LoginPageController(
     }
 
     private fun clientAppFeaturesFor(
-        clientId: Optional<ClientAppId>,
+        clientId: ClientAppId?,
         model: Model,
         features: MutableMap<String, Boolean>
     ) {
-        clientId.ifPresent {
+        clientId?.let {
             model.addAttribute("clientId", it.content)
             clientApplicationRepository.findOne(it)
-                .map { clientApp ->
-                    logger.debug("clientApp.scopes.content: ${clientApp.scopes.content}")
+                ?.let { clientApp ->
+                    logger.debug("clientApp.scopes.content: {}", clientApp.scopes.content)
                     features[ClientApplicationFeatures.SIGNUP.value] = clientApp.hasEnoughScopes(Scope.SIGN_UP)
                     features[ClientApplicationFeatures.RESET_PASSWORD.value] =
                         clientApp.hasEnoughScopes(Scope.RESET_PASSWORD)

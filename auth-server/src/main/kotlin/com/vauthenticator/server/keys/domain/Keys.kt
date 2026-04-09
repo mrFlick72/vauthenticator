@@ -6,7 +6,6 @@ import com.vauthenticator.server.extentions.encoder
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
-import java.util.*
 import kotlin.random.Random
 
 @JvmInline
@@ -20,6 +19,7 @@ value class MasterKid(private val content: String) {
 }
 
 class KeyDeletionException(message: String) : RuntimeException(message)
+class KeyNotFoundException(message: String) : RuntimeException(message)
 
 enum class KeyType { SYMMETRIC, ASYMMETRIC }
 enum class KeyPurpose { SIGNATURE, MFA }
@@ -59,16 +59,16 @@ data class Key(
     val expirationDateTimestamp: Long
 )
 
-data class DataKey(val encryptedPrivateKey: ByteArray, val publicKey: Optional<ByteArray>) {
+data class DataKey(val encryptedPrivateKey: ByteArray, val publicKey: ByteArray?) {
 
     companion object {
         fun from(encryptedPrivateKey: String, pubKey: String): DataKey {
             return DataKey(
                 decoder.decode(encryptedPrivateKey),
                 if (pubKey.isEmpty()) {
-                    Optional.empty<ByteArray>()
+                    null
                 } else {
-                    Optional.of(decoder.decode(pubKey))
+                    decoder.decode(pubKey)
                 }
             )
         }
@@ -78,11 +78,11 @@ data class DataKey(val encryptedPrivateKey: ByteArray, val publicKey: Optional<B
         return KeyPairFactory.keyPairFor(
             keyDecrypter.decryptKey(this.encryptedPrivateKeyAsString()),
             this.publicKeyAsString()
-        );
+        )
     }
 
     fun encryptedPrivateKeyAsString(): String = encoder.encode(encryptedPrivateKey).decodeToString()
-    fun publicKeyAsString(): String = publicKey.map { encoder.encode(it).decodeToString() }.orElseGet { "" }
+    fun publicKeyAsString(): String = publicKey?.let { encoder.encode(it).decodeToString() }.orEmpty()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -92,18 +92,17 @@ data class DataKey(val encryptedPrivateKey: ByteArray, val publicKey: Optional<B
 
         if (!encryptedPrivateKey.contentEquals(other.encryptedPrivateKey)) return false
 
-        if (!(publicKey.isEmpty && other.publicKey.isEmpty)) {
-            return publicKey.get().contentEquals(other.publicKey.get())
+        if (publicKey == null || other.publicKey == null) {
+            return publicKey == null && other.publicKey == null
         }
 
-        return true
+        return publicKey.contentEquals(other.publicKey)
     }
 
     override fun hashCode(): Int {
         var result = encryptedPrivateKey.contentHashCode()
-        result = 31 * result + publicKey.hashCode()
+        result = 31 * result + (publicKey?.contentHashCode() ?: 0)
         return result
     }
 }
-
 

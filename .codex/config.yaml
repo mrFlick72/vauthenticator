@@ -1,0 +1,12 @@
+agents:
+  - path: auth-server
+    instructions: auth-server/AGENTS.md
+
+  - path: management-ui
+    instructions: management-ui/AGENTS.md
+
+  - path: helm
+    instructions: helm-charts/AGENTS.md
+
+policies:
+  - .codex/policies/no-cross-project.md

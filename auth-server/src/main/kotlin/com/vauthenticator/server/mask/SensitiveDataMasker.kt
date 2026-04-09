@@ -9,7 +9,7 @@ interface SensitiveDataMasker {
 
 class SensitiveDataMaskerResolver(private val registry: Map<MfaMethod, SensitiveDataMasker>) {
 
-    fun getSensitiveDataMasker(mfaMethod: MfaMethod): SensitiveDataMasker = registry[mfaMethod]!!
+    fun getSensitiveDataMasker(mfaMethod: MfaMethod): SensitiveDataMasker = registry[mfaMethod]?: throw IllegalArgumentException("No masker found for mfa method %s".format(mfaMethod)) //todo use a custom exception
 }
 
 class SensitiveEmailMasker : SensitiveDataMasker {

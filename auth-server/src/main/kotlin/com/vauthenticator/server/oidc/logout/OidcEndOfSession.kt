@@ -12,7 +12,6 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
-import java.util.Optional.ofNullable
 
 @Controller
 class FrontChannelLogoutController(@Value("\${auth.oidcIss:}") private val authServerBaseUrl: String) {
@@ -44,11 +43,9 @@ class ClearSessionStateLogoutHandler(
     ) {
         val sessionId = sessionFactory.sessionIdFor(request)
         val hashOperations = redisTemplate.opsForHash<String, String?>()
-        ofNullable(hashOperations.get(sessionId, sessionId.toSha256()))
-            .ifPresent {
-                hashOperations.delete(sessionId, sessionId.toSha256())
-                hashOperations.delete(it, it.toSha256())
-            }
+        val sessionState = hashOperations.get(sessionId, sessionId.toSha256()) ?: return
+        hashOperations.delete(sessionId, sessionId.toSha256())
+        hashOperations.delete(sessionState, sessionState.toSha256())
     }
 
 }
