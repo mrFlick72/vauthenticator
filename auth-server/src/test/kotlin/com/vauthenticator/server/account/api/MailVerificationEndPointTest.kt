@@ -41,7 +41,7 @@ class MailVerificationEndPointTest {
     @BeforeEach
     fun setUp() {
         mokMvc = standaloneSetup(
-            MailVerificationEndPoint(
+            EMailVerificationEndPoint(
                 PermissionValidator(cientApplicationRepository),
                 sendVerifyEMailChallenge
             )

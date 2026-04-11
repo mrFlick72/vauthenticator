@@ -4,7 +4,6 @@ import tools.jackson.databind.ObjectMapper
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import java.sql.ResultSet
-import java.util.*
 
 private const val FINED_ALL_QUERY = """
     SELECT client_app_id,
@@ -64,18 +63,17 @@ class JdbcClientApplicationRepository(
     private val namedJdbcTemplate: NamedParameterJdbcTemplate,
     private val objectMapper: ObjectMapper,
     private val allowedOriginRepository: AllowedOriginRepository
-) :
-    ClientApplicationRepository {
+) : ClientApplicationRepository {
     init {
         findAll().forEach { allowedOriginRepository.setAllowedOriginsFor(it.clientAppId, it.allowedOrigins) }
     }
 
-    override fun findOne(clientAppId: ClientAppId): Optional<ClientApplication> {
+    override fun findOne(clientAppId: ClientAppId): ClientApplication? {
         val queryResult =
             namedJdbcTemplate.query(FINED_ONE_QUERY, mapOf("client_app_id" to clientAppId.content)) { rs, _ ->
                 JdbcClientApplicationConverter.fromDbToDomain(rs, objectMapper)
             }
-        return Optional.ofNullable(queryResult.firstOrNull())
+        return queryResult.firstOrNull()
     }
 
     override fun findAll(): Iterable<ClientApplication> {
@@ -85,16 +83,13 @@ class JdbcClientApplicationRepository(
     }
 
     override fun save(clientApp: ClientApplication) {
-        namedJdbcTemplate
-            .update(
-                SAVE_QUERY,
-                mapOf(
+        namedJdbcTemplate.update(
+                SAVE_QUERY, mapOf(
                     "client_app_id" to clientApp.clientAppId.content,
                     "client_app_name" to clientApp.clientAppName.content,
                     "secret" to clientApp.secret.content,
                     "confidential" to clientApp.confidential,
-                    "scopes" to
-                            clientApp.scopes.content.joinToString(separator = ",") { it.content },
+                    "scopes" to clientApp.scopes.content.joinToString(separator = ",") { it.content },
                     "with_pkce" to clientApp.withPkce.content,
                     "authorized_grant_types" to clientApp.authorizedGrantTypes.content.joinToString(separator = ",") { it.name },
                     "web_server_redirect_uri" to clientApp.webServerRedirectUri.content,
@@ -119,27 +114,27 @@ class JdbcClientApplicationRepository(
 
 object JdbcClientApplicationConverter {
 
-    fun fromDbToDomain(rs: ResultSet, objectMapper: ObjectMapper) = ClientApplication(
-        clientAppId = ClientAppId(rs.getString("client_app_id")),
-        clientAppName = ClientAppName(rs.getString("client_app_name")),
-        secret = Secret(rs.getString("secret")),
-        confidential = rs.getBoolean("confidential"),
-        scopes = Scopes(rs.getString("scopes").split(",").map { Scope(it.trim()) }.toSet()),
-        withPkce = WithPkce(rs.getBoolean("with_pkce")),
-        authorizedGrantTypes = AuthorizedGrantTypes(
-            rs.getString("authorized_grant_types").split(",").map { AuthorizedGrantType.valueOf(it) }),
-        webServerRedirectUri = CallbackUri(rs.getString("web_server_redirect_uri")),
-        allowedOrigins = AllowedOrigins(rs.getString("allowed_origins").split(",").map { AllowedOrigin(it) }.toSet()),
-        accessTokenValidity = TokenTimeToLive(rs.getLong("access_token_validity")),
-        refreshTokenValidity = TokenTimeToLive(rs.getLong("refresh_token_validity")),
-        additionalInformation = Optional.ofNullable(
-            objectMapper.readValue(
-                rs.getString("additional_information"),
-                Map::class.java
-            ) as Map<String, String>
-        ).orElse(emptyMap()),
-        autoApprove = AutoApprove(rs.getBoolean("auto_approve")),
-        postLogoutRedirectUri = PostLogoutRedirectUri(rs.getString("post_logout_redirect_uri")),
-        logoutUri = LogoutUri(rs.getString("logout_uri"))
-    )
+    fun fromDbToDomain(rs: ResultSet, objectMapper: ObjectMapper) =
+        ClientApplication(
+            clientAppId = ClientAppId(rs.getString("client_app_id")),
+            clientAppName = ClientAppName(rs.getString("client_app_name")),
+            secret = Secret(rs.getString("secret")),
+            confidential = rs.getBoolean("confidential"),
+            scopes = Scopes(rs.getString("scopes").split(",").map { Scope(it.trim()) }.toSet()),
+            withPkce = WithPkce(rs.getBoolean("with_pkce")),
+            authorizedGrantTypes = AuthorizedGrantTypes(
+                rs.getString("authorized_grant_types").split(",").map { AuthorizedGrantType.valueOf(it) }),
+            webServerRedirectUri = CallbackUri(rs.getString("web_server_redirect_uri")),
+            allowedOrigins = AllowedOrigins(rs.getString("allowed_origins").split(",").map { AllowedOrigin(it) }
+                .toSet()),
+            accessTokenValidity = TokenTimeToLive(rs.getLong("access_token_validity")),
+            refreshTokenValidity = TokenTimeToLive(rs.getLong("refresh_token_validity")),
+            additionalInformation = rs.getString("additional_information")?.let {
+                objectMapper.readValue(
+                    rs.getString("additional_information"), Map::class.java
+                ) as Map<String, String>
+            } ?: emptyMap(),
+            autoApprove = AutoApprove(rs.getBoolean("auto_approve")),
+            postLogoutRedirectUri = PostLogoutRedirectUri(rs.getString("post_logout_redirect_uri")),
+            logoutUri = LogoutUri(rs.getString("logout_uri")))
 }

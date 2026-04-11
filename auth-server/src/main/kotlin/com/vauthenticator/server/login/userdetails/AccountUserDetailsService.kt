@@ -12,21 +12,21 @@ open class AccountUserDetailsService(private val userRepository: AccountReposito
     private val logger: Logger = LoggerFactory.getLogger(AccountUserDetailsService::class.java)
 
     override fun loadUserByUsername(username: String): User =
-            userRepository.accountFor(username)
-                    .map {
-                        logger.info("Account found for $username username")
-                        User(
-                                it.username,
-                                it.password,
-                                it.enabled,
-                                it.accountNonExpired,
-                                it.credentialsNonExpired,
-                                it.accountNonLocked,
-                                it.authorities.map { SimpleGrantedAuthority(it) }
-                        )
-                    }
-                    .orElseThrow {
-                        logger.error("Account not found for $username username")
-                        UsernameNotFoundException("the user $username not found")
-                    }
+        userRepository.accountFor(username)
+            ?.let {
+                logger.info("Account found for $username username")
+                User(
+                    it.username,
+                    it.password,
+                    it.enabled,
+                    it.accountNonExpired,
+                    it.credentialsNonExpired,
+                    it.accountNonLocked,
+                    it.authorities.map { SimpleGrantedAuthority(it) }
+                )
+            }
+            ?: run {
+                logger.error("Account not found for $username username")
+                throw UsernameNotFoundException("the user $username not found")
+            }
 }

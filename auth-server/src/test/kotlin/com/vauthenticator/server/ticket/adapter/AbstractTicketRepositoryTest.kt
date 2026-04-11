@@ -3,14 +3,12 @@ package com.vauthenticator.server.ticket.adapter
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.TicketFixture.ticketFor
-import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.ticket.domain.TicketId
 import com.vauthenticator.server.ticket.domain.TicketRepository
-import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.assertNull
 import java.util.*
 
 abstract class AbstractTicketRepositoryTest {
@@ -23,7 +21,7 @@ abstract class AbstractTicketRepositoryTest {
 
     abstract fun initTicketRepository(): TicketRepository
     abstract fun resetDatabase()
-    abstract fun getActual(): Map<String, Any>
+    abstract fun getActual(): Map<String, String?>
 
     @BeforeEach
     fun setUp() {
@@ -45,7 +43,6 @@ abstract class AbstractTicketRepositoryTest {
     }
 
 
-
     @Test
     fun `when a ticket is retrieved`() {
         val ticketId = TicketId(ticketGenerator.invoke())
@@ -55,14 +52,14 @@ abstract class AbstractTicketRepositoryTest {
 
         val actual = uut.loadFor(ticketId)
 
-        assertEquals(Optional.of(expected), actual)
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `when a ticket is not present`() {
         val ticketId = TicketId(ticketGenerator.invoke())
         val actual = uut.loadFor(ticketId)
-        assertEquals(Optional.empty<Ticket>(), actual)
+        assertNull(actual)
     }
 
     @Test
@@ -74,12 +71,12 @@ abstract class AbstractTicketRepositoryTest {
 
         val actual = uut.loadFor(ticketId)
 
-        assertEquals(Optional.of(expected), actual)
+        assertEquals(expected, actual)
 
         uut.delete(ticketId)
         val actualAfterDeletion = uut.loadFor(ticketId)
 
-        assertEquals(Optional.empty<Ticket>(), actualAfterDeletion)
+        assertNull(actualAfterDeletion)
     }
 
     fun getTicketGenerator() = ticketGenerator

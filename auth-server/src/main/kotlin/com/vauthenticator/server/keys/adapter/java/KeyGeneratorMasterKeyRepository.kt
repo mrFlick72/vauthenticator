@@ -1,5 +1,6 @@
 package com.vauthenticator.server.keys.adapter.java
 
+import com.vauthenticator.server.keys.domain.KeyNotFoundException
 import com.vauthenticator.server.keys.domain.MasterKid
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -11,9 +12,9 @@ class KeyGeneratorMasterKeyRepository(
     val storage: KeyGeneratorMasterKeyStorage
 ) {
 
-    fun maskerKeyFor(masterKeyId: MasterKid): String {
-        return storage.content[masterKeyId.content()]!!
-    }
+    fun maskerKeyFor(masterKeyId: MasterKid): String =
+        storage.content[masterKeyId.content()]
+            ?: throw KeyNotFoundException("Master key ${masterKeyId.content()} not found")
 
 }
 

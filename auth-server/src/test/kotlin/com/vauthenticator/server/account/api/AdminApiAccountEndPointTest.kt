@@ -46,7 +46,7 @@ internal class AdminApiAccountEndPointTest {
         val representation = AdminAccountApiRequest(email = "anemail@domain.com", enabled = false)
         val masterAccount = AccountTestFixture.anAccount().copy(enabled = false)
 
-        every { accountRepository.accountFor("anemail@domain.com") } returns Optional.of(AccountTestFixture.anAccount())
+        every { accountRepository.accountFor("anemail@domain.com") } returns AccountTestFixture.anAccount()
         every { accountRepository.save(masterAccount) } just runs
 
         mokMvc.perform(
@@ -63,7 +63,7 @@ internal class AdminApiAccountEndPointTest {
     internal fun `when the account is not found`() {
         val representation = AdminAccountApiRequest(email = "anemail@domain.com", enabled = false)
 
-        every { accountRepository.accountFor("anemail@domain.com") } returns Optional.empty()
+        every { accountRepository.accountFor("anemail@domain.com") } returns null
 
         mokMvc.perform(
             put("/api/admin/accounts")

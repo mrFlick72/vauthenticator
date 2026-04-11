@@ -53,15 +53,13 @@ internal class VerifyEMailChallengeTest {
         val enabledAccount = account.copy(accountNonLocked = true, enabled = true, emailVerified = true)
         val ticketId = TicketId(RAW_TICKET)
 
-        every { ticketRepository.loadFor(ticketId) } returns Optional.of(
-            TicketFixture.ticketFor(
-                ticketId.content,
-                account.email,
-                ClientAppId.empty().content
-            )
+        every { ticketRepository.loadFor(ticketId) } returns TicketFixture.ticketFor(
+            ticketId.content,
+            account.email,
+            ClientAppId.empty().content
         )
         every { mfaMethodsEnrollmentAssociation.associate(RAW_TICKET, true) } just runs
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every { accountRepository.save(enabledAccount) } just runs
 
         underTest.verifyMail(RAW_TICKET)
@@ -73,14 +71,12 @@ internal class VerifyEMailChallengeTest {
         val account = AccountTestFixture.anAccount()
         val ticketId = TicketId(RAW_TICKET)
 
-        every { ticketRepository.loadFor(ticketId) } returns Optional.of(
-            TicketFixture.ticketFor(
-                ticketId.content,
-                account.email,
-                ClientAppId.empty().content
-            )
+        every { ticketRepository.loadFor(ticketId) } returns TicketFixture.ticketFor(
+            ticketId.content,
+            account.email,
+            ClientAppId.empty().content
         )
-        every { accountRepository.accountFor(account.email) } returns Optional.empty()
+        every { accountRepository.accountFor(account.email) } returns null
         every { mfaMethodsEnrollmentAssociation.associate(RAW_TICKET, true) } just runs
 
         assertThrows(InvalidTicketException::class.java) { underTest.verifyMail(RAW_TICKET) }
@@ -90,7 +86,7 @@ internal class VerifyEMailChallengeTest {
     internal fun `when the ticket does not exist`() {
         val ticketId = TicketId(RAW_TICKET)
 
-        every { ticketRepository.loadFor(ticketId) } returns Optional.empty()
+        every { ticketRepository.loadFor(ticketId) } returns null
 
         assertThrows(InvalidTicketException::class.java) { underTest.verifyMail(RAW_TICKET) }
     }

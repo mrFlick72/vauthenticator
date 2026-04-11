@@ -45,7 +45,7 @@ class CachedRoleRepositoryTest {
 
     @Test
     internal fun `when a role is not found into the cache then it is loaded from database and loaded into the cache`() {
-        every { cacheOperation.get(cache_key) } returns Optional.empty()
+        every { cacheOperation.get(cache_key) } returns null
         every { delegate.findAll() } returns roles
         every { roleCacheContentConverter.loadableContentIntoCacheFor(roles) } returns caceh_content
         every { cacheOperation.put(cache_key, caceh_content) } just runs
@@ -60,7 +60,7 @@ class CachedRoleRepositoryTest {
 
     @Test
     internal fun `when an account is found from the cache `() {
-        every { cacheOperation.get(cache_key) } returns Optional.of(caceh_content)
+        every { cacheOperation.get(cache_key) } returns caceh_content
         every { roleCacheContentConverter.getObjectFromCacheContentFor(caceh_content) } returns roles
 
         underTest.findAll()

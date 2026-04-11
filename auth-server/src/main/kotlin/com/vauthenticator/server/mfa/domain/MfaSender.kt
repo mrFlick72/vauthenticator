@@ -14,31 +14,29 @@ class MfaChallengeSender(
 ) {
 
     fun sendMfaChallengeFor(userName: String, mfaDeviceId: MfaDeviceId) {
-        mfaAccountMethodsRepository.findBy(mfaDeviceId)
-            .map {
-                sendMfaChallengeFor(
-                    userName,
-                    it.mfaMethod,
-                    it.mfaChannel
-                )
-            }
+        mfaAccountMethodsRepository.findBy(mfaDeviceId)?.let {
+            sendMfaChallengeFor(
+                userName,
+                it.mfaMethod,
+                it.mfaChannel
+            )
+        }
     }
 
 
     fun sendMfaChallengeFor(userName: String) {
-        mfaAccountMethodsRepository.getDefaultDevice(userName)
-            .flatMap { mfaAccountMethodsRepository.findBy(it) }
-            .map {
-                sendMfaChallengeFor(
-                    userName,
-                    it.mfaMethod,
-                    it.mfaChannel
-                )
-            }
+        val defaultDevice = mfaAccountMethodsRepository.getDefaultDevice(userName) ?: return
+        mfaAccountMethodsRepository.findBy(defaultDevice)?.let {
+            sendMfaChallengeFor(
+                userName,
+                it.mfaMethod,
+                it.mfaChannel
+            )
+        }
     }
 
     private fun sendMfaChallengeFor(userName: String, mfaMethod: MfaMethod, mfaChannel: String) {
-        val account = accountRepository.accountFor(userName).get()
+        val account = requireNotNull(accountRepository.accountFor(userName)) { "Account $userName not found" }
         val mfaSecret = otpMfa.generateSecretKeyFor(account, mfaMethod, mfaChannel)
         val mfaCode = otpMfa.getTOTPCode(mfaSecret).content()
 

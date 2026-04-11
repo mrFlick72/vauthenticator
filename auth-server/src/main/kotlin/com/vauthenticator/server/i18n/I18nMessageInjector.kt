@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.ui.Model
 import org.springframework.web.servlet.LocaleResolver
 import tools.jackson.databind.ObjectMapper
-import java.util.*
 
 
 class I18nMessageInjector(
@@ -30,8 +29,8 @@ class I18nMessageInjector(
     companion object {
 
         fun hasBadLoginFrom(httpServletRequest: HttpServletRequest) =
-            !Optional.ofNullable(httpServletRequest.session.getAttribute("SPRING_SECURITY_LAST_EXCEPTION")).isEmpty
-                    && httpServletRequest.parameterMap.contains("error")
+            httpServletRequest.session.getAttribute("SPRING_SECURITY_LAST_EXCEPTION") != null &&
+                httpServletRequest.parameterMap.contains("error")
 
     }
 

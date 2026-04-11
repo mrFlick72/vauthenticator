@@ -4,7 +4,6 @@ import com.vauthenticator.server.extentions.toSha256
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.lang.Nullable
 import org.springframework.security.oauth2.core.OAuth2AccessToken
 import org.springframework.security.oauth2.core.OAuth2DeviceCode
 import org.springframework.security.oauth2.core.OAuth2RefreshToken
@@ -40,7 +39,7 @@ class RedisOAuth2AuthorizationService(private val redisTemplate: RedisTemplate<A
             .delete(authorization.id, authorization.id.toSha256(), authorization)
     }
 
-    @Nullable
+
     override fun findById(id: String): OAuth2Authorization? {
         Assert.hasText(id, "id cannot be empty")
         logger.debug("findById: $id")
@@ -48,12 +47,11 @@ class RedisOAuth2AuthorizationService(private val redisTemplate: RedisTemplate<A
             .get(id, id.toSha256())
     }
 
-    @Nullable
-    override fun findByToken(token: String, @Nullable tokenType: OAuth2TokenType?): OAuth2Authorization? {
+    override fun findByToken(token: String, tokenType: OAuth2TokenType?): OAuth2Authorization? {
         Assert.hasText(token, "token cannot be empty")
         logger.debug("findByToken")
 
-        val id = redisTemplate.opsForHash<String, String>().get(token, token.toSha256())!!
+        val id = redisTemplate.opsForHash<String, String>().get(token, token.toSha256())
         return redisTemplate.opsForHash<String, OAuth2Authorization>().get(id, id.toSha256())
     }
 

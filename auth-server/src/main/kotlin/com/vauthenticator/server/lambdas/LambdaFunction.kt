@@ -10,7 +10,6 @@ import software.amazon.awssdk.services.lambda.model.InvokeRequest
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 import java.time.Duration
-import java.util.*
 
 interface LambdaFunction {
 
@@ -82,24 +81,25 @@ class AwsLambdaFunction(
 
     override fun execute(id: LambdaFunctionId, context: LambdaFunctionContext): LambdaFunctionContext {
         val typeRef: TypeReference<Map<String, Any>> = object : TypeReference<Map<String, Any>>() {}
-        val sessionId = currentRequestAttributes().sessionId;
+        val sessionId = currentRequestAttributes().sessionId
 
         val opsForHash = redisTemplate.opsForHash<String, String>()
-        return Optional.ofNullable(opsForHash.get(sessionId, sessionId.toSha256()))
-            .map { LambdaFunctionContext(objectMapper.readValue(it, typeRef)) }
-            .orElseGet {
-                val invokeRequest: InvokeRequest = InvokeRequest.builder()
-                    .functionName(id.content)
-                    .payload(SdkBytes.fromUtf8String(objectMapper.writeValueAsString(context.content)))
-                    .build()
+        val cachedContent = opsForHash.get(sessionId, sessionId.toSha256())
+        if (cachedContent != null) {
+            return LambdaFunctionContext(objectMapper.readValue(cachedContent, typeRef))
+        }
 
-                val invoke = client.invoke(invokeRequest)
-                val serializedBody = invoke.payload().asUtf8String()
+        val invokeRequest: InvokeRequest = InvokeRequest.builder()
+            .functionName(id.content)
+            .payload(SdkBytes.fromUtf8String(objectMapper.writeValueAsString(context.content)))
+            .build()
 
-                opsForHash.put(sessionId, sessionId.toSha256(), serializedBody)
-                opsForHash.operations.expire(sessionId, ttl)
-                LambdaFunctionContext(objectMapper.readValue(serializedBody, typeRef))
-            }
+        val invoke = client.invoke(invokeRequest)
+        val serializedBody = invoke.payload().asUtf8String()
+
+        opsForHash.put(sessionId, sessionId.toSha256(), serializedBody)
+        opsForHash.operations.expire(sessionId, ttl)
+        return LambdaFunctionContext(objectMapper.readValue(serializedBody, typeRef))
     }
 
 }

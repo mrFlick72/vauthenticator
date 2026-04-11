@@ -1,5 +1,6 @@
 package com.vauthenticator.server.role.adapter.dynamodb
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.extentions.asDynamoAttribute
 import com.vauthenticator.server.extentions.filterEmptyMetadata
 import com.vauthenticator.server.extentions.valueAsLongFor
@@ -8,9 +9,6 @@ import com.vauthenticator.server.role.domain.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
-import tools.jackson.databind.ObjectMapper
-import java.util.*
-import kotlin.jvm.optionals.getOrNull
 
 private const val GROUP_NAME_FIELD_NAME = "group_name"
 private const val DESCRIPTION_FIELD_NAME = "description"
@@ -25,17 +23,16 @@ class DynamoDbGroupRepository(
     private val roleRepository: RoleRepository
 ) : GroupRepository {
     override fun loadFor(groupName: String): GroupWitRoles? {
-        return Optional.ofNullable(
-            dynamoDbClient.getItem {
-                it.tableName(groupTableName)
-                    .key(
-                        mutableMapOf(
-                            GROUP_NAME_FIELD_NAME to groupName.asDynamoAttribute()
-                        )
+        return dynamoDbClient.getItem {
+            it.tableName(groupTableName)
+                .key(
+                    mutableMapOf(
+                        GROUP_NAME_FIELD_NAME to groupName.asDynamoAttribute()
                     )
-            }.item()
-        ).flatMap { it.filterEmptyMetadata() }
-            .map {
+                )
+        }.item()
+            .filterEmptyMetadata()
+            ?.let {
                 val roles = dynamoDbClient.getItem {
                     it.tableName(groupToRoleAssociationTableName)
                         .key(
@@ -55,9 +52,9 @@ class DynamoDbGroupRepository(
                     ),
                     roles = roles
                 )
+            }?.let {
+                stealRoleCleanUpFor(it)
             }
-            .map { stealRoleCleanUpFor(it) }
-            .getOrNull()
 
     }
 

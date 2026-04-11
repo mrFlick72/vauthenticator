@@ -20,8 +20,6 @@ import org.junit.jupiter.api.Test
 import tools.jackson.databind.ObjectMapper
 import java.time.Clock
 import java.time.Duration
-import java.util.*
-
 class DatabaseTtlEntryCleanJobTest {
 
     @BeforeEach
@@ -44,7 +42,7 @@ class DatabaseTtlEntryCleanJobTest {
         keyStorage.store(
             MasterKid(""),
             kid,
-            DataKey(ByteArray(0), Optional.empty()),
+            DataKey(ByteArray(0), null),
             KeyType.ASYMMETRIC,
             SIGNATURE
         )
@@ -55,7 +53,7 @@ class DatabaseTtlEntryCleanJobTest {
 
 
         val actualTicket = ticketRepository.loadFor(TicketId("A_TICKET"))
-        assertTrue(actualTicket.isEmpty)
+        assertTrue(actualTicket == null)
         assertThrows(NoSuchElementException::class.java) {
             keyStorage.findOne(kid, SIGNATURE)
         }

@@ -10,8 +10,6 @@ import com.vauthenticator.server.extentions.filterEmptyMetadata
 import com.vauthenticator.server.role.domain.RoleRepository
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException
-import java.util.*
-import java.util.Optional.ofNullable
 
 class DynamoDbAccountRepository(
     private val dynamoDbClient: DynamoDbClient,
@@ -19,11 +17,11 @@ class DynamoDbAccountRepository(
     private val roleRepository: RoleRepository
 ) : AccountRepository {
 
-    override fun accountFor(username: String): Optional<Account> =
-        ofNullable(findAccountFor(username))
-            .flatMap { it.filterEmptyMetadata() }
-            .map(::fromDynamoToDomain)
-            .map(::stealRoleCleanUpFor)
+    override fun accountFor(username: String): Account? =
+        findAccountFor(username)
+            ?.filterEmptyMetadata()
+            ?.let(::fromDynamoToDomain)
+            ?.let(::stealRoleCleanUpFor)
 
 
     private fun stealRoleCleanUpFor(account: Account): Account {

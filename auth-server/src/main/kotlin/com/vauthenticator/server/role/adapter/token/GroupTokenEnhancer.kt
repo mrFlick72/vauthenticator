@@ -16,19 +16,15 @@ class GroupTokenEnhancer(
 
         if (context.isATokenForAUserFrom()) {
             if (tokenType == context.tokenType.value) {
-                val attributes = context.authorization!!.attributes
-                val principal = attributes["java.security.Principal"] as Authentication
-
-                accountRepository.accountFor(principal.name)
-                    .map {
-                        if (it.groups.isNotEmpty()) {
-                            context.claims.claim(
-                                groupClaimName, it.groups
-                            )
+                val attributes = context.authorization?.attributes
+                attributes?.let {
+                    val principal = it["java.security.Principal"] as Authentication
+                    accountRepository.accountFor(principal.name)
+                        ?.let {
+                            context.claims.claim(groupClaimName, it.groups)
                         }
 
-                    }
-
+                }
             }
         }
     }

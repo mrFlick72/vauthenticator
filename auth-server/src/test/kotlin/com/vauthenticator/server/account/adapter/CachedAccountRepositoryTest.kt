@@ -40,8 +40,8 @@ internal class CachedAccountRepositoryTest {
         val account = anAccount()
         val username = account.username
 
-        every { cacheOperation.get(account.email) } returns Optional.empty()
-        every { delegate.accountFor(username) } returns Optional.of(account)
+        every { cacheOperation.get(account.email) } returns null
+        every { delegate.accountFor(username) } returns account
         every { accountCacheContentConverter.loadableContentIntoCacheFor(account) } returns "account"
         every { cacheOperation.put(username, "account") } just runs
 
@@ -59,7 +59,7 @@ internal class CachedAccountRepositoryTest {
         val username = account.username
 
         every { accountCacheContentConverter.getObjectFromCacheContentFor("account") } returns account
-        every { cacheOperation.get(account.email) } returns Optional.of("account")
+        every { cacheOperation.get(account.email) } returns "account"
 
         underTest.accountFor(username)
 

@@ -61,10 +61,10 @@ class ClientApplicationEndPoint(
     ): ResponseEntity<ClientAppRepresentation> {
         permissionValidator.validate(principal, Scopes.from(Scope.READ_CLIENT_APPLICATION))
         return readClientApplication.findOne(ClientAppId(clientAppId))
-            .map { ClientAppRepresentation.fromDomainToRepresentation(it) }
-            .map {
+            ?.let { ClientAppRepresentation.fromDomainToRepresentation(it) }
+            ?.let {
                 ResponseEntity.ok(it)
-            }.orElse(ResponseEntity.notFound().build())
+            } ?: ResponseEntity.notFound().build()
     }
 
     @DeleteMapping("/api/client-applications/{clientAppId}")
@@ -141,8 +141,10 @@ data class ClientAppRepresentation(
                     .map { AuthorizedGrantType.valueOf(it) }),
                 webServerRedirectUri = CallbackUri(representation.webServerRedirectUri),
                 allowedOrigins = AllowedOrigins(representation.allowedOrigins.map { AllowedOrigin(it) }.toSet()),
-                accessTokenValidity = representation.accessTokenValidity?.let { TokenTimeToLive(it) }?: TokenTimeToLive(0),
-                refreshTokenValidity = representation.refreshTokenValidity?.let { TokenTimeToLive(it) }?: TokenTimeToLive(0),
+                accessTokenValidity = representation.accessTokenValidity?.let { TokenTimeToLive(it) }
+                    ?: TokenTimeToLive(0),
+                refreshTokenValidity = representation.refreshTokenValidity?.let { TokenTimeToLive(it) }
+                    ?: TokenTimeToLive(0),
                 postLogoutRedirectUri = PostLogoutRedirectUri(representation.postLogoutRedirectUri),
                 logoutUri = LogoutUri(representation.logoutUri)
             )

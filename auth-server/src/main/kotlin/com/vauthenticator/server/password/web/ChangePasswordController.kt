@@ -31,7 +31,7 @@ class ChangePasswordController(
     private val logger = LoggerFactory.getLogger(ChangePasswordController::class.java)
 
     @GetMapping("/change-password")
-    fun view(model: Model, httpServletRequest : HttpServletRequest): String {
+    fun view(model: Model): String {
         i18nMessageInjector.setMessagedFor(I18nScope.CHANGE_PASSWORD_PAGE, model)
         model.addAttribute("assetBundle", "changePassword_bundle.js")
         return "template"
@@ -49,7 +49,7 @@ class ChangePasswordController(
             nextHopeLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
         } catch (e: Exception) {
             logger.error(e.message, e)
-            val changePasswordException = ChangePasswordException(e.message!!)
+            val changePasswordException = ChangePasswordException(e.message ?: "")
             publisher.publishEvent(ChangePasswordFailureEvent(authentication, changePasswordException))
             changePasswordFailureHandler.onAuthenticationFailure(request, response, changePasswordException)
         }
@@ -63,12 +63,10 @@ class ChangePasswordController(
     }
 
     private fun resetMandatoryActionToNoAction(authentication: Authentication) {
-        accountRepository.accountFor(authentication.name)
-            .map {
-                accountRepository.save(
-                    it.copy(mandatoryAction = AccountMandatoryAction.NO_ACTION)
-                )
-
-            }
+        accountRepository.accountFor(authentication.name)?.let {
+            accountRepository.save(
+                it.copy(mandatoryAction = AccountMandatoryAction.NO_ACTION)
+            )
+        }
     }
 }

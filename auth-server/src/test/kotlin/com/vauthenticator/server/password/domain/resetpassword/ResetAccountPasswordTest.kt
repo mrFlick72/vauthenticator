@@ -63,9 +63,9 @@ class ResetAccountPasswordTest {
         val ticket = TicketFixture.ticketFor(ticketId.content, email, "")
 
         every { passwordPolicy.accept(email, "NEW_PSWD") } just runs
-        every { ticketRepository.loadFor(ticketId) } returns Optional.of(ticket)
+        every { ticketRepository.loadFor(ticketId) } returns ticket
         every { ticketRepository.delete(ticketId) } just runs
-        every { accountRepository.accountFor(email) } returns Optional.of(anAccount)
+        every { accountRepository.accountFor(email) } returns anAccount
         every { accountRepository.save(anAccount.copy(password = "NEW_PSWD")) } just runs
         every { vAuthenticatorPasswordEncoder.encode("NEW_PSWD") } returns "NEW_PSWD"
         every { eventsDispatcher.dispatch(any<ResetPasswordEvent>()) } just runs
@@ -78,7 +78,7 @@ class ResetAccountPasswordTest {
         val ticketId = TicketId("A_TICKET")
 
         every { passwordPolicy.accept("A_USERNAME", "NEW_PSWD") } just runs
-        every { ticketRepository.loadFor(ticketId) } returns Optional.empty()
+        every { ticketRepository.loadFor(ticketId) } returns null
 
         assertThrows(InvalidTicketException::class.java) {
             underTest.resetPasswordFromMailChallenge(

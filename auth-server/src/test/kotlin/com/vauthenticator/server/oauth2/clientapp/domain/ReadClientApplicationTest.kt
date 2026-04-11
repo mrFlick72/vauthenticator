@@ -7,7 +7,6 @@ import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class ReadClientApplicationTest {
@@ -20,10 +19,10 @@ class ReadClientApplicationTest {
         val clientAppId = ClientAppId("AN_ID")
         val readClientApplication = ReadClientApplication(clientApplicationRepository)
 
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(aClientApp(clientAppId))
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(clientAppId)
 
-        val actual: Optional<ClientApplication> = readClientApplication.findOne(clientAppId)
-        assertEquals(actual, Optional.of(aClientApp(clientAppId = clientAppId, password = Secret("*******"))))
+        val actual: ClientApplication? = readClientApplication.findOne(clientAppId)
+        assertEquals(actual, aClientApp(clientAppId = clientAppId, password = Secret("*******")))
     }
 
     @Test

@@ -77,7 +77,7 @@ class MfaChallengeSenderTest {
         mfaMethod: MfaMethod,
         testAccount: Account
     ) {
-        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns Optional.of(mfaDeviceId)
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
         testSetup(mfaChannel, mfaMethod, testAccount)
 
         uut.sendMfaChallengeFor(userName)
@@ -93,7 +93,7 @@ class MfaChallengeSenderTest {
             mfaChannel,
             mfaMethod
         )
-        every { accountRepository.accountFor(userName) } returns Optional.of(testAccount)
+        every { accountRepository.accountFor(userName) } returns testAccount
         every { otp.generateSecretKeyFor(testAccount, mfaMethod, mfaChannel) } returns mfaSecret
         every { otp.getTOTPCode(mfaSecret) } returns challenge
 

@@ -17,9 +17,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient.*
-import java.util.*
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient.from
 
 @ExtendWith(MockKExtension::class)
 class ClientAppRegisteredClientRepositoryTest {
@@ -63,8 +61,7 @@ class ClientAppRegisteredClientRepositoryTest {
 
     @Test
     fun `when application is not found by id or clientId`() {
-        every { clientApplicationRepository.findOne(ClientAppId("A_CLIENT_APP_ID")) }
-            .returns(Optional.empty())
+        every { clientApplicationRepository.findOne(ClientAppId("A_CLIENT_APP_ID")) } returns null
 
         assertThrows(
             RegisteredClientAppNotFound::class.java,
@@ -85,9 +82,10 @@ class ClientAppRegisteredClientRepositoryTest {
     fun `when a new client app is registered`(confidential : Boolean) {
         every {
             storeClientApplication.store(
-                aClientApplication().get()
+                aClientApplication()
                     .copy(
                         confidential = confidential,
+                        secret = if (confidential) Secret("A_SECRET") else Secret(""),
                         withPkce = WithPkce(!confidential),
                         allowedOrigins = AllowedOrigins.empty(),
                         postLogoutRedirectUri = PostLogoutRedirectUri("http://post_logout_redirect_uri"),

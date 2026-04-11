@@ -7,13 +7,13 @@ import jakarta.servlet.http.HttpServletRequest
 class CorsConfigurationResolver(private val allowedOriginRepository: AllowedOriginRepository) {
 
     fun configurationFor(request: HttpServletRequest): AuthServerCorsConfiguration {
-        val allowedOrigin = originFrom(request)
+        val allowedOrigin = originFrom(request) ?: return AuthServerCorsConfiguration("")
 
-        if (allowedOriginRepository.getAllAvailableAllowedOrigins().contains(allowedOrigin)) {
-            return AuthServerCorsConfiguration(allowedOrigin = allowedOrigin!!.content)
+        return if (allowedOrigin in allowedOriginRepository.getAllAvailableAllowedOrigins()) {
+            AuthServerCorsConfiguration(allowedOrigin.content)
+        } else {
+            AuthServerCorsConfiguration("")
         }
-
-        return AuthServerCorsConfiguration(allowedOrigin = "")
     }
 
 

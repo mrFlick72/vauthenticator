@@ -23,7 +23,6 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
-import java.util.*
 
 
 @ExtendWith(MockKExtension::class)
@@ -55,7 +54,7 @@ class MfaChallengeEndPointWebUsageTest {
 
     @Test
     fun `when an mfa challenge is sent to the default mfa device`() {
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(aClientApp)
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp
         every { mfaChallengeSender.sendMfaChallengeFor(account.email) } just runs
 
         mokMvc.perform(
@@ -69,7 +68,7 @@ class MfaChallengeEndPointWebUsageTest {
     fun `when an mfa challenge is sent to a specific mfa device`() {
         val mfaDeviceId = MfaDeviceId("A_WELL_DEFINED_MFA_DEVICE_ID")
 
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(aClientApp)
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp
         every { mfaChallengeSender.sendMfaChallengeFor(account.email, mfaDeviceId) } just runs
 
         mokMvc.perform(
@@ -83,7 +82,7 @@ class MfaChallengeEndPointWebUsageTest {
     @Test
     fun `when an mfa challenge fails for insufficient scopes`() {
         val mfaDeviceId = MfaDeviceId("A_WELL_DEFINED_MFA_DEVICE_ID")
-        every { clientApplicationRepository.findOne(forbiddenClientAppId) } returns Optional.of(forbiddenClientApp)
+        every { clientApplicationRepository.findOne(forbiddenClientAppId) } returns forbiddenClientApp
         every { mfaChallengeSender.sendMfaChallengeFor(account.email, mfaDeviceId) } just runs
 
         mokMvc.perform(

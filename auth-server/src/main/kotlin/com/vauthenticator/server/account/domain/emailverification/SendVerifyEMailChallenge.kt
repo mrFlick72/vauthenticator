@@ -23,7 +23,7 @@ class SendVerifyEMailChallenge(
     private val logger = LoggerFactory.getLogger(SendVerifyEMailChallenge::class.java)
 
     fun sendVerifyMail(email: String): Unit = accountRepository.accountFor(email)
-        .map { account ->
+        ?.let { account ->
             val verificationTicket =
                 mfaMethodsEnrollment.enroll(
                     account.email,
@@ -35,7 +35,7 @@ class SendVerifyEMailChallenge(
                 )
             val mailContext = mailContextFrom(verificationTicket)
             mailVerificationMailSender.sendFor(account, mailContext)
-        }.orElseThrow {
+        } ?: throw run {
             logger.warn("account not found")
             AccountNotFoundException("account not found")
         }

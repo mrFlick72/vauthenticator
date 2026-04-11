@@ -10,7 +10,6 @@ import com.vauthenticator.server.mfa.domain.MfaMethod
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
-import java.util.*
 
 class DynamoMfaAccountMethodsRepository(
     private val mfaAccountMethodTableName: String,
@@ -25,20 +24,15 @@ class DynamoMfaAccountMethodsRepository(
         userName: String,
         mfaMfaMethod: MfaMethod,
         mfaChannel: String
-    ): Optional<MfaAccountMethod> {
-        return Optional.ofNullable(
-            getFromDynamoBy(userName, mfaChannel)
-                .map { MfaAccountMethodMapper.fromDynamoToDomain(userName, it) }
-                .find { it.mfaMethod == mfaMfaMethod }
-        )
-    }
+    ): MfaAccountMethod? =
+        getFromDynamoBy(userName, mfaChannel)
+            .map { MfaAccountMethodMapper.fromDynamoToDomain(userName, it) }
+            .find { it.mfaMethod == mfaMfaMethod }
 
-    override fun findBy(mfaDeviceId: MfaDeviceId): Optional<MfaAccountMethod> =
-        Optional.ofNullable(
-            getFromDynamoBy(mfaDeviceId)
-                .map { MfaAccountMethodMapper.fromDynamoToDomain(it) }
-                .firstOrNull()
-        )
+    override fun findBy(mfaDeviceId: MfaDeviceId): MfaAccountMethod? =
+        getFromDynamoBy(mfaDeviceId)
+            .map { MfaAccountMethodMapper.fromDynamoToDomain(it) }
+            .firstOrNull()
 
 
     override fun findAll(userName: String): List<MfaAccountMethod> =
@@ -83,16 +77,11 @@ class DynamoMfaAccountMethodsRepository(
         mfaChannel: String,
         associated: Boolean
     ): MfaAccountMethod {
-        val (kid, mfaDeviceId) = findBy(userName, mfaMfaMethod, mfaChannel)
-            .map {
-                listOf(it.key, it.mfaDeviceId)
-            }.orElseGet {
-                val kid = keyRepository.createKeyFrom(masterKid, KeyType.SYMMETRIC, KeyPurpose.MFA)
-                val mfaDeviceId = mfaDeviceIdGenerator.invoke()
-                listOf(kid, mfaDeviceId)
-            }
+        val existingMethod = findBy(userName, mfaMfaMethod, mfaChannel)
+        val kid = existingMethod?.key ?: keyRepository.createKeyFrom(masterKid, KeyType.SYMMETRIC, KeyPurpose.MFA)
+        val mfaDeviceId = existingMethod?.mfaDeviceId ?: mfaDeviceIdGenerator.invoke()
 
-        storeOnDynamo(userName, mfaMfaMethod, mfaChannel, mfaDeviceId as MfaDeviceId, kid as Kid, associated)
+        storeOnDynamo(userName, mfaMfaMethod, mfaChannel, mfaDeviceId, kid, associated)
         return MfaAccountMethod(userName, mfaDeviceId, kid, mfaMfaMethod, mfaChannel, associated)
     }
 
@@ -109,7 +98,7 @@ class DynamoMfaAccountMethodsRepository(
         )
     }
 
-    override fun getDefaultDevice(userName: String): Optional<MfaDeviceId> {
+    override fun getDefaultDevice(userName: String): MfaDeviceId? {
         val queryRequest = QueryRequest.builder()
             .tableName(defaultMfaAccountMethodTableName)
             .keyConditionExpression("user_name=:email")
@@ -121,7 +110,7 @@ class DynamoMfaAccountMethodsRepository(
             .map { MfaDeviceId(it.valueAsStringFor("mfa_device_id")) }
             .firstOrNull()
 
-        return Optional.ofNullable(mfaDeviceId)
+        return mfaDeviceId
     }
 
     private fun storeOnDynamo(
@@ -149,5 +138,4 @@ class DynamoMfaAccountMethodsRepository(
     }
 
 }
-
 

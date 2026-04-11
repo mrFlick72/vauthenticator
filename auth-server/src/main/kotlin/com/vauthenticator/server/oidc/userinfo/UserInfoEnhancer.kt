@@ -2,6 +2,7 @@ package com.vauthenticator.server.oidc.userinfo
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.token.ClaimsNotFoundException
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo
 import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext
 import java.time.LocalDateTime
@@ -12,7 +13,7 @@ open class UserInfoEnhancer(private val accountRepository: AccountRepository) {
 
     open fun oidcUserInfoFrom(principal: OidcUserInfoAuthenticationContext): OidcUserInfo =
         accountRepository.accountFor(userName(principal))
-            .map { account ->
+            ?.let { account ->
                 val claims = mutableMapOf<String, Any>()
 
                 RoleClaimsProvider(account, claims)
@@ -20,8 +21,7 @@ open class UserInfoEnhancer(private val accountRepository: AccountRepository) {
                 EmailClaimsProvider(account, claims)
                 ProfileClaimsProvider(account, claims)
                 OidcUserInfo(claims)
-            }
-            .orElseThrow()
+            } ?: throw NoSuchElementException()
 
 }
 
@@ -55,14 +55,14 @@ object ProfileClaimsProvider : ClaimsProvider {
         claims["middle_name"] = ""
         claims["updated_at"] = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
 
-        account.phone.ifPresent {
+        account.phone?.let {
             claims["phone_number"] = it.formattedPhone()
             claims["phone_number_verified"] = true
         }
-        account.birthDate.ifPresent {
+        account.birthDate?.let {
             claims["birthdate"] = it.iso8601FormattedDate()
         }
-        account.locale.ifPresent {
+        account.locale?.let {
             claims["locale"] = it.formattedLocale()
         }
         return claims
@@ -79,4 +79,4 @@ object OpenIdClaimsProvider : ClaimsProvider {
 }
 
 fun userName(principal: OidcUserInfoAuthenticationContext) =
-    principal.authorization.accessToken.claims!!["sub"] as String
+    (principal.authorization.accessToken.claims?.get("sub") ?: throw ClaimsNotFoundException("sub claims not found")) as String

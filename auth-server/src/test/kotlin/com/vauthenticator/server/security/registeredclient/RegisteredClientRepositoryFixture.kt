@@ -7,7 +7,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings
 import java.time.Duration
-import java.util.*
 
 private const val A_CLIENT_APP_ID = "A_CLIENT_APP_ID"
 private const val A_CLIENT_APP_NAME_CLIENT_APP_NAME = "A_CLIENT_APP_NAME"
@@ -46,7 +45,7 @@ object RegisteredClientRepositoryFixture {
         )
         .build()
 
-    fun aClientApplication(confidential : Boolean = true): Optional<ClientApplication> = Optional.ofNullable(
+    fun aClientApplication(confidential : Boolean = true): ClientApplication =
         ClientApplication(
             clientAppId = ClientAppId(A_CLIENT_APP_ID),
             clientAppName = ClientAppName(A_CLIENT_APP_NAME_CLIENT_APP_NAME),
@@ -69,5 +68,5 @@ object RegisteredClientRepositoryFixture {
             postLogoutRedirectUri = PostLogoutRedirectUri("http://post_logout_redirect_uri"),
             logoutUri = LogoutUri("http://logout_uri")
         )
-    )
+
 }

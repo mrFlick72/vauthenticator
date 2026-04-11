@@ -10,6 +10,7 @@ import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.principalFor
 import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
+import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -23,20 +24,22 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
 
+private const val ENDPOINT = "/api/sign-up/welcome"
 
 @ExtendWith(MockKExtension::class)
-internal class WelcomeEMailEndPointTest {
+class WelcomeEMailEndPointTest {
+
     private val objectMapper = ObjectMapper()
 
-    lateinit var mokMvc: MockMvc
+    private lateinit var mockMvc: MockMvc
 
     @MockK
-    lateinit var sayWelcome: SayWelcome
+    private lateinit var sayWelcome: SayWelcome
 
     @MockK
-    lateinit var clientApplicationRepository: ClientApplicationRepository
+    private lateinit var clientApplicationRepository: ClientApplicationRepository
 
     private val principal = principalFor(
         A_CLIENT_APP_ID,
@@ -46,22 +49,21 @@ internal class WelcomeEMailEndPointTest {
     )
 
     @BeforeEach
-    internal fun setUp() {
-        mokMvc = MockMvcBuilders.standaloneSetup(
-            WelcomeMailEndPoint(
+    fun setUp() {
+        mockMvc = standaloneSetup(
+            WelcomeEMailEndPoint(
                 PermissionValidator(clientApplicationRepository),
                 sayWelcome
             )
-        )
-            .build()
+        ).setControllerAdvice(ExceptionAdviceController()).build()
     }
 
     @Test
-    internal fun `happy path`() {
+    fun `when welcome mail is sent`() {
         every { sayWelcome.welcome(EMAIL) } just runs
 
-        mokMvc.perform(
-            put("/api/sign-up/welcome")
+        mockMvc.perform(
+            put(ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
                 .principal(principal)
@@ -72,17 +74,60 @@ internal class WelcomeEMailEndPointTest {
     }
 
     @Test
-    internal fun `no account found`() {
-        every { sayWelcome.welcome(EMAIL) } throws AccountNotFoundException(
-            ""
-        )
+    fun `when the account does not exist`() {
+        every { sayWelcome.welcome(EMAIL) } throws AccountNotFoundException("")
 
-        mokMvc.perform(
-            put("/api/sign-up/welcome")
+        mockMvc.perform(
+            put(ENDPOINT)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
                 .principal(principal)
         )
             .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `when the request body is missing`() {
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .principal(principal)
+        )
+            .andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { sayWelcome.welcome(any()) }
+    }
+
+    @Test
+    fun `when the request body does not contains the email field`() {
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("some-key" to "irrelevant")))
+                .principal(principal)
+        )
+            .andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { sayWelcome.welcome(any()) }
+    }
+
+    @Test
+    fun `when the principal does not have the welcome scope`() {
+        val principalWithoutScope = principalFor(
+            A_CLIENT_APP_ID,
+            EMAIL,
+            emptyList(),
+            emptyList()
+        )
+
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+                .principal(principalWithoutScope)
+        )
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { sayWelcome.welcome(any()) }
     }
 }

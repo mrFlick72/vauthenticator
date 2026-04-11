@@ -32,7 +32,7 @@ class SaveAccountTest {
         val account = anAccount().copy(firstName = "A_NEW_FIRST_NAME")
         val principal: JwtAuthenticationToken = SecurityFixture.principalFor("A_CLIENT_APP_ID", anAccount().email)
 
-        every { accountRepository.accountFor(account.email) } returns Optional.of(account)
+        every { accountRepository.accountFor(account.email) } returns account
         every { accountRepository.save(account) } just runs
 
         underTest.execute(principal, account)
@@ -45,7 +45,7 @@ class SaveAccountTest {
         val account = anAccount()
         val principal: JwtAuthenticationToken = SecurityFixture.principalFor("A_CLIENT_APP_ID", account.email)
 
-        every { accountRepository.accountFor(account.email) } returns Optional.empty()
+        every { accountRepository.accountFor(account.email) } returns null
 
         underTest.execute(principal, account)
 

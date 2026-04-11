@@ -8,7 +8,7 @@ import tools.jackson.databind.ObjectMapper
 
 class ClientApplicationCacheContentConverterTest {
     val underTest = ClientApplicationCacheContentConverter(ObjectMapper())
-    private val clientApplication = aClientApplication().get()
+    private val clientApplication = aClientApplication()
     private val testableResource = "clientapplications/clientApp.json"
 
     @Test

@@ -5,6 +5,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.MFA_ALW
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.RESET_PASSWORD
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.SIGN_UP
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
+import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
 import com.vauthenticator.server.support.ClientAppFixture.aClientApp
 import com.vauthenticator.server.support.ClientAppFixture.aClientAppId
 import org.junit.jupiter.api.Assertions.assertTrue

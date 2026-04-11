@@ -11,8 +11,6 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.Optional
-
 @ExtendWith(MockKExtension::class)
 class GroupTokenEnhancerTest {
 
@@ -24,7 +22,7 @@ class GroupTokenEnhancerTest {
         val uut = GroupTokenEnhancer("access_token", "groups", accountRepository)
         val context = JwtEncodingContextFixture.newContext
 
-        every { accountRepository.accountFor(EMAIL) } returns Optional.of(anAccount().copy(groups = setOf("A_GROUP")))
+        every { accountRepository.accountFor(EMAIL) } returns anAccount().copy(groups = setOf("A_GROUP"))
 
         uut.customize(context)
 
@@ -42,7 +40,7 @@ class GroupTokenEnhancerTest {
         val uut = GroupTokenEnhancer("id_token", "groups", accountRepository)
         val context = JwtEncodingContextFixture.newIdTokenContext
 
-        every { accountRepository.accountFor(EMAIL) } returns Optional.of(anAccount().copy(groups = setOf("A_GROUP")))
+        every { accountRepository.accountFor(EMAIL) } returns anAccount().copy(groups = setOf("A_GROUP"))
 
         uut.customize(context)
 
@@ -54,6 +52,16 @@ class GroupTokenEnhancerTest {
         assertEquals(expected, actual)
     }
 
+    @Test
+    fun `when token is access token but authorization is null then the groups claims will be not added`() {
+        val uut = GroupTokenEnhancer("access_token", "groups", accountRepository)
+        val context = JwtEncodingContextFixture.newContextWithoutAuthorization
+
+        uut.customize(context)
+
+        verify(exactly = 0) { accountRepository.accountFor(any()) }
+        assertThrows(IllegalArgumentException::class.java) { context.claims.build().claims["groups"] }
+    }
 
     @Test
     fun `when the groups are not put in any token since that the principal is a client credential principal`() {

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class MfaLoginWorkflowHandlerTest {
@@ -69,7 +68,7 @@ class MfaLoginWorkflowHandlerTest {
     ) {
         every { request.session } returns session
         every { session.getAttribute("clientId") } returns clientAppId.content
-        every { clientApplicationRepository.findOne(clientAppId) } returns Optional.of(clientApp)
+        every { clientApplicationRepository.findOne(clientAppId) } returns clientApp
     }
 
     private fun verifyExpectationFor(clientAppId: ClientAppId) {

@@ -1,7 +1,9 @@
 package com.vauthenticator.server.keys.adapter.java
 
+import com.vauthenticator.server.keys.domain.KeyNotFoundException
 import com.vauthenticator.server.keys.domain.MasterKid
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -26,6 +28,10 @@ class KeyGeneratorMasterKeyRepositoryTest {
 
     @Test
     fun `when get a key from the storage fails`() {
-        assertThrows(NullPointerException::class.java) { uut.maskerKeyFor(MasterKid("a_key_2")) }
+        val actual = assertThrows(KeyNotFoundException::class.java) {
+            uut.maskerKeyFor(MasterKid("a_key_2"))
+        }
+
+        assertTrue(actual.message?.contains("a_key_2") == true)
     }
 }
