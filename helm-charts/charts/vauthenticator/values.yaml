@@ -22,6 +22,19 @@ aws:
 
 imagePullSecrets: [ ]
 
+keda:
+  enabled: false
+  spec:
+    minReplicaCount: 1
+    maxReplicaCount: 1
+    pollingInterval: 1
+    cooldownPeriod: 300
+  prometheus:
+    serverAddress: ""
+    metricName: ""
+    threshold: ""
+    query: ""
+
 application:
   sessionTimeout: 24h
   profiles: dynamo,kms
@@ -136,19 +149,6 @@ application:
     dynamodb:
       endpointOverride:
 
-  keda:
-    enabled: false
-    spec:
-      minReplicaCount: 1
-      maxReplicaCount: 1
-      pollingInterval: 1
-      cooldownPeriod: 300
-    prometheus:
-      serverAddress: ""
-      metricName: ""
-      threshold: ""
-      query: ""
-
 
   pod:
     probes:
@@ -190,4 +190,3 @@ application:
     app: vauthenticator
 
   podAnnotations: { }
-

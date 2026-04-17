@@ -4,8 +4,8 @@ It is the official Helm chart for the VAuthenticator authorization server.
 
 # Global Components
 
-We discuss how to configure global and generally available properties. AWS and Redis are root-level settings, while
-deployment, pod, labels, and selectors are applied through the `application` section.
+We discuss how to configure global and generally available properties. AWS, Redis, and KEDA are root-level settings,
+while deployment, pod, labels, and selectors are applied through the `application` section.
 
 ## Redis
 
@@ -60,7 +60,7 @@ aws:
 | aws.eks.serviceAccount.enabled     | Identify that we want use a dedicated Service Account linked to an IAM identity Provider. <br/>This strategy is the best practice if VAuthenticator is deployed on AWS EKS | false                                      |
 | aws.eks.serviceAccount.iamRole.arn | It is the arn of the role used from STS to gain permissions                                                                                                                | arn:aws:iam::ACCOUNT_ID:role/IAM_ROLE_NAME |
 
-## KEDA (application scoped)
+## KEDA
 
 In order to apply autoscaling in VAuthenticator authorization server is possible configure [keda](https://keda.sh/) with
 prometheus metrics.
@@ -68,34 +68,33 @@ prometheus metrics.
 #### yaml section
 
 ```yaml
-application:
-  keda:
-    enabled: false
-    spec:
-      minReplicaCount: 1
-      maxReplicaCount: 1
-      pollingInterval: 1
-      cooldownPeriod: 300
-    prometheus:
-      serverAddress: ""
-      metricName: ""
-      threshold: ""
-      query: ""
+keda:
+  enabled: false
+  spec:
+    minReplicaCount: 1
+    maxReplicaCount: 1
+    pollingInterval: 1
+    cooldownPeriod: 300
+  prometheus:
+    serverAddress: ""
+    metricName: ""
+    threshold: ""
+    query: ""
 ```
 
 #### Properties description
 
 | Name                                      | Description                                                                                                           | Value |
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|-------|
-| application.keda.enabled                  | define if the keda autoscaling is enabled                                                                             | false |
-| application.keda.spec.minReplicaCount     | minReplicaCount autoscaling parameter                                                                                 | 1     |
-| application.keda.spec.maxReplicaCount     | maxReplicaCount autoscaling parameter                                                                                 | 1     |
-| application.keda.spec.pollingInterval     | polling Interval of metric evaluation in order to decide if apply autoscaling or not                                  | 1     |
-| application.keda.spec.cooldownPeriod      | specifies how long any alarm-triggered scaling action will be disallowed after a previous scaling action is complete. | 300   |
-| application.keda.prometheus.serverAddress | prometheus address                                                                                                    | ""    |
-| application.keda.prometheus.metricName    | prometheus metric name                                                                                                | ""    |
-| application.keda.prometheus.threshold     | prometheus metric threshold to apply for autoscaling                                                                  | ""    |
-| application.keda.prometheus.query         | prometheus query to evaluate autoscaling                                                                              | ""    |
+| keda.enabled                              | define if the keda autoscaling is enabled                                                                             | false |
+| keda.spec.minReplicaCount                 | minReplicaCount autoscaling parameter                                                                                 | 1     |
+| keda.spec.maxReplicaCount                 | maxReplicaCount autoscaling parameter                                                                                 | 1     |
+| keda.spec.pollingInterval                 | polling Interval of metric evaluation in order to decide if apply autoscaling or not                                  | 1     |
+| keda.spec.cooldownPeriod                  | specifies how long any alarm-triggered scaling action will be disallowed after a previous scaling action is complete. | 300   |
+| keda.prometheus.serverAddress             | prometheus address                                                                                                    | ""    |
+| keda.prometheus.metricName                | prometheus metric name                                                                                                | ""    |
+| keda.prometheus.threshold                 | prometheus metric threshold to apply for autoscaling                                                                  | ""    |
+| keda.prometheus.query                     | prometheus query to evaluate autoscaling                                                                              | ""    |
 
 ## POD (application scoped)
 

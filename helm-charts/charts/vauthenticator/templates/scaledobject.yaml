@@ -1,4 +1,4 @@
-{{- if eq .Values.application.keda.enabled true }}
+{{- if eq .Values.keda.enabled true }}
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -7,17 +7,17 @@ metadata:
   labels:
     deploymentName: {{ include "vauthenticator.name" . }}
 spec:
-  minReplicaCount: {{ .Values.application.keda.spec.minReplicaCount }}
-  maxReplicaCount: {{ .Values.application.keda.spec.maxReplicaCount }}
-  pollingInterval: {{ .Values.application.keda.spec.pollingInterval }}
-  cooldownPeriod: {{ .Values.application.keda.spec.cooldownPeriod }}
+  minReplicaCount: {{ .Values.keda.spec.minReplicaCount }}
+  maxReplicaCount: {{ .Values.keda.spec.maxReplicaCount }}
+  pollingInterval: {{ .Values.keda.spec.pollingInterval }}
+  cooldownPeriod: {{ .Values.keda.spec.cooldownPeriod }}
   scaleTargetRef:
     name: {{ include "vauthenticator.name" . }}
   triggers:
     - type: prometheus
       metadata:
-        serverAddress: {{ .Values.application.keda.prometheus.serverAddress }}
-        metricName: {{ .Values.application.keda.prometheus.metricName }}
-        threshold: {{ .Values.application.keda.prometheus.threshold | quote }}
-        query: {{ .Values.application.keda.prometheus.query }}
+        serverAddress: {{ .Values.keda.prometheus.serverAddress }}
+        metricName: {{ .Values.keda.prometheus.metricName }}
+        threshold: {{ .Values.keda.prometheus.threshold | quote }}
+        query: {{ .Values.keda.prometheus.query }}
 {{- end }}
