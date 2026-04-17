@@ -1,5 +1,4 @@
 import CryptoJS from 'crypto-js';
-import {createRemoteJWKSet, jwtVerify, JWTVerifyOptions} from 'jose';
 import {applicationConfigLoader} from "../config/ConfigLoader";
 
 const ACCESS_TOKEN_ID = "ACCESS_TOKEN";
@@ -11,66 +10,6 @@ export type TokenResponse = {
     scope: string
     token_type: string
     expires_in: number
-}
-
-type OpenIdConfiguration = {
-    issuer: string
-    jwks_uri: string
-}
-
-type TokenValidationOptions = JWTVerifyOptions & {
-    jwksUri: string
-}
-
-let openIdConfigurationCache: OpenIdConfiguration | undefined
-let signingKeySetCache: ReturnType<typeof createRemoteJWKSet> | undefined
-let signingKeySetUrlCache: string | undefined
-
-const loadOpenIdConfiguration = async (idpBaseUrl: string): Promise<OpenIdConfiguration> => {
-    if (!openIdConfigurationCache) {
-        const response = await fetch(`${idpBaseUrl}/.well-known/openid-configuration`, {
-            method: "GET",
-            headers: {
-                "Accept": "application/json",
-            },
-            mode: "cors",
-            credentials: 'include'
-        })
-
-        if (!response.ok) {
-            throw new Error(`Unable to load openid configuration: ${response.status}`)
-        }
-
-        openIdConfigurationCache = await response.json() as OpenIdConfiguration
-    }
-
-    return openIdConfigurationCache
-}
-
-const loadSigningKeySet = (jwksUri: string) => {
-    console.log(`Loading signing key set from ${jwksUri}`)
-    if (!signingKeySetCache || signingKeySetUrlCache !== jwksUri) {
-        signingKeySetCache = createRemoteJWKSet(new URL(jwksUri))
-        signingKeySetUrlCache = jwksUri
-    }
-
-    return signingKeySetCache
-}
-
-const validateJwtToken = async (token: string, options: TokenValidationOptions): Promise<boolean> => {
-    try {
-        const signingKeySet = loadSigningKeySet(options.jwksUri as string)
-
-        await jwtVerify(token, signingKeySet, {
-            issuer: options.issuer,
-            clockTolerance: 30,
-        })
-
-        return true
-    } catch (error) {
-        console.error("Token validation failed", error)
-        return false
-    }
 }
 
 const randomDataString = (): string => {
@@ -103,25 +42,22 @@ const hasValidTokens = async () => {
     const idToken = window.sessionStorage.getItem(ID_TOKEN_ID);
     const accessToken = window.sessionStorage.getItem(ACCESS_TOKEN_ID);
 
-    if (!idToken || !accessToken) {
+    if (idToken && accessToken) {
+        let response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`, {
+            method: "GET",
+            headers: {
+                "Authorization": "Bearer " + accessToken,
+                "Accept": "application/json",
+            },
+            mode: "cors",
+            credentials: 'include'
+        })
+        console.log(response)
+        return response.status != 403
+    } else {
         return false
     }
-
-    const openIdConfiguration = await loadOpenIdConfiguration(oauth2Config.idpBaseUrl)
-    const [idTokenIsValid, accessTokenIsValid] = await Promise.all([
-        validateJwtToken(idToken, {
-            issuer: openIdConfiguration.issuer,
-            jwksUri: openIdConfiguration.jwks_uri,
-        }),
-        validateJwtToken(accessToken, {
-            issuer: openIdConfiguration.issuer,
-            jwksUri: openIdConfiguration.jwks_uri,
-        }),
-    ])
-
-    return idTokenIsValid && accessTokenIsValid
 }
-
 
 export const authenticate = async (code: string) => {
     let oauth2Config = await applicationConfigLoader()
