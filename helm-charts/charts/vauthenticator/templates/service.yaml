@@ -8,7 +8,7 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.server.port }}
+    - port: {{ .Values.application.server.port }}
       name: http
   selector:
     {{- include "vauthenticator.selectorLabels" . | nindent 4 }}

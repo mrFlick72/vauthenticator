@@ -122,20 +122,20 @@ pod:
 | pod.probes.rediness.initialDelaySeconds | define for rediness probe the initial delay in seconds to wait to start to evaluate the probes | 10    |
 | pod.probes.rediness.periodSeconds       | define for rediness probe period in seconds to wait for the next evaluation                    | 30    |
 
-## PO
+## Pod Annotations
 
 #### yaml section
 
 ```yaml
-po:
+pod:
   podAnnotations: { }
 ```
 
 #### Properties description
 
-| Name              | Description                             | Value |
-|-------------------|-----------------------------------------|-------|
-| po.podAnnotations | define pod annotations if required      | { }   |
+| Name               | Description                             | Value |
+|--------------------|-----------------------------------------|-------|
+| pod.podAnnotations | define pod annotations if required      | { }   |
 
 ## Ingress (application scoped)
 
@@ -266,7 +266,6 @@ application:
     port: 8080
 
   baseUrl: http://application-example-host.com
-  backChannelBaseUrl: http://vauthenticator:8080
 
 
   mailProvider:
@@ -287,8 +286,6 @@ application:
   dynamoDb:
     account:
       tableName: your_VAuthenticator_Account_table_name
-      role:
-        tableName: your_VAuthenticator_Account_Role_table_name
     role:
       tableName: your_VAuthenticator_Role_table_name
     clientApplication:
@@ -341,7 +338,6 @@ application:
 | application.host                                                      | Redis database host used by vauthenticator authorization server                                                                            | vauthenticator-redis-master.auth.svc.cluster.local      |
 | application.server.port                                               | standard port in which the main tomcat is exposed <br/>**do not touch it!** it is useless lets to use ingress to access to the main tomcat | 8080                                                    |
 | application.baseUrl                                                   | public url to reach the authorization server                                                                                               |                                                         |
-| application.backChannelBaseUrl                                        | machine to machine url to reach the authorization server typically it should be kubernetes service                                         | http://vauthenticator:8080                              |
 | application.emailProvider.enabled                                     | define if enable mail communication support                                                                                                | false                                                   |
 | application.emailProvider.host                                        | mail server host                                                                                                                           | localhost                                               |
 | application.emailProvider.port                                        | mail server used port                                                                                                                      | 587                                                     |
@@ -356,7 +352,6 @@ application:
 | application.dynamoDb.account.tableName                                | Account Table Name                                                                                                                         | your_VAuthenticator_Account_table_name                  |
 | application.dynamoDb.account.cache.ttl                                | Account Table Redis Cache TTL                                                                                                              | 1h                                                      |
 | application.dynamoDb.account.cache.name                               | Account Table Redis Cache Region Name                                                                                                      | account_cache                                           |
-| application.dynamoDb.account.role.tableName                           | Account Roles Table Name                                                                                                                   | your_VAuthenticator_Account_Role_table_name             |
 | application.dynamoDb.role.tableName                                   | Roles Table Name                                                                                                                           | your_VAuthenticator_Role_table_name                     |
 | application.dynamoDb.role.cache.ttl                                   | Role Table Redis Cache TTL                                                                                                                 | 1h                                                      |
 | application.dynamoDb.role.cache.name                                  | Role Table Redis Cache Region Name                                                                                                         | role_cache                                              |

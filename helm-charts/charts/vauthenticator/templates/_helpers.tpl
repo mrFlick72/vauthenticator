@@ -26,7 +26,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Selector labels
 */}}
 {{- define "vauthenticator.selectorLabels" -}}
-{{- toYaml .Values.application.selectorLabels }}
+{{- toYaml .Values.selectorLabels }}
 app.kubernetes.io/name: {{ include "vauthenticator.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}

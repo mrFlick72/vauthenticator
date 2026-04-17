@@ -103,7 +103,6 @@ application:
     port: 8080
 
   baseUrl: http://application-example-host.com
-  backChannelBaseUrl: http://vauthenticator:8080
 
 
   emailProvider:
@@ -127,8 +126,6 @@ application:
       cache:
         ttl: 1h
         name: account_cache
-      role:
-        tableName: your_VAuthenticator_Account_Role_table_name
     role:
       tableName: your_VAuthenticator_Role_table_name
       cache:
