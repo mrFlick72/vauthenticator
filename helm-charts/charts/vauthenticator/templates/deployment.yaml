@@ -4,7 +4,7 @@ metadata:
   name: {{ include "vauthenticator.name" . }}
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: {{ .Values.application.replicaCount }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "vauthenticator.selectorLabels" . | nindent 6 }}
@@ -15,7 +15,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- with .Values.application.lables }}
+        {{- with .Values.labels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
         {{- include "vauthenticator.selectorLabels" . | nindent 8 }}
@@ -41,8 +41,8 @@ spec:
             - name: application-config
               subPath: application.yml
               mountPath: /usr/local/onlyone-portal/config/application.yml
-          image: "{{ .Values.application.image.repository }}:{{ .Values.application.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.application.image.pullPolicy }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.application.server.port }}
             - containerPort: 8081
@@ -59,7 +59,7 @@ spec:
             initialDelaySeconds: {{ .Values.pod.probes.rediness.initialDelaySeconds }}
             periodSeconds: {{ .Values.pod.probes.rediness.periodSeconds }}
           resources:
-            {{- toYaml .Values.application.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           env:
             {{- if eq .Values.aws.iamUser.enabled true }}
             - name: AWS_ACCESS_KEY_ID

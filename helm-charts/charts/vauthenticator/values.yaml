@@ -45,6 +45,37 @@ pod:
       periodSeconds: 30
   podAnnotations: { }
 
+
+service:
+  type: ClusterIP
+
+ingress:
+  host: "*"
+  annotations: { }
+  tls: { }
+  enabled: true
+  class: nginx
+
+
+resources:
+  requests:
+    cpu: "256m"
+    memory: "256Mi"
+  limits:
+    cpu: "512m"
+    memory: "512Mi"
+replicaCount: 1
+
+image:
+  repository: mrflick72/vauthenticator-k8s
+  pullPolicy: Always
+  tag: "0.8"
+
+labels: { }
+
+selectorLabels:
+  app: vauthenticator
+
 application:
   sessionTimeout: 24h
   profiles: dynamo,kms
@@ -158,33 +189,3 @@ application:
       endpointOverride:
     dynamodb:
       endpointOverride:
-
-  service:
-    type: ClusterIP
-
-  ingress:
-    host: "*"
-    annotations: { }
-    tls: { }
-    enabled: true
-    class: nginx
-
-
-  resources:
-    requests:
-      cpu: "256m"
-      memory: "256Mi"
-    limits:
-      cpu: "512m"
-      memory: "512Mi"
-  replicaCount: 1
-
-  image:
-    repository: mrflick72/vauthenticator-k8s
-    pullPolicy: Always
-    tag: "0.8"
-
-  lables: { }
-
-  selectorLabels:
-    app: vauthenticator
