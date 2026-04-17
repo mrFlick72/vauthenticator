@@ -40,13 +40,7 @@ const hasValidTokens = async () => {
     const accessToken = window.sessionStorage.getItem("ACCESS_TOKEN");
 
     if (idToken && accessToken) {
-        let response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`, {
-            method: "GET",
-            headers: {
-                "Authorization": "Bearer " + accessToken,
-                "Accept": "application/json",
-            },
-        })
+        let response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`)
         return response.status != 403
     } else {
         return false
@@ -71,10 +65,10 @@ export const authenticate = async (code: string) => {
         .then((data) => {
             let tokenResponse = data as TokenResponse
 
-            if (tokenResponse.id_token) {
+            if(tokenResponse.id_token){
                 window.sessionStorage.setItem("ID_TOKEN", tokenResponse.id_token);
             }
-            if (tokenResponse.access_token) {
+            if(tokenResponse.access_token){
                 window.sessionStorage.setItem("ACCESS_TOKEN", tokenResponse.access_token);
             }
             window.sessionStorage.removeItem("codeVerifier")
@@ -97,7 +91,7 @@ export const authenticationChecker = () => {
         .then(config => {
             setInterval(() => {
                 isAuthenticated().then()
-            }, config.authenticationCheckInterval * 1000)
+            }, config.authenticationCheckInterval*1000)
         })
 
 }
