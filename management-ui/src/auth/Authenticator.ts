@@ -1,9 +1,6 @@
 import CryptoJS from 'crypto-js';
 import {applicationConfigLoader} from "../config/ConfigLoader";
 
-const ACCESS_TOKEN_ID = "ACCESS_TOKEN";
-const ID_TOKEN_ID = "ID_TOKEN";
-
 export type TokenResponse = {
     id_token: string
     access_token: string
@@ -39,8 +36,8 @@ export const isAuthenticated = async () => {
 
 const hasValidTokens = async () => {
     const oauth2Config = await applicationConfigLoader()
-    const idToken = window.sessionStorage.getItem(ID_TOKEN_ID);
-    const accessToken = window.sessionStorage.getItem(ACCESS_TOKEN_ID);
+    const idToken = window.sessionStorage.getItem("ID_TOKEN");
+    const accessToken = window.sessionStorage.getItem("ACCESS_TOKEN");
 
     if (idToken && accessToken) {
         let response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`, {
@@ -49,10 +46,7 @@ const hasValidTokens = async () => {
                 "Authorization": "Bearer " + accessToken,
                 "Accept": "application/json",
             },
-            mode: "cors",
-            credentials: 'include'
         })
-        console.log(response)
         return response.status != 403
     } else {
         return false
@@ -78,10 +72,10 @@ export const authenticate = async (code: string) => {
             let tokenResponse = data as TokenResponse
 
             if (tokenResponse.id_token) {
-                window.sessionStorage.setItem(ID_TOKEN_ID, tokenResponse.id_token);
+                window.sessionStorage.setItem("ID_TOKEN", tokenResponse.id_token);
             }
             if (tokenResponse.access_token) {
-                window.sessionStorage.setItem(ACCESS_TOKEN_ID, tokenResponse.access_token);
+                window.sessionStorage.setItem("ACCESS_TOKEN", tokenResponse.access_token);
             }
             window.sessionStorage.removeItem("codeVerifier")
         })
@@ -90,10 +84,10 @@ export const authenticate = async (code: string) => {
 export const endOfSession = async () => {
     const oauth2Config = await applicationConfigLoader()
     const returnTo = document.referrer
-    const idTokenHint = window.sessionStorage.getItem(ID_TOKEN_ID)
+    const idTokenHint = window.sessionStorage.getItem("ID_TOKEN")
 
-    window.sessionStorage.removeItem(ID_TOKEN_ID);
-    window.sessionStorage.removeItem(ACCESS_TOKEN_ID);
+    window.sessionStorage.removeItem("ID_TOKEN");
+    window.sessionStorage.removeItem("ACCESS_TOKEN");
 
     window.location.href = `${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`
 }
