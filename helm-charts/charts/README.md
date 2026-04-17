@@ -4,8 +4,9 @@ It is the official Helm chart for the VAuthenticator authorization server.
 
 # Global Components
 
-We discuss how to configure global and generally available properties. AWS, Redis, and KEDA are root-level settings,
-while deployment, pod, labels, and selectors are applied through the `application` section.
+We discuss how to configure global and generally available properties. AWS, Redis, KEDA, pod probe settings, and the
+`po` block are root-level settings, while deployment-specific labels, selectors, and service settings are applied
+through the `application` section.
 
 ## Redis
 
@@ -96,7 +97,7 @@ keda:
 | keda.prometheus.threshold                 | prometheus metric threshold to apply for autoscaling                                                                  | ""    |
 | keda.prometheus.query                     | prometheus query to evaluate autoscaling                                                                              | ""    |
 
-## POD (application scoped)
+## POD
 
 #### yaml section
 
@@ -120,6 +121,21 @@ pod:
 | pod.probes.liveness.periodSeconds       | define for liveness probe period in seconds to wait for the next evaluation                    | 30    |
 | pod.probes.rediness.initialDelaySeconds | define for rediness probe the initial delay in seconds to wait to start to evaluate the probes | 10    |
 | pod.probes.rediness.periodSeconds       | define for rediness probe period in seconds to wait for the next evaluation                    | 30    |
+
+## PO
+
+#### yaml section
+
+```yaml
+po:
+  podAnnotations: { }
+```
+
+#### Properties description
+
+| Name              | Description                             | Value |
+|-------------------|-----------------------------------------|-------|
+| po.podAnnotations | define pod annotations if required      | { }   |
 
 ## Ingress (application scoped)
 
@@ -203,8 +219,6 @@ lables: { }
 
 selectorLabels:
   app: vauthenticator
-
-podAnnotations: { }
 ```
 
 #### Properties description
@@ -215,7 +229,6 @@ podAnnotations: { }
 | service.type   | **do not touch this this** it is used internally                                              | ClusterIP  |
 | selectorLabels | **do not touch this this** it is used internally as common selector for pod service and so on | it depends |
 | lables         | define pod lables if requred                                                                  | { }        |
-| podAnnotations | define pod annotations if requred                                                             | { }        |
 
 # VAuthenticator Authorization Server
 

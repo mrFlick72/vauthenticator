@@ -35,6 +35,16 @@ keda:
     threshold: ""
     query: ""
 
+pod:
+  probes:
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    rediness:
+      initialDelaySeconds: 10
+      periodSeconds: 30
+  podAnnotations: { }
+
 application:
   sessionTimeout: 24h
   profiles: dynamo,kms
@@ -149,16 +159,6 @@ application:
     dynamodb:
       endpointOverride:
 
-
-  pod:
-    probes:
-      liveness:
-        initialDelaySeconds: 10
-        periodSeconds: 30
-      rediness:
-        initialDelaySeconds: 10
-        periodSeconds: 30
-
   service:
     type: ClusterIP
 
@@ -188,5 +188,3 @@ application:
 
   selectorLabels:
     app: vauthenticator
-
-  podAnnotations: { }
