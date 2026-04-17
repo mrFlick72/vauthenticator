@@ -10,7 +10,7 @@ spec:
       {{- include "vauthenticator.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.application.podAnnotations }}
+      {{- with .Values.pod.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -50,14 +50,14 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8081
-            initialDelaySeconds: {{ .Values.application.pod.probes.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.application.pod.probes.liveness.periodSeconds }}
+            initialDelaySeconds: {{ .Values.pod.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pod.probes.liveness.periodSeconds }}
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8081
-            initialDelaySeconds: {{ .Values.application.pod.probes.rediness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.application.pod.probes.rediness.periodSeconds }}
+            initialDelaySeconds: {{ .Values.pod.probes.rediness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pod.probes.rediness.periodSeconds }}
           resources:
             {{- toYaml .Values.application.resources | nindent 12 }}
           env:
