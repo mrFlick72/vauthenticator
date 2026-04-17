@@ -1,6 +1,8 @@
 in-namespace:
   redis:
     enabled: true
+  db:
+    enabled: true
 
 redis:
   auth:
@@ -56,6 +58,32 @@ ingress:
   enabled: true
   class: nginx
 
+gateway:
+  enabled: false
+  annotations: { }
+  labels: { }
+  parentRefs: [ ]
+  hostnames: [ ]
+  rules: [ ]
+
+  # Example:
+  # TLS/cert-manager is configured on the referenced Gateway listener, not on this HTTPRoute.
+  # enabled: true
+  # parentRefs:
+  #   - name: traefik-gateway
+  #     namespace: traefik
+  #     sectionName: websecure # Optional: target a specific Gateway listener
+  # hostnames:
+  #   - auth.example.com # Should match the HTTPS listener hostname/certificate DNS name
+  # rules:
+  #   - matches:
+  #       - path:
+  #           type: PathPrefix
+  #           value: /
+  #     backendRefs:
+  #       - name: vauthenticator
+  #         port: 8080
+
 
 resources:
   requests:
@@ -94,6 +122,7 @@ application:
       enablePasswordReusePrevention: true
 
   masterKey: ACCOUNT_KMS_KEY
+  masterKeyContent: xxxxxxxxx
 
   redis:
     database: 0
@@ -104,9 +133,7 @@ application:
 
   baseUrl: http://application-example-host.com
 
-
   emailProvider:
-    enabled: false
     host: localhost
     port: 587
     username: ""

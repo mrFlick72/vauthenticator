@@ -160,6 +160,44 @@ ingress:
 | ingress.enabled     | define if the ingress should be included in the resources                       | true  |
 | ingress.class       | define what kind of ingress class should be configured for teh ingress resource | nginx |
 
+## Gateway API HTTPRoute (application scoped)
+
+The chart can expose VAuthenticator through a Gateway API `HTTPRoute`. When `gateway.enabled` is `true`, the chart
+expects at least one `gateway.parentRefs` entry that points to an existing Gateway listener. If `gateway.rules` is
+left empty, the chart renders a default `PathPrefix /` rule that forwards to the VAuthenticator service on
+`application.server.port`.
+
+For TLS with cert-manager, configure TLS on the referenced Gateway listener itself, for example with an HTTPS listener,
+cert-manager annotations on the Gateway, and `tls.certificateRefs`. The `HTTPRoute` then attaches to that listener and
+matches the same hostname.
+
+#### yaml section
+
+```yaml
+gateway:
+  enabled: false
+  annotations: { }
+  labels: { }
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+      sectionName: websecure # Optional: target a specific Gateway listener
+  hostnames:
+    - auth.example.com # Should match the HTTPS listener hostname/certificate DNS name
+  rules: [ ]
+```
+
+#### Properties description
+
+| Name                | Description                                                                                                            | Value                           |
+|---------------------|------------------------------------------------------------------------------------------------------------------------|---------------------------------|
+| gateway.enabled     | define if the Gateway API `HTTPRoute` should be included in the resources                                             | false                           |
+| gateway.annotations | define annotations for the `HTTPRoute` resource                                                                       | { }                             |
+| gateway.labels      | define additional labels for the `HTTPRoute` resource                                                                 | { }                             |
+| gateway.parentRefs  | define the target Gateway references. At least one entry is required when `gateway.enabled` is `true`                | [ ]                             |
+| gateway.hostnames   | define the optional list of hostnames matched by the `HTTPRoute`                                                      | [ ]                             |
+| gateway.rules       | define the `HTTPRoute.spec.rules` list. If empty, the chart renders a default `/` `PathPrefix` rule to the service   | [ ]                             |
+
 ## Pod Resources (application scoped)
 
 #### yaml section
@@ -257,6 +295,7 @@ application:
       enablePasswordReusePrevention: true
 
   masterKey: ACCOUNT_KMS_KEY
+  masterKeyContent: xxxxxxxxx
 
   redis:
     database: 0
@@ -268,20 +307,19 @@ application:
   baseUrl: http://application-example-host.com
 
 
-  mailProvider:
-    enabled: false
+  emailProvider:
     host: localhost
     port: 587
     username: ""
     password: ""
     properties: { }
 
-  mail:
+  email:
     from: ""
-    welcomeMailSubject: ""
-    verificationMailSubject: ""
-    resetPasswordMailSubject: ""
-    mfaMailSubject: ""
+    welcomeEMailSubject: ""
+    verificationEMailSubject: ""
+    resetPasswordEMailSubject: ""
+    mfaEMailSubject: ""
 
   dynamoDb:
     account:
@@ -338,7 +376,6 @@ application:
 | application.host                                                      | Redis database host used by vauthenticator authorization server                                                                            | vauthenticator-redis-master.auth.svc.cluster.local      |
 | application.server.port                                               | standard port in which the main tomcat is exposed <br/>**do not touch it!** it is useless lets to use ingress to access to the main tomcat | 8080                                                    |
 | application.baseUrl                                                   | public url to reach the authorization server                                                                                               |                                                         |
-| application.emailProvider.enabled                                     | define if enable mail communication support                                                                                                | false                                                   |
 | application.emailProvider.host                                        | mail server host                                                                                                                           | localhost                                               |
 | application.emailProvider.port                                        | mail server used port                                                                                                                      | 587                                                     |
 | application.emailProvider.username                                    | mail server account username                                                                                                               | ""                                                      |

@@ -33,7 +33,7 @@ data:
         id: {{ .Values.application.masterKey }}
         storage:
           content:
-            key: {{ .Values.application.masterKey }}
+            {{ .Values.application.masterKey }}: {{ .Values.application.masterKeyContent }}
 
     oidcEndSessionUrl: {{ .Values.application.baseUrl }}/oidc/logout
     auth.oidcIss: {{ .Values.application.baseUrl }}
@@ -58,7 +58,6 @@ data:
             name: {{ .Values.application.documentRepository.documentType.staticAsset.cacheName }}
             ttl: {{ .Values.application.documentRepository.documentType.staticAsset.cacheTtl }}
 
-    {{- if eq .Values.application.emailProvider.enabled true }}
     no-reply:
       email:
         from: {{ .Values.application.email.from }}
@@ -66,7 +65,6 @@ data:
         verificationEMailSubject: {{ .Values.application.email.verificationEMailSubject }}
         resetPasswordEMailSubject: {{ .Values.application.email.resetPasswordEMailSubject }}
         mfaEMailSubject: {{ .Values.application.email.mfaEMailSubject }}
-    {{- end }}
 
     event:
       consumer:
@@ -83,7 +81,6 @@ data:
 
       main:
         lazy-initialization: false
-    {{- if eq .Values.application.emailProvider.enabled true }}
       mail:
         host: {{ .Values.application.emailProvider.host }}
         port: {{ .Values.application.emailProvider.port }}
@@ -91,7 +88,6 @@ data:
         password: {{ .Values.application.emailProvider.password }}
         properties:
         {{- toYaml .Values.application.emailProvider.properties | nindent 10 }}
-    {{- end }}
 
       security:
         oauth2:
