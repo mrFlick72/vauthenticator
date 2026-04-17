@@ -1,14 +1,11 @@
 # VAuthenticator Helm Chart
 
-It is the official helm chart for VAuthenticator ecosystem.
+It is the official Helm chart for the VAuthenticator authorization server.
 
 # Global Components
 
-We discuss how configure global and general available properties apart from that AWS and Redis section,
-Deployment, pod, lables and selectors section are applied on
-`application`, `managementUi` and root field.
-To make it simple we cover configuration without root but keep in mind that those generic stuff are available for all
-application root tag
+We discuss how to configure global and generally available properties. AWS and Redis are root-level settings, while
+deployment, pod, labels, and selectors are applied through the `application` section.
 
 ## Redis
 
@@ -384,66 +381,3 @@ application:
 | application.events.password.policy.minSize                            | it defines what is the minimum accepted password length                                                                                    | 1                                                       |
 | application.events.password.policy.minSpecialSymbol                   | it defines what is the minimum number of special characters to use for a password                                                          | 1                                                       |
 | application.events.password.policy.enablePasswordReusePrevention      | enable the password reuse prevention feature                                                                                               | true                                                    |
-
-# VAuthenticator Authorization Server Management UI
-
-Authorization server Management UI backend application configuration
-
-#### yaml section
-
-```yaml
-managementUi:
-  enabled: false
-  redis:
-    database: 1
-    host: vauthenticator-redis-master.auth.svc.cluster.local
-
-  server:
-    port: 8080
-
-  sso:
-    clientApp:
-      clientId: vauthenticator-management-ui
-      clientSecret: secret
-
-  baseUrl: http://application-example-host.com
-
-  documentRepository:
-    engine: s3
-    bucketName: test
-    fsBasePath: dist
-    documentType:
-      mail:
-        cacheName:
-        cacheTtl: 1m
-      staticAsset:
-        cacheName:
-        cacheTtl: 1m
-
-  assetServer:
-    onS3:
-      enabled: false
-    baseUrl: http://localhost:8080
-
-```
-
-#### Properties description
-
-| Name                                                               | Description                                                                                                                                | Value                                              |
-|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------|
-| managementUi.enabled                                               | define if management ui have to be deployed                                                                                                | false                                              |
-| managementUi.redis.database                                        | Redis database used by vauthenticator authorization server                                                                                 | 0                                                  |
-| managementUi.host                                                  | Redis database host used by vauthenticator authorization server                                                                            | vauthenticator-redis-master.auth.svc.cluster.local |
-| managementUi.server.port                                           | standard port in which the main tomcat is exposed <br/>**do not touch it!** it is useless lets to use ingress to access to the main tomcat | 8080                                               |
-| managementUi.sso.clientApp.clientId                                | client application id used for sso login                                                                                                   | authenticator-management-ui                        |
-| managementUi.sso.clientApp.clientSecret                            | client application secret used for sso login                                                                                               | secret                                             |
-| managementUi.baseUrl                                               | base url used to compute redirect uri and other stuff it is the base url in which you will publish the management app                      | http://application-example-host.com                |
-| managementUi.assetServer.baseUrl                                   | asset server for login, mfa and other pages                                                                                                | http://localhost:8080/asset                        |
-| managementUi.assetServer.onS3.enabled                              | enable asset serving form S3                                                                                                               | true/false                                         |
-| managementUi.documentRepository.engine                             | what engine use to get documents S3 or FileSystem                                                                                          | s3/file-system                                     |
-| managementUi.documentRepository.bucketName                         | bucket used to store documents when S3 document engine is enabled                                                                          | your-bucket                                        |
-| managementUi.documentRepository.fsBasePath                         | file system base path to store documents when FileSystem document engine is enabled                                                        | your-base-path                                     |
-| managementUi.documentRepository.documentType.mail.cacheName        | file local cache region name for mail documents                                                                                            | your-base-path                                     |
-| managementUi.documentRepository.documentType.mail.cacheTtl         | file local cache region ttl for mail documents                                                                                             | your-base-path                                     |
-| managementUi.documentRepository.documentType.staticAsset.cacheName | file local cache region name for static asset                                                                                              | your-base-path                                     |
-| managementUi.documentRepository.documentType.staticAsset.cacheTtl  | file local cache region ttl for static asset                                                                                               | your-base-path                                     |
