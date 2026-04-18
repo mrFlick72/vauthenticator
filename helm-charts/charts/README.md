@@ -280,6 +280,10 @@ Authorization server backend application configuration
 application:
   sessionTimeout: 24h
   profiles: dynamo,kms
+  datasource:
+    url: jdbc:postgresql://db.local.vauthenticator.com:5432/
+    username: postgres
+    password: postgres
   password:
     history:
       evaluationLimit: 1
@@ -366,14 +370,21 @@ application:
 
 ```
 
+`spring.datasource` is rendered in the generated `application.yml` only when `application.profiles` includes
+`database`. In that case `application.datasource.url` is required.
+
 #### Properties description
 
 | Name                                                                  | Description                                                                                                                                | Value                                                   |
 |-----------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------|
 | application.sessionTimeout                                            | Server Session Timeout expressed as java duration                                                                                          | 24h                                                     |
+| application.profiles                                                  | defines the activated spring profiles, useful to switch from dynamo to database or local java to kms implementation                       | dynamo,kms                                              |
+| application.datasource.url                                            | Spring datasource JDBC URL. Required when `application.profiles` includes `database`                                                      | ""                                                      |
+| application.datasource.username                                       | Spring datasource username                                                                                                                 | ""                                                      |
+| application.datasource.password                                       | Spring datasource password                                                                                                                 | ""                                                      |
 | application.masterKey                                                 | KMS Master key as starting key to generate data key data key pair to sign tokens, MFA and data encryption                                  | your kms key id                                         |
 | application.redis.database                                            | Redis database used by vauthenticator authorization server                                                                                 | 0                                                       |
-| application.host                                                      | Redis database host used by vauthenticator authorization server                                                                            | vauthenticator-redis-master.auth.svc.cluster.local      |
+| application.redis.host                                                | Redis database host used by vauthenticator authorization server                                                                            | vauthenticator-redis-master.auth.svc.cluster.local      |
 | application.server.port                                               | standard port in which the main tomcat is exposed <br/>**do not touch it!** it is useless lets to use ingress to access to the main tomcat | 8080                                                    |
 | application.baseUrl                                                   | public url to reach the authorization server                                                                                               |                                                         |
 | application.emailProvider.host                                        | mail server host                                                                                                                           | localhost                                               |
@@ -415,13 +426,12 @@ application:
 | application.documentRepository.documentType.staticAsset.cacheName     | file local cache region name for static asset                                                                                              | your-base-path                                          |
 | application.documentRepository.documentType.staticAsset.cacheTtl      | file local cache region ttl for static asset                                                                                               | your-base-path                                          |
 | application.events.enableLoggerConsumer                               | enable the default logger consumer for the vauthenticator events                                                                           | your-base-path                                          |
-| application.events.profiles                                           | defines the activated spring profiles, useful to switch from dynamo to db or local java to kms implementation                              | dynamo,kms                                              |
-| application.events.password.history.evaluationLimit                   | it defines how many stored historical password evaluate                                                                                    | 1                                                       |
-| application.events.password.history.maxHistoryAllowedSize             | it defines the max number of stored historical password for a specific user                                                                | 3                                                       |
-| application.events.password.generatorCriteria.upperCaseCharactersSize | it defines how many upper case characters to use to generate a ramdom password                                                             | 2                                                       |
-| application.events.password.generatorCriteria.lowerCaseCharactersSize | it defines how many lower case characters to use to generate a ramdom password                                                             | 2                                                       |
-| application.events.password.generatorCriteria.specialCharactersSize   | it defines how many special characters to use to generate a ramdom password                                                                | 2                                                       |
-| application.events.password.generatorCriteria.numberCharactersSize    | it defines how characters to use to generate a ramdom password                                                                             | 2                                                       |
-| application.events.password.policy.minSize                            | it defines what is the minimum accepted password length                                                                                    | 1                                                       |
-| application.events.password.policy.minSpecialSymbol                   | it defines what is the minimum number of special characters to use for a password                                                          | 1                                                       |
-| application.events.password.policy.enablePasswordReusePrevention      | enable the password reuse prevention feature                                                                                               | true                                                    |
+| application.password.history.evaluationLimit                          | it defines how many stored historical password evaluate                                                                                    | 1                                                       |
+| application.password.history.maxHistoryAllowedSize                    | it defines the max number of stored historical password for a specific user                                                                | 3                                                       |
+| application.password.generatorCriteria.upperCaseCharactersSize        | it defines how many upper case characters to use to generate a ramdom password                                                             | 2                                                       |
+| application.password.generatorCriteria.lowerCaseCharactersSize        | it defines how many lower case characters to use to generate a ramdom password                                                             | 2                                                       |
+| application.password.generatorCriteria.specialCharactersSize          | it defines how many special characters to use to generate a ramdom password                                                                | 2                                                       |
+| application.password.generatorCriteria.numberCharactersSize           | it defines how characters to use to generate a ramdom password                                                                             | 2                                                       |
+| application.password.policy.minSize                                   | it defines what is the minimum accepted password length                                                                                    | 1                                                       |
+| application.password.policy.minSpecialSymbol                          | it defines what is the minimum number of special characters to use for a password                                                          | 1                                                       |
+| application.password.policy.enablePasswordReusePrevention             | enable the password reuse prevention feature                                                                                               | true                                                    |

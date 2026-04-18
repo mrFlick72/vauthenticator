@@ -107,6 +107,15 @@ selectorLabels:
 application:
   sessionTimeout: 24h
   profiles: dynamo,kms
+  datasource:
+    # Rendered only when application.profiles includes database.
+    # Example:
+    # url: jdbc:postgresql://db.local.vauthenticator.com:5432/
+    # username: postgres
+    # password: postgres
+    url: ""
+    username: ""
+    password: ""
   password:
     history:
       evaluationLimit: 1

@@ -75,9 +75,16 @@ data:
         length: {{ .Values.application.mfa.otp.otpLength }}
         timeToLiveInSeconds: {{ .Values.application.mfa.otp.otpTimeToLiveInSeconds }}
 
+    {{- $databaseProfileEnabled := regexMatch "(^|.*,\\s*)database(\\s*,.*|\\s*$)" .Values.application.profiles }}
     spring:
       profiles:
         active: {{ .Values.application.profiles }}
+      {{- if $databaseProfileEnabled }}
+      datasource:
+        url: {{ required "application.datasource.url must be set when application.profiles includes database" .Values.application.datasource.url | quote }}
+        username: {{ .Values.application.datasource.username | quote }}
+        password: {{ .Values.application.datasource.password | quote }}
+      {{- end }}
 
       main:
         lazy-initialization: false
