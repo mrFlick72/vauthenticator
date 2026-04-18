@@ -176,3 +176,18 @@ data:
     {{- if eq .Values.aws.eks.serviceAccount.enabled true }}
     iamServiceAccountAwsCredentialsProvider: true
     {{- end }}
+
+
+{{- if (index .Values "in-namespace" "db" "enabled") }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vauthenticator-postgres-initdb
+data:
+  init.sql: |
+{{ .Files.Get "files/schema.sql" | indent 4 }}
+
+
+{{- end }}

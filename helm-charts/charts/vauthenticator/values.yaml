@@ -4,6 +4,11 @@ in-namespace:
   db:
     enabled: true
 
+postgresql:
+  primary:
+    initdb:
+      scriptsConfigMap: vauthenticator-postgres-initdb
+
 redis:
   auth:
     enabled: false
