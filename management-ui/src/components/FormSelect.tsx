@@ -1,7 +1,6 @@
 import React from "react"
-import Select from "react-select";
+import Select, {GroupBase, OptionsOrGroups} from "react-select";
 import {Grid, InputLabel} from "@mui/material";
-import {GroupBase, OptionsOrGroups} from "react-select/dist/declarations/src/types";
 
 export interface SelectOption {
     value: string
@@ -18,11 +17,11 @@ interface FormSelectProps {
 }
 
 const FormSelect: React.FC<FormSelectProps> = ({id, label, multi, options, value, onChangeHandler, prefix}) => {
-    return <Grid container spacing={8} alignItems="flex-end">
-        {prefix && <Grid item>
+    return <Grid container spacing={8} sx={{alignItems: "flex-end"}}>
+        {prefix && <Grid size="auto">
             {prefix}
         </Grid>}
-        <Grid item md={true} sm={true} xs={true}>
+        <Grid size="grow">
             <InputLabel id={id}>{label}</InputLabel>
             <Select
                 menuPortalTarget={document.body}

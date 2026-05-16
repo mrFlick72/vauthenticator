@@ -8,8 +8,8 @@ interface KeyDialogProps {
     title: string
     content: string
     open: boolean
-    handleClose: (open: boolean) => void
-    handler: (kid: string) => void
+    handleClose: () => void
+    handler: () => void
 }
 
 const KeyDialog: React.FC<KeyDialogProps> = ({open, handleClose, title, content, handler}) => {

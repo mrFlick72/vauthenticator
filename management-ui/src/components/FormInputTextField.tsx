@@ -26,16 +26,18 @@ const FormInputTextField: React.FC<FormInputTextFieldProps> = ({
                                                                    value,
                                                                    handler
                                                                }) => {
-    return <Grid container spacing={8} alignItems="flex-end">
-        {prefix && <Grid item>
+    return <Grid container spacing={8} sx={{alignItems: "flex-end"}}>
+        {prefix && <Grid size="auto">
             {prefix}
         </Grid>}
-        <Grid item md={true} sm={true} xs={true}>
+        <Grid size="grow">
             <TextField name={id} id={id} label={label} type={type || "text"} disabled={disabled}
                        variant="outlined" fullWidth autoFocus={autoFocus} required={required || false}
                        value={value}
-                       InputProps={{
-                           endAdornment: (suffixItem),
+                       slotProps={{
+                           input: {
+                               endAdornment: suffixItem,
+                           },
                        }}
                        onChange={handler}/>
         </Grid>

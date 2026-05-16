@@ -1,6 +1,6 @@
 import React from "react";
 import {Container, Paper} from "@mui/material";
-import {Breakpoint} from "@mui/system/createTheme/createBreakpoints";
+import {Breakpoint} from "@mui/material/styles";
 
 interface TemplateProps {
     maxWidth: Breakpoint

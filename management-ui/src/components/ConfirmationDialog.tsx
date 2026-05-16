@@ -34,7 +34,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
                 <DialogActions>
                     <FormButton label="Yes" onClickHandler={onExecute}/>
-                    <FormButton label="No" onClickHandler={onClose}/>
+                    <FormButton label="No" onClickHandler={() => onClose(false)}/>
                 </DialogActions>
             </DialogContent>
         </Dialog>
