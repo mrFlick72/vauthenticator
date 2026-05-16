@@ -7,7 +7,6 @@ module.exports = {
     mode: 'development',
     entry: {
         callback: path.resolve(__dirname, './auth/Callback.tsx'),
-        rpiframe: path.resolve(__dirname, './auth/SessionManagementRPFrame.tsx'),
         logout: path.resolve(__dirname, './auth/Logout.tsx'),
         "admin": path.resolve(__dirname, './admin/index.tsx')
     },
@@ -54,12 +53,6 @@ module.exports = {
             title: 'VAuthenticator',
             filename: 'callback.html',
             chunks: ["callback"],
-            template: "template.html"
-        }),
-        new HtmlWebpackPlugin({
-            title: 'VAuthenticator',
-            filename: 'oidc-session-rp-iframe.html',
-            chunks: ["rpiframe"],
             template: "template.html"
         }),
         new HtmlWebpackPlugin({

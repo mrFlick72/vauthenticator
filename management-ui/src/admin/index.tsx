@@ -11,9 +11,6 @@ import KeyManagementPage from "./key/KeyManagementPage";
 import MailTemplatePage from "./communication/MailTemplatePage";
 import ClientAppListPage from "./clientapp/pages/clientAppList/ClientAppListPage";
 import ClientAppManagementPage from './clientapp/pages/clientAppManagement/ClientAppManagementPage';
-import {authenticationChecker} from "../auth/Authenticator";
-
-authenticationChecker()
 
 const VAuthenticatorAdminApp = () =>
     <HashRouter>

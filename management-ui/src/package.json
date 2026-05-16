@@ -42,7 +42,6 @@
     "@types/react-dom": "^18.2.19",
     "copy-to-clipboard": "^3.3.3",
     "crypto-js": "^4.2.0",
-    "jose": "^6.2.2",
     "moment": "2.30.1",
     "pkce-challenge": "^4.1.0",
     "prop-types": "15.8.1",
