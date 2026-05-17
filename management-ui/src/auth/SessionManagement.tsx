@@ -55,13 +55,7 @@ const buildRpIframeDocument = (
 <body>
 <script>
     var stat = "unchanged";
-    var mes = ${JSON.stringify(message)};
-    var targetOrigin = ${JSON.stringify(targetOrigin)};
-    var parentOrigin = ${JSON.stringify(parentOrigin)};
-    var opFrameId = ${JSON.stringify(OP_IFRAME_ID)};
-    var timerID;
-
-      var stat = "unchanged";
+    var eventType = ${JSON.stringify(SESSION_MANAGEMENT_EVENT_TYPE)};
     var mes = ${JSON.stringify(message)};
     var targetOrigin = ${JSON.stringify(targetOrigin)};
     var parentOrigin = ${JSON.stringify(parentOrigin)};
@@ -99,8 +93,10 @@ const buildRpIframeDocument = (
         if (stat === "changed" || stat === "error") {
             clearInterval(timerID);
             console.log("Session state " + stat);
-            checkOfSession().then(url => window.location.replace(url))
-            // 
+            window.parent.postMessage({
+                type: eventType,
+                status: stat
+            }, parentOrigin);
         }
     }
 
@@ -144,11 +140,19 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
             }
 
             if (event.data.status === "changed") {
-                onSessionChanged?.();
+                if (onSessionChanged) {
+                    onSessionChanged();
+                } else {
+                    void checkOfSession();
+                }
             }
 
             if (event.data.status === "error") {
-                onSessionError?.();
+                if (onSessionError) {
+                    onSessionError();
+                } else {
+                    void checkOfSession();
+                }
             }
         };
 
