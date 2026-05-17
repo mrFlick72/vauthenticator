@@ -1,5 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
 import {applicationConfigLoader} from "../config/ConfigLoader";
+import {checkOfSession} from "./Authenticator";
 
 const SESSION_STATE_STORAGE_KEY = "SESSION_STATE";
 const OP_IFRAME_ID = "op";
@@ -67,13 +68,6 @@ const buildRpIframeDocument = (
     var opFrameId = ${JSON.stringify(OP_IFRAME_ID)};
     var timerID;
 
-    function notifyParent(status) {
-        window.parent.postMessage({
-            type: ${JSON.stringify(SESSION_MANAGEMENT_EVENT_TYPE)},
-            status: status
-        }, parentOrigin);
-    }
-
     function check_session() {
         var frame = window.parent.document.getElementById(opFrameId);
         var win = frame && frame.contentWindow ? frame.contentWindow : window.parent.frames[opFrameId];
@@ -105,7 +99,8 @@ const buildRpIframeDocument = (
         if (stat === "changed" || stat === "error") {
             clearInterval(timerID);
             console.log("Session state " + stat);
-            // notifyParent(stat);
+            checkOfSession().then(url => window.location.replace(url))
+            // 
         }
     }
 
