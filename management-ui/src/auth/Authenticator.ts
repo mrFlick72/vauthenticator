@@ -82,6 +82,7 @@ export const endOfSession = async () => {
 
     window.sessionStorage.removeItem("ID_TOKEN");
     window.sessionStorage.removeItem("ACCESS_TOKEN");
+    window.sessionStorage.removeItem("SESSION_STATE");
 
     window.location.href = `${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`
 }

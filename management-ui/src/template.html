@@ -7,56 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
 </head>
 <body>
-<iframe>
-    <script>
-        import {applicationConfigLoader} from "./config/ConfigLoader";
-
-        function rpIframeFor(client_id, session_state) {
-            let stat = "unchanged";
-            let mes = client_id + " " + session_state;
-            let targetOrigin = "https://server.example.com"; // Validates origin
-            let opFrameId = "op";
-            let timerID;
-
-            function check_session() {
-                var win = window.parent.frames[opFrameId].contentWindow
-                win.postMessage(mes, targetOrigin);
-            }
-
-            function setTimer() {
-                check_session();
-                timerID = setInterval(check_session, 5 * 1000);
-            }
-
-            window.addEventListener("message", receiveMessage, false);
-
-            function receiveMessage(e) {
-                if (e.origin !== targetOrigin) {
-                    return;
-                }
-                stat = e.data;
-
-                if (stat === "changed") {
-                    clearInterval(timerID);
-                    // then take the actions below...
-                }
-            }
-
-            setTimer();
-        }
-
-
-        let oauth2Config = await applicationConfigLoader()
-
-        let clientApplicationId = oauth2Config.clientApplicationId
-        let sessionState = window.sessionStorage.getItem("SESSION_STATE")
-
-        if (clientApplicationId && sessionState) {
-            rpIframeFor(clientApplicationId, sessionState)
-        }
-    </script>
-
-</iframe>
 <div id="app"></div>
 
 </body>

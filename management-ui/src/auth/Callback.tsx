@@ -11,6 +11,10 @@ const Callback = () => {
 
     useEffect(() => {
         let code = params.get("code")!!
+        let sessionState = params.get("session_state")
+        if (sessionState) {
+            window.sessionStorage.setItem("SESSION_STATE", sessionState)
+        }
         authenticate(code)
             .then(_ => {
                 window.location.href = window.sessionStorage.getItem("returnTo")!!
