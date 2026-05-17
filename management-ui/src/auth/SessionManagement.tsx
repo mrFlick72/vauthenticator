@@ -72,13 +72,18 @@ const buildRpIframeDocument = (
         var win = frame && frame.contentWindow ? frame.contentWindow : window.parent.frames[opFrameId];
 
         if (win) {
-            win.postMessage(mes, targetOrigin);
+            try {
+                win.postMessage(mes, targetOrigin);
+            } catch (e) {
+                console.error(e);
+                return;
+            }
         }
     }
 
     function setTimer() {
-        check_session();
         timerID = setInterval(check_session, ${DEFAULT_CHECK_INTERVAL_MS});
+        window.setTimeout(check_session, 0);
     }
 
     window.addEventListener("message", receiveMessage, false);
