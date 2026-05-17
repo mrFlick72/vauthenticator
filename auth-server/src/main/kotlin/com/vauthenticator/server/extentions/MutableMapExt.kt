@@ -17,7 +17,7 @@ fun Map<String, AttributeValue>.valueAsBoolFor(key: String): Boolean =
     requiredValueFor(key) { bool() }
 
 fun Map<String, AttributeValue>.valueAsStringSetFor(key: String): Set<String> =
-    this[key]?.ss()?.toSet() ?: emptySet()
+    this[key]?.ss()?.toSet() ?: setOf()
 
 fun Map<String, AttributeValue>.valueAsLongFor(key: String): Long =
     requiredValueFor(key) { n() }

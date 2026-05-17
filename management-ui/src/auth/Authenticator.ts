@@ -65,10 +65,10 @@ export const authenticate = async (code: string) => {
         .then((data) => {
             let tokenResponse = data as TokenResponse
 
-            if(tokenResponse.id_token){
+            if (tokenResponse.id_token) {
                 window.sessionStorage.setItem("ID_TOKEN", tokenResponse.id_token);
             }
-            if(tokenResponse.access_token){
+            if (tokenResponse.access_token) {
                 window.sessionStorage.setItem("ACCESS_TOKEN", tokenResponse.access_token);
             }
             window.sessionStorage.removeItem("codeVerifier")
@@ -84,7 +84,7 @@ export const endOfSession = async () => {
     window.sessionStorage.removeItem("ACCESS_TOKEN");
     window.sessionStorage.removeItem("SESSION_STATE");
 
-    window.location.href = `${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`
+    window.location.replace(encodeURI(`${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`))
 }
 
 export const authenticationChecker = () => {
@@ -92,7 +92,7 @@ export const authenticationChecker = () => {
         .then(config => {
             setInterval(() => {
                 isAuthenticated().then()
-            }, config.authenticationCheckInterval*1000)
+            }, config.authenticationCheckInterval * 1000)
         })
 
 }

@@ -60,6 +60,13 @@ const buildRpIframeDocument = (
     var opFrameId = ${JSON.stringify(OP_IFRAME_ID)};
     var timerID;
 
+      var stat = "unchanged";
+    var mes = ${JSON.stringify(message)};
+    var targetOrigin = ${JSON.stringify(targetOrigin)};
+    var parentOrigin = ${JSON.stringify(parentOrigin)};
+    var opFrameId = ${JSON.stringify(OP_IFRAME_ID)};
+    var timerID;
+
     function notifyParent(status) {
         window.parent.postMessage({
             type: ${JSON.stringify(SESSION_MANAGEMENT_EVENT_TYPE)},
@@ -75,8 +82,8 @@ const buildRpIframeDocument = (
             try {
                 win.postMessage(mes, targetOrigin);
             } catch (e) {
+                console.error(" win.postMessage(mes, targetOrigin); failed: ");
                 console.error(e);
-                return;
             }
         }
     }
@@ -97,7 +104,8 @@ const buildRpIframeDocument = (
 
         if (stat === "changed" || stat === "error") {
             clearInterval(timerID);
-            notifyParent(stat);
+            console.log("Session state " + stat);
+            // notifyParent(stat);
         }
     }
 
