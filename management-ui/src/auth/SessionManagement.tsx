@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
 import {applicationConfigLoader} from "../config/ConfigLoader";
-import {checkOfSession} from "./Authenticator";
+import {checkOfSession, endOfSession} from "./Authenticator";
 
 const SESSION_STATE_STORAGE_KEY = "SESSION_STATE";
 const OP_IFRAME_ID = "op";
@@ -70,7 +70,7 @@ const buildRpIframeDocument = (
             try {
                 win.postMessage(mes, targetOrigin);
             } catch (e) {
-                console.error(" win.postMessage(mes, targetOrigin); failed: ");
+                console.error("win.postMessage(mes, targetOrigin); failed: ");
                 console.error(e);
             }
         }
@@ -84,6 +84,7 @@ const buildRpIframeDocument = (
     window.addEventListener("message", receiveMessage, false);
 
     function receiveMessage(e) {
+        console.log("Received message", e);
         if (e.origin !== targetOrigin) {
             return;
         }
@@ -135,6 +136,7 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
 
     useEffect(() => {
         const receiveMessage = (event: MessageEvent<unknown>) => {
+            console.log("Received message in RP iframe", event);
             if (event.origin !== window.location.origin || !isSessionManagementEvent(event.data)) {
                 return;
             }
@@ -143,7 +145,12 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
                 if (onSessionChanged) {
                     onSessionChanged();
                 } else {
-                    void checkOfSession();
+                    checkOfSession().then(isActive => {
+                        if (!isActive) {
+                            // endOfSession().then(() => {
+                            // })
+                        }
+                    })
                 }
             }
 
@@ -151,7 +158,12 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
                 if (onSessionError) {
                     onSessionError();
                 } else {
-                    void checkOfSession();
+                    checkOfSession().then(isActive => {
+                        if (!isActive) {
+                            // endOfSession().then(() => {
+                            // })
+                        }
+                    })
                 }
             }
         };

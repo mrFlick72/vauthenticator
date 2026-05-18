@@ -59,7 +59,8 @@
     }
 
     async function get_op_user_agent_state() {
-        return document.cookie.split("=")[1] || ""
+        const match = document.cookie.match(/(?:^|;\s*)opbs=([^;]*)/)
+        return match ? match[1] : ""
     }
     /*]]>*/
 
