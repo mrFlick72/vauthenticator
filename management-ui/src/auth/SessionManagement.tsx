@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
 import {applicationConfigLoader} from "../config/ConfigLoader";
-import {checkOfSession, endOfSession} from "./Authenticator";
+import {checkOfSession, endOfSession, invalidateSession, isAuthenticated} from "./Authenticator";
 
 const SESSION_STATE_STORAGE_KEY = "SESSION_STATE";
 const OP_IFRAME_ID = "op";
@@ -144,8 +144,8 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
             if (event.data.status === "changed") {
                 checkOfSession().then(isActive => {
                     if (!isActive) {
-                        endOfSession().then(() => {
-                        })
+                        invalidateSession();
+                        isAuthenticated().then()
                     }
                 });
             }
@@ -153,8 +153,8 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
             if (event.data.status === "error") {
                 checkOfSession().then(isActive => {
                     if (!isActive) {
-                        endOfSession().then(() => {
-                        })
+                        invalidateSession();
+                        isAuthenticated().then()
                     }
                 })
             }

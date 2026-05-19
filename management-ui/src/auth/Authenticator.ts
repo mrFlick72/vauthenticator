@@ -95,17 +95,22 @@ export const authenticate = async (code: string) => {
         })
 }
 
+export const invalidateSession = () => {
+    window.sessionStorage.removeItem("ID_TOKEN");
+    window.sessionStorage.removeItem("ACCESS_TOKEN");
+    window.sessionStorage.removeItem("SESSION_STATE");
+}
+
 export const endOfSession = async () => {
     const oauth2Config = await applicationConfigLoader()
     const returnTo = document.referrer
     const idTokenHint = window.sessionStorage.getItem("ID_TOKEN")
 
-    window.sessionStorage.removeItem("ID_TOKEN");
-    window.sessionStorage.removeItem("ACCESS_TOKEN");
-    window.sessionStorage.removeItem("SESSION_STATE");
+    invalidateSession();
 
     window.location.replace(encodeURI(`${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`))
 }
+
 export const checkOfSession = async (): Promise<boolean> => {
     try {
         let oauth2Config = await applicationConfigLoader()
