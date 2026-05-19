@@ -142,29 +142,21 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
             }
 
             if (event.data.status === "changed") {
-                if (onSessionChanged) {
-                    onSessionChanged();
-                } else {
-                    checkOfSession().then(isActive => {
-                        if (!isActive) {
-                            // endOfSession().then(() => {
-                            // })
-                        }
-                    })
-                }
+                checkOfSession().then(isActive => {
+                    if (!isActive) {
+                        endOfSession().then(() => {
+                        })
+                    }
+                });
             }
 
             if (event.data.status === "error") {
-                if (onSessionError) {
-                    onSessionError();
-                } else {
-                    checkOfSession().then(isActive => {
-                        if (!isActive) {
-                            // endOfSession().then(() => {
-                            // })
-                        }
-                    })
-                }
+                checkOfSession().then(isActive => {
+                    if (!isActive) {
+                        endOfSession().then(() => {
+                        })
+                    }
+                })
             }
         };
 
