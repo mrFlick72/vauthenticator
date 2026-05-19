@@ -24,6 +24,9 @@ import org.springframework.web.util.UriComponentsBuilder
 import java.util.Arrays.stream
 import java.util.UUID
 
+const val OPBS_COOKIE_NAME = "opbs"
+const val OPBS_SESSION_ATTRIBUTE = "opbs_session_value"
+
 fun sendAuthorizationResponse(
     redisTemplate: RedisTemplate<String, String?>,
     factory: SessionManagementFactory,
@@ -51,7 +54,7 @@ fun sendAuthorizationResponse(
     redisTemplate.opsForHash<String, String?>().put(sessionId, sessionId.toSha256(), sessionState)
     redisTemplate.opsForHash<String, String?>().put(sessionState, sessionState.toSha256(), opbs)
 
-    val opbsCookie = Cookie("opbs", opbs).apply {
+    val opbsCookie = Cookie(OPBS_COOKIE_NAME, opbs).apply {
         path = "/"
         isHttpOnly = false // must be readable by the session management iframe JS
     }
@@ -73,10 +76,10 @@ class SessionManagementFactory(private val providerSettings: AuthorizationServer
             .orElseThrow()
 
     fun opbsStateValue(request: HttpServletRequest): String {
-        var opbs: String = (request.session.getAttribute("opbs_session_value") ?: "") as String
+        var opbs: String = (request.session.getAttribute(OPBS_SESSION_ATTRIBUTE) ?: "") as String
         if (opbs.isEmpty()) {
             opbs = UUID.randomUUID().toString();
-            request.session.setAttribute("opbs_session_value", opbs)
+            request.session.setAttribute(OPBS_SESSION_ATTRIBUTE, opbs)
         }
 
         logger.debug("opbs $opbs")
