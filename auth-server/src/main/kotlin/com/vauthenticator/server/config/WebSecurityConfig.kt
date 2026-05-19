@@ -7,8 +7,6 @@ import com.vauthenticator.server.login.workflow.LOGIN_ENGINE_BROKER_PAGE
 import com.vauthenticator.server.mfa.web.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
-import com.vauthenticator.server.oidc.logout.ClearSessionStateLogoutHandler
-import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
 import com.vauthenticator.server.password.domain.changepassword.CHANGE_PASSWORD_URL
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
@@ -50,10 +48,7 @@ private val WHITE_LIST = arrayOf(
 
 @EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
-class WebSecurityConfig(
-    private val providerSettings: AuthorizationServerSettings,
-    private val redisTemplate: RedisTemplate<String, String?>
-) {
+class WebSecurityConfig {
     @Autowired
     lateinit var corsConfigurationSource: CorsConfigurationSource
 
@@ -83,20 +78,6 @@ class WebSecurityConfig(
         }
 
 
-        http.logout {
-            it.addLogoutHandler(
-                ClearSessionStateLogoutHandler(
-                    SessionManagementFactory(providerSettings),
-                    redisTemplate
-                )
-            )
-                .invalidateHttpSession(true)
-                .logoutRequestMatcher(
-                    PathPatternRequestMatcher.pathPattern("/logout")
-                )
-        }
-
-
         http.userDetailsService(accountUserDetailsService)
         http.oauth2ResourceServer { it.jwt {} }
         http.securityMatcher(*WHITE_LIST, "/api/**", "/mfa-challenge/**", "/change-password", LOGIN_ENGINE_BROKER_PAGE)
@@ -111,7 +92,11 @@ class WebSecurityConfig(
                     .requestMatchers("/change-password").permitAll()
 
                     .requestMatchers(HttpMethod.POST, "/api/password")
-                    .hasAnyAuthority(Scope.GENERATE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
+                    .hasAnyAuthority(
+                        Scope.GENERATE_PASSWORD.content,
+                        Scope.ADMIN_FULL_ACCESS.content,
+                        Role.adminRole().name
+                    )
 
 
                     .requestMatchers(HttpMethod.PUT, "/api/reset-password-challenge").permitAll()
@@ -127,13 +112,25 @@ class WebSecurityConfig(
                     .hasAnyAuthority(Scope.MAIL_VERIFY.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
 
                     .requestMatchers(HttpMethod.PUT, "/api/accounts/password")
-                    .hasAnyAuthority(Scope.CHANGE_PASSWORD.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
+                    .hasAnyAuthority(
+                        Scope.CHANGE_PASSWORD.content,
+                        Scope.ADMIN_FULL_ACCESS.content,
+                        Role.adminRole().name
+                    )
 
                     .requestMatchers(HttpMethod.GET, "/api/email-template")
-                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
+                    .hasAnyAuthority(
+                        Scope.MAIL_TEMPLATE_READER.content,
+                        Scope.ADMIN_FULL_ACCESS.content,
+                        Role.adminRole().name
+                    )
 
                     .requestMatchers(HttpMethod.PUT, "/api/email-template")
-                    .hasAnyAuthority(Scope.MAIL_TEMPLATE_WRITER.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
+                    .hasAnyAuthority(
+                        Scope.MAIL_TEMPLATE_WRITER.content,
+                        Scope.ADMIN_FULL_ACCESS.content,
+                        Role.adminRole().name
+                    )
 
                     .requestMatchers(HttpMethod.GET, "/api/keys")
                     .hasAnyAuthority(Scope.KEY_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
