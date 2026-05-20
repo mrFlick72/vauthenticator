@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useState} from "react";
+import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
 import {applicationConfigLoader} from "../config/ConfigLoader";
-import {checkOfSession, endOfSession, invalidateSession, isAuthenticated} from "./Authenticator";
+import {checkOfSession, invalidateSession, isAuthenticated} from "./Authenticator";
 
 const SESSION_STATE_STORAGE_KEY = "SESSION_STATE";
 const OP_IFRAME_ID = "op";
@@ -112,6 +113,7 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
     const [sessionState, setSessionState] = useState<string | null>(() =>
         window.sessionStorage.getItem(SESSION_STATE_STORAGE_KEY)
     );
+    const [sessionExpired, setSessionExpired] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -135,34 +137,44 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
     }, []);
 
     useEffect(() => {
+        let active = true;
+
+        const handleSessionStatus = async (status: SessionManagementStatus) => {
+            const isActive = await checkOfSession();
+            if (!active || isActive) {
+                return;
+            }
+
+            if (status === "changed") {
+                invalidateSession();
+                setSessionExpired(true);
+            }
+
+            if (status === "error") {
+                invalidateSession();
+                setSessionExpired(true);
+            }
+        };
+
         const receiveMessage = (event: MessageEvent<unknown>) => {
             console.log("Received message in RP iframe", event);
             if (event.origin !== window.location.origin || !isSessionManagementEvent(event.data)) {
                 return;
             }
 
-            if (event.data.status === "changed") {
-                checkOfSession().then(isActive => {
-                    if (!isActive) {
-                        invalidateSession();
-                        isAuthenticated().then()
-                    }
-                });
-            }
-
-            if (event.data.status === "error") {
-                checkOfSession().then(isActive => {
-                    if (!isActive) {
-                        invalidateSession();
-                        isAuthenticated().then()
-                    }
-                })
-            }
+            handleSessionStatus(event.data.status).then();
         };
 
         window.addEventListener("message", receiveMessage, false);
-        return () => window.removeEventListener("message", receiveMessage, false);
+        return () => {
+            active = false;
+            window.removeEventListener("message", receiveMessage, false);
+        };
     }, [onSessionChanged, onSessionError]);
+
+    const relogin = () => {
+        isAuthenticated().then();
+    };
 
     const iframeData = useMemo(() => {
         if (!config || !sessionState) {
@@ -183,24 +195,43 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
         };
     }, [config, sessionState]);
 
-    if (!iframeData) {
-        return null;
-    }
-
     return (
         <>
-            <iframe
-                hidden
-                id={OP_IFRAME_ID}
-                name={OP_IFRAME_ID}
-                src={iframeData.opIframeUrl}
-                title="OIDC OP session management"
-            />
-            <iframe
-                hidden
-                srcDoc={iframeData.rpIframeDocument}
-                title="OIDC RP session management"
-            />
+            {iframeData ? (
+                <>
+                    <iframe
+                        hidden
+                        id={OP_IFRAME_ID}
+                        name={OP_IFRAME_ID}
+                        src={iframeData.opIframeUrl}
+                        title="OIDC OP session management"
+                    />
+                    <iframe
+                        hidden
+                        srcDoc={iframeData.rpIframeDocument}
+                        title="OIDC RP session management"
+                    />
+                </>
+            ) : null}
+
+            <Dialog
+                aria-labelledby="session-expired-dialog-title"
+                aria-describedby="session-expired-dialog-description"
+                open={sessionExpired}
+                maxWidth="sm"
+            >
+                <DialogTitle id="session-expired-dialog-title">Session expired</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="session-expired-dialog-description">
+                        Your session is over. Log in again to continue.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="contained" color="primary" onClick={relogin}>
+                        Log in again
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };
