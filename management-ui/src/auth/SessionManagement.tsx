@@ -16,11 +16,6 @@ type SessionManagementEvent = {
     status: SessionManagementStatus;
 };
 
-type SessionManagementProps = {
-    onSessionChanged?: () => void;
-    onSessionError?: () => void;
-};
-
 type SessionManagementConfig = {
     clientApplicationId: string;
     idpBaseUrl: string;
@@ -109,7 +104,7 @@ const buildRpIframeDocument = (
 </html>`;
 };
 
-const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, onSessionError}) => {
+const SessionManagement: React.FC = () => {
     const [config, setConfig] = useState<SessionManagementConfig | null>(null);
     const [sessionState, setSessionState] = useState<string | null>(() =>
         window.sessionStorage.getItem(SESSION_STATE_STORAGE_KEY)
@@ -171,7 +166,7 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
             active = false;
             window.removeEventListener("message", receiveMessage, false);
         };
-    }, [onSessionChanged, onSessionError]);
+    }, []);
 
     const relogin = () => {
         isAuthenticated().then();
