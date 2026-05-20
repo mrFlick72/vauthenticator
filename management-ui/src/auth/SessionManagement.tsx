@@ -1,5 +1,6 @@
 import React, {useEffect, useMemo, useState} from "react";
-import {Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import {Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
+import {Security} from "@mui/icons-material";
 import {applicationConfigLoader} from "../config/ConfigLoader";
 import {checkOfSession, invalidateSession, isAuthenticated} from "./Authenticator";
 
@@ -220,7 +221,26 @@ const SessionManagement: React.FC<SessionManagementProps> = ({onSessionChanged, 
                 open={sessionExpired}
                 maxWidth="sm"
             >
-                <DialogTitle id="session-expired-dialog-title">Session expired</DialogTitle>
+                <DialogTitle id="session-expired-dialog-title">
+                    <Box component="span" sx={{display: "flex", alignItems: "center", gap: 1.5}}>
+                        <Box
+                            component="span"
+                            sx={{
+                                alignItems: "center",
+                                bgcolor: "primary.main",
+                                borderRadius: "50%",
+                                color: "primary.contrastText",
+                                display: "inline-flex",
+                                height: 36,
+                                justifyContent: "center",
+                                width: 36,
+                            }}
+                        >
+                            <Security aria-hidden="true" fontSize="small"/>
+                        </Box>
+                        <span>Session expired</span>
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="session-expired-dialog-description">
                         Your session is over. Log in again to continue.
