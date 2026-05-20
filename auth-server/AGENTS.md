@@ -52,7 +52,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `management`: actuator-style setup and cleanup endpoints, including tenant bootstrap
 - `mfa`: MFA enrollment, challenge, association, and login workflow integration
 - `oauth2`: authorization storage, registered client adaptation, and token enhancement
-- `oidc`: logout, session management, userinfo, and ID token enrichment
+- `oidc`: RP-initiated logout, OIDC Session Management, userinfo, and ID token enrichment
 - `password`: password reset, change, generation, and policy/history logic
 - `role`: groups, roles, and permission validation
 - `ticket`: ticket creation and storage used by multi-step flows
@@ -152,6 +152,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - If a change affects templates or frontend bundles, verify whether frontend assets or communication templates must be rebuilt or copied for the local filesystem-based setup.
 - Be careful with profile-specific behavior. Repository, key, and infrastructure code may have both AWS-backed and local/database-backed implementations.
 - Tests are organized near the same domain names in `src/test/kotlin/com/vauthenticator/server`.
+- The logout support is RP-initiated OIDC logout plus session-management state cleanup. Do not describe `/oidc/logout` as OIDC Front-Channel Logout unless the front-channel metadata and iframe fan-out flow are implemented.
 
 ## Files Worth Reading First
 

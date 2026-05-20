@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This project is the standalone admin UI for VAuthenticator. It is a React and TypeScript application that builds static bundles for the management experience, including the admin SPA plus OAuth callback and logout entry points.
+This project is the standalone admin UI for VAuthenticator. It is a React and TypeScript application that builds static bundles for the management experience, including the admin SPA plus OAuth callback and RP-initiated logout entry points.
 
 Use this guide for any work under `management-ui`. Per the repo root instructions, this file takes precedence over the monorepo-level `Agents.md` for this subtree.
 
@@ -52,6 +52,8 @@ The home screen is a card-based navigation page that links into those feature ar
 ## Authentication And Backend Coupling
 
 Authentication is handled in `src/auth/Authenticator.ts` using an OAuth2 authorization code flow with PKCE. Tokens are stored in `window.sessionStorage`.
+
+Logout in this UI is RP-initiated OIDC logout against the authorization server. It is not an OIDC Front-Channel Logout receiver.
 
 Important session keys:
 
