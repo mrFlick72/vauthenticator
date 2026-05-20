@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -26,7 +25,6 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.*
@@ -38,12 +36,8 @@ import org.springframework.web.cors.CorsConfigurationSource
 const val adminRole = "VAUTHENTICATOR_ADMIN"
 
 const val LOG_IN_URL_PAGE = "/login"
-const val FRONT_CHANNEL_LOG_OUT_URL = "/oidc/logout"
-const val LOG_OUR_URL = "/logout"
 private val WHITE_LIST = arrayOf(
     LOG_IN_URL_PAGE,
-    FRONT_CHANNEL_LOG_OUT_URL,
-    LOG_OUR_URL
 )
 
 @EnableWebSecurity
