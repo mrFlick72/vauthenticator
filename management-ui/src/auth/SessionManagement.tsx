@@ -91,6 +91,8 @@ const buildRpIframeDocument = (
         if (stat === "changed" || stat === "error") {
             clearInterval(timerID);
             console.log("Session state " + stat);
+            //it is needed only to trigger the useeffect in the react component. and handle the session managemant status there. 
+            // the actual session state is checked in the useeffect handler by calling the checkOfSession function.
             window.parent.postMessage({
                 type: eventType,
                 status: stat
