@@ -329,7 +329,7 @@ data class Scope(val content: String) {
 
 data class Authorities(val content: Set<Authority>) {
     companion object {
-        fun empty() = Authorities(emptySet())
+        fun empty() = Authorities(setOf())
     }
 }
 

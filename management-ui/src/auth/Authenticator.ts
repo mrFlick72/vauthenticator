@@ -18,7 +18,9 @@ const randomDataString = (): string => {
     return text
 }
 
-export const isAuthenticated = async () => {
+type AuthorizeType = "login" | "none"
+
+export const getAuthorizeUrlFor = async (type: AuthorizeType, storeCodeVerifier = true): Promise<string> => {
     const nonce = randomDataString()
     const state = randomDataString()
     const codeVerifier = randomDataString()
@@ -27,10 +29,28 @@ export const isAuthenticated = async () => {
     const codeChallenge = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
     let oauth2Config = await applicationConfigLoader()
+    if (storeCodeVerifier) {
+        window.sessionStorage.setItem("codeVerifier", codeVerifier);
+    }
+    let promptType = type;
+    return `${oauth2Config.idpBaseUrl}/oauth2/authorize?response_type=code&client_id=${oauth2Config.clientApplicationId}&redirect_uri=${oauth2Config.redirectUri}&scope=${oauth2Config.scope}&state=${state}&nonce=${nonce}&code_challenge=${codeChallenge}&code_challenge_method=S256&prompt=${promptType}`
+}
+
+const isVAuthenticatorLoginUrl = (url: string, idpBaseUrl: string) => {
+    if (!url) {
+        return false
+    }
+
+    const idpUrl = new URL(idpBaseUrl)
+    const redirectUrl = new URL(url, idpUrl.origin)
+
+    return redirectUrl.origin === idpUrl.origin && redirectUrl.pathname === "/login"
+}
+
+export const isAuthenticated = async () => {
     window.sessionStorage.setItem("returnTo", window.location.href);
     if (!await hasValidTokens()) {
-        window.location.href = `${oauth2Config.idpBaseUrl}/oauth2/authorize?response_type=code&client_id=${oauth2Config.clientApplicationId}&redirect_uri=${oauth2Config.redirectUri}&scope=${oauth2Config.scope}&state=${state}&nonce=${nonce}&code_challenge=${codeChallenge}&code_challenge_method=S256`
-        window.sessionStorage.setItem("codeVerifier", codeVerifier);
+        window.location.href = await getAuthorizeUrlFor("login")
     }
 }
 
@@ -65,14 +85,20 @@ export const authenticate = async (code: string) => {
         .then((data) => {
             let tokenResponse = data as TokenResponse
 
-            if(tokenResponse.id_token){
+            if (tokenResponse.id_token) {
                 window.sessionStorage.setItem("ID_TOKEN", tokenResponse.id_token);
             }
-            if(tokenResponse.access_token){
+            if (tokenResponse.access_token) {
                 window.sessionStorage.setItem("ACCESS_TOKEN", tokenResponse.access_token);
             }
             window.sessionStorage.removeItem("codeVerifier")
         })
+}
+
+export const invalidateSession = () => {
+    window.sessionStorage.removeItem("ID_TOKEN");
+    window.sessionStorage.removeItem("ACCESS_TOKEN");
+    window.sessionStorage.removeItem("SESSION_STATE");
 }
 
 export const endOfSession = async () => {
@@ -80,10 +106,26 @@ export const endOfSession = async () => {
     const returnTo = document.referrer
     const idTokenHint = window.sessionStorage.getItem("ID_TOKEN")
 
-    window.sessionStorage.removeItem("ID_TOKEN");
-    window.sessionStorage.removeItem("ACCESS_TOKEN");
+    invalidateSession();
 
-    window.location.href = `${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`
+    window.location.replace(encodeURI(`${oauth2Config.idpBaseUrl}/connect/logout?id_token_hint=${idTokenHint}&post_logout_redirect_uri=${returnTo}`))
+}
+
+export const checkOfSession = async (): Promise<boolean> => {
+    try {
+        let oauth2Config = await applicationConfigLoader()
+        let authorizationUrl = await getAuthorizeUrlFor("none", false)
+        let response = await fetch(authorizationUrl, {
+            method: "GET",
+            credentials: "include",
+            redirect: "follow",
+        })
+
+        return response.ok && !isVAuthenticatorLoginUrl(response.url, oauth2Config.idpBaseUrl)
+    } catch (e) {
+        console.error("Session check failed", e)
+        return false
+    }
 }
 
 export const authenticationChecker = () => {
@@ -91,7 +133,7 @@ export const authenticationChecker = () => {
         .then(config => {
             setInterval(() => {
                 isAuthenticated().then()
-            }, config.authenticationCheckInterval*1000)
+            }, config.authenticationCheckInterval * 1000)
         })
 
 }

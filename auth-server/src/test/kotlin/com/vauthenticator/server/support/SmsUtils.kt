@@ -1,11 +1,11 @@
 package com.vauthenticator.server.support
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.web.client.RestClient.builder
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sns.SnsClient
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.net.URI
 
 private val objectMapper = jacksonObjectMapper()

@@ -1,6 +1,7 @@
 package com.vauthenticator.server.oidc.sessionmanagement
 
 import com.vauthenticator.server.extentions.toSha256
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.Logger
@@ -23,6 +24,9 @@ import org.springframework.web.util.UriComponentsBuilder
 import java.util.Arrays.stream
 import java.util.UUID
 
+const val OPBS_COOKIE_NAME = "opbs"
+const val OPBS_SESSION_ATTRIBUTE = "opbs_session_value"
+
 fun sendAuthorizationResponse(
     redisTemplate: RedisTemplate<String, String?>,
     factory: SessionManagementFactory,
@@ -44,11 +48,17 @@ fun sendAuthorizationResponse(
     }
 
     val sessionState = factory.sessionStateFor(request, authentication)
-
+    val opbs = factory.opbsStateValue(request)
+    println("opbs: $opbs")
     val sessionId = factory.sessionIdFor(request)
     redisTemplate.opsForHash<String, String?>().put(sessionId, sessionId.toSha256(), sessionState)
-    redisTemplate.opsForHash<String, String?>()
-        .put(sessionState, sessionState.toSha256(), factory.opbsStateValue(request))
+    redisTemplate.opsForHash<String, String?>().put(sessionState, sessionState.toSha256(), opbs)
+
+    val opbsCookie = Cookie(OPBS_COOKIE_NAME, opbs).apply {
+        path = "/"
+        isHttpOnly = false // must be readable by the session management iframe JS
+    }
+    response.addCookie(opbsCookie)
 
     uriBuilder.queryParam("session_state", sessionState)
     redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString())
@@ -66,10 +76,10 @@ class SessionManagementFactory(private val providerSettings: AuthorizationServer
             .orElseThrow()
 
     fun opbsStateValue(request: HttpServletRequest): String {
-        var opbs: String = (request.session.getAttribute("opbs_session_value") ?: "") as String
+        var opbs: String = (request.session.getAttribute(OPBS_SESSION_ATTRIBUTE) ?: "") as String
         if (opbs.isEmpty()) {
             opbs = UUID.randomUUID().toString();
-            request.session.setAttribute("opbs_session_value", opbs)
+            request.session.setAttribute(OPBS_SESSION_ATTRIBUTE, opbs)
         }
 
         logger.debug("opbs $opbs")

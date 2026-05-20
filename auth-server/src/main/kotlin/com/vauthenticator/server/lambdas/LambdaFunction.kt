@@ -40,7 +40,7 @@ value class LambdaFunctionContext(val content: Map<String, Any>) {
                 "general_context_claims" to mapOf(
                     "client_id" to "",
                     "grant_flow" to "",
-                    "authorized_scope" to emptySet<String>()
+                    "authorized_scope" to setOf<String>()
                 ),
                 "access_token_claims" to emptyMap(),
                 "id_token_claims" to emptyMap()

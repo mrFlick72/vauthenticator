@@ -19,7 +19,7 @@ interface MenuCardProps {
 
 const MenuCard: React.FC<MenuCardProps> = ({title, content, linkTo}) => {
     return (
-        <Grid item xs={12} sm={6} md={4} lg={4} xl={3}>
+        <Grid size={{xs: 12, sm: 6, md: 4, lg: 4, xl: 3}}>
             <Link to={linkTo} style={{textDecoration: 'none', textAlign: 'center'}}>
                 <Card style={classes.root}>
                     <CardActionArea>

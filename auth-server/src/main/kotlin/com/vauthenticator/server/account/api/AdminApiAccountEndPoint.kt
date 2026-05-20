@@ -29,7 +29,7 @@ data class AdminApiAccountApiRepresentation(
     val accountLocked: Boolean = true,
     val enabled: Boolean = true,
     var email: String = "",
-    val authorities: Set<String> = emptySet(),
+    val authorities: Set<String> = setOf(),
     val mandatoryAction: String = AccountMandatoryAction.NO_ACTION.name
 )
 

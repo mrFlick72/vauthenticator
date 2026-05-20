@@ -28,7 +28,7 @@ Right now it is based, as said before to the latest version on spring oauth2/ope
   - see [here](auth-server/docs/mfa.md) for more details
 - Post login flow 
   - force to reset password
-- back/front channel logout
+- OIDC RP-initiated logout and OIDC Session Management
 - management api: custom actuator endpoint for more details [look here](auth-server/docs/management.md)
 
 **Storage:**

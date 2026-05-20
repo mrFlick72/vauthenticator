@@ -1,6 +1,5 @@
 package com.vauthenticator.server.account
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.account.adapter.CachedAccountRepository
@@ -41,6 +40,7 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import tools.jackson.databind.ObjectMapper
 import java.time.Duration
 
 @Configuration(proxyBeanMethods = false)
@@ -70,7 +70,6 @@ class AccountConfig {
     )
     @Profile("dynamo")
     fun dynamoDbAccountRepository(
-        mapper: ObjectMapper,
         dynamoDbClient: DynamoDbClient,
         roleRepository: RoleRepository,
         @Value("\${vauthenticator.dynamo-db.account.table-name}") accountTableName: String
@@ -154,7 +153,6 @@ class EMailVerificationConfig {
 
     @Bean
     fun sendVerifyMailChallenge(
-        clientAccountRepository: ClientApplicationRepository,
         accountRepository: AccountRepository,
         mfaMethodsEnrollment: MfaMethodsEnrollment,
         verificationMailSender: EMailSenderService,

@@ -1,6 +1,5 @@
 package com.vauthenticator.server.role.adapter.dynamodb
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vauthenticator.server.role.adapter.AbstractGroupRepositoryTest
 import com.vauthenticator.server.role.domain.GroupRepository
 import com.vauthenticator.server.role.domain.Role
@@ -12,10 +11,11 @@ import com.vauthenticator.server.support.DynamoDbUtils.dynamoRoleTableName
 import com.vauthenticator.server.support.DynamoDbUtils.initRoleTestsInDynamo
 import com.vauthenticator.server.support.DynamoDbUtils.resetDynamoDb
 import com.vauthenticator.server.support.protectedRoleNames
+import tools.jackson.databind.ObjectMapper
 
 class DynamoDbGroupRepositoryTest : AbstractGroupRepositoryTest() {
     override fun initGroupRepository(): GroupRepository =
-        DynamoDbGroupRepository(jacksonObjectMapper(), dynamoGroupTableName, dynamoGroupToRoleAssociationTableName, dynamoDbClient, initRoleRepository())
+        DynamoDbGroupRepository(ObjectMapper(), dynamoGroupTableName, dynamoGroupToRoleAssociationTableName, dynamoDbClient, initRoleRepository())
 
     override fun initRoleRepository(): RoleRepository =
         DynamoDbRoleRepository(protectedRoleNames, dynamoDbClient, dynamoRoleTableName)

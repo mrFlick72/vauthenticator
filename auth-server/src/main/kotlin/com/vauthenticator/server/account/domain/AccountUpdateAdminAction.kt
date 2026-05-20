@@ -5,7 +5,7 @@ data class AdminAccountApiRequest(
     val accountLocked: Boolean = true,
     val enabled: Boolean = true,
     var email: String = "",
-    val authorities: Set<String> = emptySet(),
+    val authorities: Set<String> = setOf(),
     val mandatoryAction: AccountMandatoryAction = AccountMandatoryAction.NO_ACTION
 )
 
