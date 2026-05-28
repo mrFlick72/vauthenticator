@@ -6,7 +6,7 @@ This repository contains the VAuthenticator authorization server. It is a Spring
 
 The main application entry point is [src/main/kotlin/com/vauthenticator/server/VAuthenticatorApplication.kt](src/main/kotlin/com/vauthenticator/server/VAuthenticatorApplication.kt).
 
-Use this guide for any work under `auth-server`. Per the repo root instructions, this file takes precedence over the monorepo-level `Agents.md` for this subtree.
+Use this guide for any work under `auth-server`. Per the repo root instructions, this file takes precedence over the monorepo-level `AGENTS.md` for this subtree.
 
 The relevant skills if available, for working in this repository include: $kotlin-patterns $kotlin-specialist $kotlin-springboot  $kotlin-testing
 
@@ -168,6 +168,5 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 
 ## Practical Notes For Future Agents
 
-- The git worktree was clean when this guide was created.
 - `application.yml` at the root resource level is intentionally minimal, so expect most behavior to come from profile-specific or component-specific configuration classes and local overrides.
 - The local helper scripts and docs are important in this project because a large part of the runtime setup lives outside the default Spring Boot process.
