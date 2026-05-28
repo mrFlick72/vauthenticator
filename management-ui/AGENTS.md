@@ -13,7 +13,7 @@ Use this guide for any work under `management-ui`. Per the repo root instruction
 - webpack 5
 - Material UI 9
 - React Router 7
-- `dotenv-webpack` is still wired into webpack, but runtime auth/API settings are loaded from `config-manager`
+- Runtime auth/API settings are loaded from `config-manager`
 
 The package manifest is `src/package.json` and the webpack config is `src/webpack.config.js`.
 
@@ -25,7 +25,6 @@ The package manifest is `src/package.json` and the webpack config is `src/webpac
 - `src/config`: runtime config loading from `GET /api/config`
 - `src/theme`: MUI theme setup
 - `src/utils`: shared frontend utilities
-- `environments`: `.env.*` files consumed by webpack builds
 - `local`: nginx and docker-compose files for local static serving
 - `dist`: generated frontend output
 - `changelog`: project release notes
@@ -81,7 +80,7 @@ When changing admin pages, always check the corresponding repository class to co
 
 ## Environment And Local Runtime
 
-The development webpack build still loads `environments/.env.development`, but the current app configuration flow comes from `GET /api/config` at runtime.
+Runtime configuration comes from `GET /api/config`, which local nginx proxies to `config-manager`.
 
 The local nginx config proxies `/api/config` to `config-manager` on the host at port `8086`.
 

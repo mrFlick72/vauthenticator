@@ -1,9 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {Box, Typography} from "@mui/material";
 
 type TabPanelProps = {
-    children: any
+    children: React.ReactNode
     value: string
     index: string
 }
