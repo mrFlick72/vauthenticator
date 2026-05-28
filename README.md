@@ -69,7 +69,7 @@ The local UI is served from:
 
 - `http://local.management.vauthenticator.com:8085/secure/admin/index`
 
-The nginx config in `management-ui/local` proxies `GET /api/config` to `config-manager` on `lhost.docker.internal:8086` remapped to `local.ui-config-manager.vauthenticator.com:8086` at docker compose level.
+The nginx config in `management-ui/local` proxies `GET /api/config` to `config-manager` on `host.docker.internal:8086` and forwards the `Host` header as `local.ui-config-manager.vauthenticator.com`.
 
 ## Build And Test
 
