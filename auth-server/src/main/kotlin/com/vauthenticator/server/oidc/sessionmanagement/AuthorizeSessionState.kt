@@ -8,7 +8,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken
@@ -18,11 +17,9 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.util.StringUtils
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriComponentsBuilder
+import java.util.*
 import java.util.Arrays.stream
-import java.util.UUID
 
 const val OPBS_COOKIE_NAME = "opbs"
 const val OPBS_SESSION_ATTRIBUTE = "opbs_session_value"
@@ -120,19 +117,3 @@ class SessionManagementIFrameController(
     }
 
 }
-
-@RestController
-class CheckSessionEndPoint(private val redisTemplate: RedisTemplate<String, String?>) {
-
-    @GetMapping("/check_session")
-    fun checkSession(@RequestParam state: String): ResponseEntity<CheckSessionResponse> {
-        val sessionState = redisTemplate.opsForHash<String, String?>().get(state, state.toSha256())
-            ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity.ok(CheckSessionResponse(sessionState))
-    }
-
-}
-
-
-data class CheckSessionResponse(val state: String?)
