@@ -6,7 +6,7 @@ This repository contains the VAuthenticator authorization server. It is a Spring
 
 The main application entry point is [src/main/kotlin/com/vauthenticator/server/VAuthenticatorApplication.kt](src/main/kotlin/com/vauthenticator/server/VAuthenticatorApplication.kt).
 
-Use this guide for any work under `auth-server`. Per the repo root instructions, this file takes precedence over the monorepo-level `Agents.md` for this subtree.
+Use this guide for any work under `auth-server`. Per the repo root instructions, this file takes precedence over the monorepo-level `AGENTS.md` for this subtree.
 
 The relevant skills if available, for working in this repository include: $kotlin-patterns $kotlin-specialist $kotlin-springboot  $kotlin-testing
 
@@ -52,7 +52,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `management`: actuator-style setup and cleanup endpoints, including tenant bootstrap
 - `mfa`: MFA enrollment, challenge, association, and login workflow integration
 - `oauth2`: authorization storage, registered client adaptation, and token enhancement
-- `oidc`: logout, session management, userinfo, and ID token enrichment
+- `oidc`: RP-initiated logout, OIDC Session Management, userinfo, and ID token enrichment
 - `password`: password reset, change, generation, and policy/history logic
 - `role`: groups, roles, and permission validation
 - `ticket`: ticket creation and storage used by multi-step flows
@@ -152,6 +152,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - If a change affects templates or frontend bundles, verify whether frontend assets or communication templates must be rebuilt or copied for the local filesystem-based setup.
 - Be careful with profile-specific behavior. Repository, key, and infrastructure code may have both AWS-backed and local/database-backed implementations.
 - Tests are organized near the same domain names in `src/test/kotlin/com/vauthenticator/server`.
+- The logout support is RP-initiated OIDC logout plus session-management state cleanup. Do not describe `/oidc/logout` as OIDC Front-Channel Logout unless the front-channel metadata and iframe fan-out flow are implemented.
 
 ## Files Worth Reading First
 
@@ -167,6 +168,5 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 
 ## Practical Notes For Future Agents
 
-- The git worktree was clean when this guide was created.
 - `application.yml` at the root resource level is intentionally minimal, so expect most behavior to come from profile-specific or component-specific configuration classes and local overrides.
 - The local helper scripts and docs are important in this project because a large part of the runtime setup lives outside the default Spring Boot process.

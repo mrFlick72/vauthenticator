@@ -1,8 +1,8 @@
 package com.vauthenticator.server.role.domain
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.cache.CacheContentConverter
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 
 data class Role(val name: String, val description: String) {
     companion object {

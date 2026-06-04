@@ -1,13 +1,13 @@
 package com.vauthenticator.server.oidc.sessionmanagement
 
 import com.vauthenticator.server.extentions.toSha256
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken
@@ -17,11 +17,12 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.util.StringUtils
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.util.UriComponentsBuilder
+import java.util.*
 import java.util.Arrays.stream
-import java.util.UUID
+
+const val OPBS_COOKIE_NAME = "opbs"
+const val OPBS_SESSION_ATTRIBUTE = "opbs_session_value"
 
 fun sendAuthorizationResponse(
     redisTemplate: RedisTemplate<String, String?>,
@@ -44,11 +45,17 @@ fun sendAuthorizationResponse(
     }
 
     val sessionState = factory.sessionStateFor(request, authentication)
-
+    val opbs = factory.opbsStateValue(request)
+    println("opbs: $opbs")
     val sessionId = factory.sessionIdFor(request)
     redisTemplate.opsForHash<String, String?>().put(sessionId, sessionId.toSha256(), sessionState)
-    redisTemplate.opsForHash<String, String?>()
-        .put(sessionState, sessionState.toSha256(), factory.opbsStateValue(request))
+    redisTemplate.opsForHash<String, String?>().put(sessionState, sessionState.toSha256(), opbs)
+
+    val opbsCookie = Cookie(OPBS_COOKIE_NAME, opbs).apply {
+        path = "/"
+        isHttpOnly = false // must be readable by the session management iframe JS
+    }
+    response.addCookie(opbsCookie)
 
     uriBuilder.queryParam("session_state", sessionState)
     redirectStrategy.sendRedirect(request, response, uriBuilder.toUriString())
@@ -66,10 +73,10 @@ class SessionManagementFactory(private val providerSettings: AuthorizationServer
             .orElseThrow()
 
     fun opbsStateValue(request: HttpServletRequest): String {
-        var opbs: String = (request.session.getAttribute("opbs_session_value") ?: "") as String
+        var opbs: String = (request.session.getAttribute(OPBS_SESSION_ATTRIBUTE) ?: "") as String
         if (opbs.isEmpty()) {
             opbs = UUID.randomUUID().toString();
-            request.session.setAttribute("opbs_session_value", opbs)
+            request.session.setAttribute(OPBS_SESSION_ATTRIBUTE, opbs)
         }
 
         logger.debug("opbs $opbs")
@@ -110,19 +117,3 @@ class SessionManagementIFrameController(
     }
 
 }
-
-@RestController
-class CheckSessionEndPoint(private val redisTemplate: RedisTemplate<String, String?>) {
-
-    @GetMapping("/check_session")
-    fun checkSession(@RequestParam state: String): ResponseEntity<CheckSessionResponse> {
-        val sessionState = redisTemplate.opsForHash<String, String?>().get(state, state.toSha256())
-            ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity.ok(CheckSessionResponse(sessionState))
-    }
-
-}
-
-
-data class CheckSessionResponse(val state: String?)

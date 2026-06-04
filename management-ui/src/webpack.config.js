@@ -1,10 +1,8 @@
 const path = require('path');
-const BUID_DIR = path.resolve("../dist");
-const Dotenv = require('dotenv-webpack');
+const BUILD_DIR = path.resolve(__dirname, "../dist");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-    mode: 'development',
     entry: {
         callback: path.resolve(__dirname, './auth/Callback.tsx'),
         logout: path.resolve(__dirname, './auth/Logout.tsx'),
@@ -13,7 +11,6 @@ module.exports = {
     resolve: {
         extensions: ['.tsx', '.ts', ".js", ".jsx"]
     },
-    plugins: [],
     module: {
         rules: [
             {
@@ -25,24 +22,9 @@ module.exports = {
                 use: ['ts-loader'],
                 exclude: /node_modules$/,
             },
-            {
-                test: /\.js?$/,
-                exclude: path.resolve(__dirname, "node_modules"),
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: ['@babel/env', '@babel/react']
-                    }
-                }
-
-            }
         ]
     },
     plugins: [
-        new Dotenv({
-            path: `../environments/.env.${process.env.ENV}`
-        }),
-
         new HtmlWebpackPlugin({
             title: 'VAuthenticator',
             filename: 'logout.html',
@@ -64,6 +46,6 @@ module.exports = {
     ],
     output: {
         filename: '[name].[fullhash].js',
-        path: BUID_DIR
+        path: BUILD_DIR
     }
 };

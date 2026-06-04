@@ -1,11 +1,11 @@
 package com.vauthenticator.server.role.adapter
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.role.domain.RoleCacheContentConverter
 import com.vauthenticator.server.support.JsonUtils.prettifyInOneLineJsonFrom
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 private const val testableResource = "roles/rolesSample.json"
 
@@ -15,7 +15,7 @@ private val rawValue = prettifyInOneLineJsonFrom(testableResource)
 
 class RoleCacheContentConverterTest {
 
-    private val underTest = RoleCacheContentConverter(jacksonObjectMapper())
+    private val underTest = RoleCacheContentConverter(ObjectMapper())
 
     @Test
     fun `when a string value from the cache is deserialized`() {

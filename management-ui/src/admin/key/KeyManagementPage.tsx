@@ -6,7 +6,6 @@ import {Alert, Snackbar} from "@mui/material";
 import {Delete} from "@mui/icons-material";
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import KeyDialog from "./KeyDialog";
-import moment from "moment";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'masterKey', label: 'Maser Key', minWidth: 170},
@@ -15,6 +14,13 @@ const columns: StickyHeadTableColumn[] = [
     {id: 'rotate', label: 'Rotate Key', minWidth: 170},
     {id: 'expireIn', label: 'Expire In', minWidth: 170}
 ];
+
+const padDatePart = (value: number) => value.toString().padStart(2, "0")
+
+const formatUnixTimestamp = (timestamp: number) => {
+    const date = new Date(timestamp * 1000)
+    return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}:${padDatePart(date.getHours())}:${padDatePart(date.getMinutes())}`
+}
 
 const KeysManagementPage = () => {
     const pageTitle = "Keys Management"
@@ -62,7 +68,7 @@ const KeysManagementPage = () => {
                         kid: value.kid,
                         delete: getDeleteLinkFor(value.kid),
                         rotate: getRotateLinkFor(value.kid, value.ttl),
-                        expireIn: value.ttl == 0 ? "Never" : moment.unix(value.ttl).format("YYYY-MM-DD:HH:mm")
+                        expireIn: value.ttl == 0 ? "Never" : formatUnixTimestamp(value.ttl)
 
                     }
                 })

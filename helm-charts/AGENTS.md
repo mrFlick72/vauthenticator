@@ -1,30 +1,62 @@
-# Repository Guidelines
+# VAuthenticator Helm Chart Agent Guide
 
-## Project Structure & Module Organization
-This directory is the Helm subproject of the VAuthenticator monorepo. Keep Helm-only changes in `helm-charts/`; do not mix edits from `../auth-server` or `../management-ui` unless explicitly requested. The installable chart lives in `charts/vauthenticator/`: `Chart.yaml` defines metadata and dependencies, `values.yaml` holds defaults, and `templates/` contains rendered Kubernetes resources such as `vauthenticator.yaml`, `vauthenticator-management-ui.yaml`, and `serviceaccount.yaml`. Top-level `README.md` covers chart usage, `charts/README.md` documents values, and `changelog/` stores release notes by version.
+## Purpose
 
-Use whenever is required context7 MCP server and the following skills if available: 
-- $kubernetes-architect
-- $helm-chart-patterns
-- $helm-chart-scaffolding
-- $helm-expert
+`helm-charts` contains the Helm packaging for deploying VAuthenticator workloads to Kubernetes.
 
-## Build, Test, and Development Commands
-- `helm dependency update charts/vauthenticator` fetches the Bitnami Redis dependency declared in `Chart.yaml`.
-- `helm lint charts/vauthenticator` validates chart structure and template syntax.
-- `helm template dev charts/vauthenticator -f charts/vauthenticator/values.yaml` renders manifests locally for review.
-- `helm package charts/vauthenticator` builds a distributable chart archive.
+Use this guide for any work under `helm-charts`. Per the repo root instructions, this file takes precedence over the monorepo-level `AGENTS.md` for this subtree.
 
-Run lint and template before opening a PR. If you change dependencies or defaults, rerun `helm dependency update`.
+The relevant skill if available for this project is: $helm-chart-patterns
 
-## Coding Style & Naming Conventions
-Use 2-space YAML indentation. Keep Helm control blocks trimmed with `{{- ... -}}` where appropriate, and reuse shared helpers from `charts/vauthenticator/templates/_helpers.tpl` for names and labels. Preserve the existing values schema instead of renaming keys; examples include `managementUi`, `selectorLabels`, and `in-namespace`. Follow current naming patterns: lower-kebab-case Kubernetes resource names and `vauthenticator.*` helper identifiers.
+## Stack
 
-## Testing Guidelines
-This repo has no unit-test suite; validation is chart-focused. Every change should pass `helm lint` and a local `helm template` render. Review both authorization server and management UI resources when editing shared values or helpers. If a change affects chart behavior or exposed configuration, update `charts/README.md` and add or extend the matching file in `changelog/`.
+- Helm 3 application chart
+- Kubernetes manifests rendered from Go templates
+- Optional Bitnami Redis dependency controlled by `in-namespace.redis.enabled`
+- Optional KEDA `ScaledObject` resources for `application` and `managementUi`
 
-## Commit & Pull Request Guidelines
-Current history uses short, imperative commit subjects without prefixes, for example `add management ui and helm chart resources as raw copy`. Keep commits small and scoped to `helm-charts/`. PRs should explain operator impact, list changed values, note any version bump in `charts/vauthenticator/Chart.yaml`, and include rendered manifest snippets when behavior changes are not obvious from the diff.
+## Repository Layout
 
-## Security & Configuration Tips
-Never commit real AWS keys, secrets, or environment-specific endpoints in `values.yaml`. Keep placeholders in source control and provide real settings through separate values files, secret managers, or deployment-time overrides.
+- `README.md`: chart repository usage
+- `charts/README.md`: values and chart configuration documentation
+- `charts/vauthenticator/Chart.yaml`: chart metadata and dependencies
+- `charts/vauthenticator/values.yaml`: default values
+- `charts/vauthenticator/templates`: rendered Kubernetes resources
+- `changelog`: chart release notes
+
+## Workloads
+
+The current chart renders:
+
+- `application`: the VAuthenticator authorization server
+- `managementUi`: the management UI application image configured by the chart templates
+- optional in-namespace Redis subchart
+
+`config-manager` is a separate Go project at the repository root and is not currently templated by this chart unless a change explicitly adds that deployment.
+
+## Build And Validation Commands
+
+From `helm-charts`:
+
+- `helm dependency update charts/vauthenticator`
+- `helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost`
+- `helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost`
+
+## Conventions For Changes
+
+- Keep `values.yaml`, templates, and `charts/README.md` in sync whenever a value is added, renamed, or removed.
+- Bump `Chart.yaml` chart version and add a changelog entry for chart behavior changes.
+- Do not put secrets directly in default values; document secret integration or value overrides instead.
+- Preserve existing value names unless the migration is explicitly requested. Some keys, such as `lables`, are misspelled but part of the current chart API.
+- Use helpers from `_helpers.tpl` for names, labels, and selector labels.
+- Quote strings that may be parsed ambiguously by YAML, and use `toYaml` plus `nindent` for nested maps.
+- Validate rendered manifests with `helm lint` and, when changing templates, `helm template`.
+- The default ingress host is `*`; pass explicit host values when linting or rendering locally.
+
+## Files Worth Reading First
+
+- `charts/vauthenticator/values.yaml`
+- `charts/vauthenticator/templates/vauthenticator.yaml`
+- `charts/vauthenticator/templates/vauthenticator-management-ui.yaml`
+- `charts/vauthenticator/templates/_helpers.tpl`
+- `charts/README.md`

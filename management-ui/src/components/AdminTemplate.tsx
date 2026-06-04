@@ -6,6 +6,7 @@ import { ExitToApp } from "@mui/icons-material";
 import MenuIcon from '@mui/icons-material/Menu';
 import { Breakpoint } from "@mui/system";
 import { isAuthenticated } from "../auth/Authenticator";
+import SessionManagement from "../auth/SessionManagement";
 
 interface AdminTemplateProps {
     page: string,
@@ -22,6 +23,7 @@ const AdminTemplate: React.FC<AdminTemplateProps> = ({ page, maxWidth, children 
 
     return (
         <ThemeProvider theme={theme}>
+            <SessionManagement/>
             <AppBar position="static">
                 <Toolbar variant="dense">
                     <a href="#">

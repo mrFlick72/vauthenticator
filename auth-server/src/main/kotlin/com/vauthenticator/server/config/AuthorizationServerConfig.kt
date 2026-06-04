@@ -17,6 +17,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.OPEN_ID
 import com.vauthenticator.server.oauth2.clientapp.domain.StoreClientApplication
 import com.vauthenticator.server.oauth2.registeredclient.ClientAppRegisteredClientRepository
 import com.vauthenticator.server.oauth2.token.OAuth2TokenEnhancer
+import com.vauthenticator.server.oidc.logout.ClearSessionStateLogoutHandler
 import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory
 import com.vauthenticator.server.oidc.sessionmanagement.sendAuthorizationResponse
 import com.vauthenticator.server.oidc.token.IdTokenEnhancer
@@ -44,6 +45,7 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
+import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationSuccessHandler
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
@@ -147,6 +149,11 @@ class AuthorizationServerConfig {
         http.cors { it.configurationSource(corsConfigurationSource) }
 
         val userInfoEnhancer = UserInfoEnhancer(accountRepository)
+        val clearSessionStateLogoutHandler = ClearSessionStateLogoutHandler(
+            SessionManagementFactory(providerSettings),
+            redisTemplate
+        )
+        val oidcLogoutAuthenticationSuccessHandler = OidcLogoutAuthenticationSuccessHandler()
 
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
         http
@@ -175,7 +182,12 @@ class AuthorizationServerConfig {
                         .filter { it != OPEN_ID }
                         .forEach { providerConfiguration.scope(it.content) }
                 }
-            }.logoutEndpoint {}
+            }.logoutEndpoint { customizer ->
+                customizer.logoutResponseHandler { request, response, authentication ->
+                    clearSessionStateLogoutHandler.logout(request, response, authentication)
+                    oidcLogoutAuthenticationSuccessHandler.onAuthenticationSuccess(request, response, authentication)
+                }
+            }
         }
             .authorizationEndpoint {
                 it.authorizationResponseHandler(
@@ -193,4 +205,3 @@ class AuthorizationServerConfig {
     }
 
 }
-

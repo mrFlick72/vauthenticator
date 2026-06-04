@@ -58,21 +58,9 @@
         e.source.postMessage(stat, e.origin);
     }
 
-    async function get_op_user_agent_state(issuer, session_state) {
-        // return document.cookie.split("=")[1] || ""
-        let response = await fetch(`${issuer}/check_session?state=${session_state}`,
-            {
-                method: 'GET',
-                credentials: 'same-origin'
-            }
-        );
-        let responseStatus = response.status
-        if(responseStatus === 200){
-            let sessionState = await response.json()
-            return sessionState.state
-        }else  {
-            return ""
-        }
+    async function get_op_user_agent_state() {
+        const match = document.cookie.match(/(?:^|;\s*)opbs=([^;]*)/)
+        return match ? match[1] : ""
     }
     /*]]>*/
 

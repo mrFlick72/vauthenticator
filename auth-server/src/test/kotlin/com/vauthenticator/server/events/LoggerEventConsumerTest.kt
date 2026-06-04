@@ -13,7 +13,6 @@ class LoggerEventConsumerTest {
     @Test
     fun `when a non Default Spring event is fired line MFA event`(output: CapturedOutput) {
         val underTest = LoggerEventConsumer(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
-
         underTest.accept(vauthenticatorAuthEvent)
         val message = """
             The user anemail@domain.com

@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.api
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.vauthenticator.server.keys.domain.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus

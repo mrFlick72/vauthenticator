@@ -15,15 +15,15 @@ const LeftRightComponentRow: React.FC<LeftRightComponentRowProps> = ({
                                                                          rightComponentsColumnSize
                                                                      }) => {
 
-    return <Grid container sm={12}>
-        <Grid item sm={leftComponentColumnsSize}>
+    return <Grid container columns={12}>
+        <Grid size={leftComponentColumnsSize}>
             {leftComponents}
         </Grid>
 
-        <Grid item sm={12 - leftComponentColumnsSize - rightComponentsColumnSize}>
+        <Grid size={12 - leftComponentColumnsSize - rightComponentsColumnSize}>
         </Grid>
 
-        <Grid item sm={rightComponentsColumnSize}>
+        <Grid size={rightComponentsColumnSize}>
             {rightComponents}
         </Grid>
     </Grid>

@@ -1,6 +1,5 @@
 package com.vauthenticator.server.account.adapter
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
 import com.vauthenticator.server.account.domain.Date
 import com.vauthenticator.server.account.domain.Phone
@@ -9,6 +8,7 @@ import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.JsonUtils.prettifyInOneLineJsonFrom
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.ObjectMapper
 
 class AccountCacheContentConverterTest {
     val underTest = AccountCacheContentConverter(ObjectMapper())

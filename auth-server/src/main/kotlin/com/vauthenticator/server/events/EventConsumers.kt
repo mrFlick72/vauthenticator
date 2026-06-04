@@ -17,7 +17,6 @@ class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) 
             event payload: ${event.payload}
      """.trimIndent()
         logger.info(logLine)
-
     }
 
     override fun handleable(event: VAuthenticatorEvent) = eventConsumerConfig.enable[LOGGER_EVENT_CONSUMER] ?: false

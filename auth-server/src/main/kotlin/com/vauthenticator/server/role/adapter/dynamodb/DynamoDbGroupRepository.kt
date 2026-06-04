@@ -1,6 +1,6 @@
 package com.vauthenticator.server.role.adapter.dynamodb
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.vauthenticator.server.extentions.asDynamoAttribute
 import com.vauthenticator.server.extentions.filterEmptyMetadata
 import com.vauthenticator.server.extentions.valueAsLongFor

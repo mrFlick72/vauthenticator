@@ -22,7 +22,7 @@ class AccountSetUpJob(
             "admin@email.com",
             "secret!",
             authorities = setOf(userRole.name, adminRole.name),
-            groups = emptySet(),
+            groups = setOf(),
             email = "admin@email.com",
             emailVerified = true,
             firstName = "Admin",
