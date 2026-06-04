@@ -1,0 +1,4 @@
+/bin/
+config-manager
+/.env
+/coverage.out
