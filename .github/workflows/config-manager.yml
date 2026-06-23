@@ -1,4 +1,4 @@
-name: build VAuthenticator
+name: build VAuthenticator Management UI config-manager
 
 on:
   push: { }
