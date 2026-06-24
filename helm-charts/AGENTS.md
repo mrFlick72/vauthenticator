@@ -21,7 +21,7 @@ The relevant skill if available for this project is: $helm-chart-patterns
 - `charts/README.md`: values and chart configuration documentation
 - `charts/vauthenticator/Chart.yaml`: chart metadata and dependencies
 - `charts/vauthenticator/values.yaml`: default values
-- `charts/vauthenticator/templates`: rendered Kubernetes resources
+- `charts/vauthenticator/templates`: rendered Kubernetes resources, including workload ConfigMaps in `vauthenticator.yaml` and `vauthenticator-management-ui.yaml`
 - `changelog`: chart release notes
 
 ## Workloads

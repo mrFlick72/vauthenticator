@@ -14,7 +14,7 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 
 ## Stack
 
-- Backend: Spring Boot 4.0.x, Kotlin 2.2, Java 21
+- Backend: Spring Boot 4.0.x, Kotlin 2.3, Java 25
 - Security: Spring Security, Spring Authorization Server, OAuth2 Resource Server
 - Persistence: PostgreSQL or DynamoDB depending on active profile
 - Cache/session: Redis, Spring Session
@@ -116,6 +116,8 @@ Backend:
 - `./mvnw test`
 - `./mvnw package`
 - `./mvnw spring-boot:run`
+
+Use a Java 25 runtime/toolchain for Maven builds and local runs. The application image is based on `amazoncorretto:25-al2023`.
 
 Frontend:
 
