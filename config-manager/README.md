@@ -50,9 +50,11 @@ The direct Go equivalents are:
 
 ```bash
 go test ./...
-go build -o bin/config-manager ./cmd/config-manager
+go build -o bin/config-manager .
 go mod tidy
 ```
+
+CI builds a Linux binary named `app`, packages it with `application.Dockerfile`, and publishes `mrflick72/vauthenticator-config-manager-k8s` tagged as `latest` from `main` or with the branch name otherwise.
 
 ## API
 
@@ -74,8 +76,9 @@ The management UI caches this response in `sessionStorage` under the `appConfig`
 
 ## Project Layout
 
-- `cmd/config-manager`: executable entry point and graceful shutdown
+- `main.go`: executable entry point and graceful shutdown
 - `internal/api`: Gin router and `/api/config` endpoint
 - `internal/config`: environment loading, parsing, defaults, and validation
 - `.env.example`: local configuration example
 - `Makefile`: development commands
+- `application.Dockerfile`: runtime image definition used by CI

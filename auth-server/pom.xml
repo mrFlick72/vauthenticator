@@ -18,8 +18,8 @@
     <description>OpenId Connect/OAuth2 Authorization Server for VAuthenticator Open Source Product</description>
 
     <properties>
-        <java.version>21</java.version>
-        <kotlin.version>2.2.21</kotlin.version>
+        <java.version>25</java.version>
+        <kotlin.version>2.3.21</kotlin.version>
 
         <io.mockk.version>1.14.6</io.mockk.version>
         <aws.sdk.version>2.44.6</aws.sdk.version>
@@ -257,6 +257,7 @@
                 <configuration>
                     <args>
                         <arg>-Xjsr305=strict</arg>
+                        <arg>-Xannotation-default-target=param-property</arg>
                     </args>
                     <compilerPlugins>
                         <plugin>spring</plugin>
@@ -269,38 +270,6 @@
                         <version>${kotlin.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.12</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/*Config.*</exclude>
-                        <exclude>**/VAuthenticatorApplication.*</exclude>
-                    </excludes>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
-                        <configuration>
-                            <formats>
-                                <format>HTML</format>
-                                <format>XML</format>
-                            </formats>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

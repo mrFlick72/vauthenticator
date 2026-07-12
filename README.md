@@ -87,6 +87,7 @@ The nginx config in `management-ui/local` proxies `GET /api/config` to `config-m
 - [Auth server MFA](auth-server/docs/mfa.md)
 - [Auth server Lambda token customization](auth-server/docs/lambda.md)
 - [Auth server management endpoints](auth-server/docs/management.md)
+- [Auth server security assessment](auth-server/docs/security-assessment.md)
 - [Management UI agent guide](management-ui/AGENTS.md)
 - [Config manager README](config-manager/README.md)
 - [Helm chart README](helm-charts/README.md)
