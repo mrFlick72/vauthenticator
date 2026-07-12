@@ -18,11 +18,13 @@ The relevant skills if available for this project include: $golang-documentation
 
 ## Repository Layout
 
-- `cmd/config-manager`: executable entry point
+- `main.go`: executable entry point and graceful shutdown
 - `internal/api`: Gin router and HTTP endpoint tests
 - `internal/config`: environment and `.env` file loading, parsing, and validation
 - `.env.example`: local configuration example
 - `Makefile`: build, run, test, and tidy shortcuts
+- `application.Dockerfile`: runtime image definition used by CI
+- `.github/workflows/config-manager.yml`: CI workflow that builds, tests, and publishes the config-manager image
 
 ## Runtime Contract
 
@@ -69,9 +71,11 @@ Optional value:
 Equivalent direct commands:
 
 - `go test ./...`
-- `go run ./cmd/config-manager`
-- `go build -o bin/config-manager ./cmd/config-manager`
+- `go run .`
+- `go build -o bin/config-manager .`
 - `go mod tidy`
+
+The CI workflow builds a Linux binary named `app` and uses `application.Dockerfile` to publish `mrflick72/vauthenticator-config-manager-k8s`.
 
 ## Conventions For Changes
 
@@ -84,7 +88,7 @@ Equivalent direct commands:
 
 ## Files Worth Reading First
 
-- `cmd/config-manager/main.go`
+- `main.go`
 - `internal/api/router.go`
 - `internal/config/config.go`
 - `README.md`

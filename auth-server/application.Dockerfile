@@ -2,7 +2,7 @@ FROM alpine:latest AS security_provider
 RUN addgroup -S application \
     && adduser -S application -G application
 
-FROM amazoncorretto:21-al2023
+FROM amazoncorretto:25-al2023
 
 COPY --from=security_provider /etc/passwd /etc/passwd
 USER application

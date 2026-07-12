@@ -1,10 +1,10 @@
 .PHONY: build run test tidy
 
 build:
-	go build -o bin/config-manager ./cmd/config-manager
+	go build -o bin/config-manager .
 
 run:
-	go run ./cmd/config-manager
+	go run .
 
 test:
 	go test ./...
