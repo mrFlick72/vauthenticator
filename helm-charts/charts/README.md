@@ -194,9 +194,30 @@ application:
       endpointOverride:
     dynamodb:
       endpointOverride:
+    sns:
+      endpointOverride:
+    lambda:
+      endpointOverride:
 ```
 
 Use these values for LocalStack or non-default AWS endpoints.
+
+### Lambda Token Enhancement
+
+```yaml
+application:
+  lambda:
+    aws:
+      enabled: false
+      functionName: vauthenticator-token-enhancer
+      functionResultCacheTtl: 10s
+```
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `application.lambda.aws.enabled` | Enable AWS Lambda-based token customization. | `false` |
+| `application.lambda.aws.functionName` | Lambda function name invoked for token enhancement. | `vauthenticator-token-enhancer` |
+| `application.lambda.aws.functionResultCacheTtl` | Cache TTL for Lambda invocation results, as a Spring duration. | `10s` |
 
 ### Password Policy
 

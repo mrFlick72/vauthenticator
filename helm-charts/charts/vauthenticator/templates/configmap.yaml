@@ -12,6 +12,10 @@ data:
         endpointOverride: {{ .Values.application.aws.kms.endpointOverride }}
       dynamodb:
         endpointOverride: {{ .Values.application.aws.dynamodb.endpointOverride }}
+      sns:
+        endpointOverride: {{ .Values.application.aws.sns.endpointOverride }}
+      lambda:
+        endpointOverride: {{ .Values.application.aws.lambda.endpointOverride }}
 
     password:
       password-history:
@@ -169,6 +173,11 @@ data:
           table-name: {{ .Values.application.dynamoDb.defaultMfaAccountMethods.tableName  }}
 
       host: {{ .Values.application.baseUrl }}
+      lambda:
+        aws:
+          enabled: {{ .Values.application.lambda.aws.enabled }}
+          function-name: {{ .Values.application.lambda.aws.functionName }}
+          function-result-cache-ttl: {{ .Values.application.lambda.aws.functionResultCacheTtl }}
     {{- if eq .Values.aws.iamUser.enabled true }}
     iamUserAwsCredentialsProvider: true
     {{- end }}

@@ -227,3 +227,13 @@ application:
       endpointOverride:
     dynamodb:
       endpointOverride:
+    sns:
+      endpointOverride:
+    lambda:
+      endpointOverride:
+
+  lambda:
+    aws:
+      enabled: false
+      functionName: vauthenticator-token-enhancer
+      functionResultCacheTtl: 10s
