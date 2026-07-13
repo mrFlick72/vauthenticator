@@ -2,13 +2,11 @@
 
 This directory contains the Helm chart repository assets for the VAuthenticator ecosystem.
 
-The current chart deploys:
+Two charts are published from this directory:
 
-- VAuthenticator authorization server (`application`)
-- VAuthenticator management UI workload (`managementUi`)
-- optional in-namespace Redis dependency from Bitnami
-
-`config-manager` is a separate Go project in this monorepo and is not currently rendered by the chart.
+- `charts/vauthenticator`: VAuthenticator authorization server (`application`), management UI
+  workload (`managementUi`), and an optional in-namespace Redis dependency from Bitnami
+- `charts/config-manager`: the `config-manager` runtime-config service consumed by the management UI
 
 ## Usage
 
@@ -27,6 +25,9 @@ cd helm-charts
 helm dependency update charts/vauthenticator
 helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
 helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
+
+helm lint charts/config-manager --set application.managementUiServerUrl=http://localhost
+helm template config-manager charts/config-manager --set application.managementUiServerUrl=http://localhost
 ```
 
 ## Redis
@@ -37,4 +38,5 @@ The chart can install Redis in the same namespace when `in-namespace.redis.enabl
 
 ## Documentation
 
-Detailed chart values are documented in [charts/README.md](charts/README.md).
+Detailed chart values are documented in [charts/README.md](charts/README.md) (vauthenticator) and
+[charts/config-manager/README.md](charts/config-manager/README.md) (config-manager).

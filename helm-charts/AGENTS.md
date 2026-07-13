@@ -17,22 +17,29 @@ The relevant skill if available for this project is: $helm-chart-patterns
 
 ## Repository Layout
 
+This directory holds two independent charts.
+
 - `README.md`: chart repository usage
-- `charts/README.md`: values and chart configuration documentation
+- `charts/README.md`: values and chart configuration documentation for `charts/vauthenticator`
 - `charts/vauthenticator/Chart.yaml`: chart metadata and dependencies
 - `charts/vauthenticator/values.yaml`: default values
 - `charts/vauthenticator/templates`: rendered Kubernetes resources, including workload ConfigMaps in `vauthenticator.yaml` and `vauthenticator-management-ui.yaml`
-- `changelog`: chart release notes
+- `changelog`: `charts/vauthenticator` release notes
+- `charts/config-manager/Chart.yaml`, `charts/config-manager/values.yaml`, `charts/config-manager/templates`: the `config-manager` chart
+- `charts/config-manager/README.md`: values and chart configuration documentation for `charts/config-manager`
+- `charts/config-manager/changelog`: `charts/config-manager` release notes
 
 ## Workloads
 
-The current chart renders:
+`charts/vauthenticator` renders:
 
 - `application`: the VAuthenticator authorization server
 - `managementUi`: the management UI application image configured by the chart templates
 - optional in-namespace Redis subchart
 
-`config-manager` is a separate Go project at the repository root and is not currently templated by this chart unless a change explicitly adds that deployment.
+`charts/config-manager` renders the `config-manager` Go service (Deployment + ClusterIP Service
+only, no Ingress — see `charts/config-manager/README.md`). `config-manager`'s source lives at the
+repository root, separate from this chart.
 
 ## Build And Validation Commands
 
@@ -41,6 +48,8 @@ From `helm-charts`:
 - `helm dependency update charts/vauthenticator`
 - `helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost`
 - `helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost`
+- `helm lint charts/config-manager --set application.managementUiServerUrl=http://localhost`
+- `helm template config-manager charts/config-manager --set application.managementUiServerUrl=http://localhost`
 
 ## Conventions For Changes
 

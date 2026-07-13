@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "config-manager.name" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "config-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.pod.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "config-manager.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /api/config
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: {{ .Values.pod.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pod.probes.liveness.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /api/config
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: {{ .Values.pod.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pod.probes.readiness.periodSeconds }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: SERVER_ADDRESS
+              value: {{ .Values.application.serverAddress | quote }}
+            - name: MANAGEMENT_UI_SERVER_URL
+              value: {{ required "application.managementUiServerUrl must be set" .Values.application.managementUiServerUrl | quote }}
+            - name: IDP_BASE_URL
+              value: {{ required "application.idpBaseUrl must be set" .Values.application.idpBaseUrl | quote }}
+            - name: CLIENT_APPLICATION_ID
+              value: {{ required "application.clientApplicationId must be set" .Values.application.clientApplicationId | quote }}
+            - name: REDIRECT_URI
+              value: {{ required "application.redirectUri must be set" .Values.application.redirectUri | quote }}
+            - name: AUTHENTICATION_CHECK_INTERVAL
+              value: {{ required "application.authenticationCheckInterval must be set" .Values.application.authenticationCheckInterval | quote }}
+            - name: API_BASE_URL
+              value: {{ required "application.apiBaseUrl must be set" .Values.application.apiBaseUrl | quote }}
