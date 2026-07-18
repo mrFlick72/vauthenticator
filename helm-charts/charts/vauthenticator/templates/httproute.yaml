@@ -25,6 +25,6 @@ spec:
         {{- toYaml .matches | nindent 8 }}
       backendRefs:
         - name: {{ include "vauthenticator.name" $ }}
-          port: {{ $.Values.service.port }}
+          port: {{ $.Values.application.server.port }}
     {{- end }}
 {{- end }}

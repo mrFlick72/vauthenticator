@@ -65,29 +65,36 @@ ingress:
 
 gateway:
   enabled: false
-  annotations: { }
-  labels: { }
-  parentRefs: [ ]
+
+# Gateway API routing. gateway.enabled renders a Gateway resource; httpRoute.enabled
+# renders an HTTPRoute bound to it via parentRefs. Enable both together to route
+# through the Gateway API instead of the Ingress resource (ingress.enabled and
+# httpRoute.enabled are mutually exclusive; the chart fails to render if both are true).
+httpRoute:
+  enabled: false
+  gatewayClassName: nginx
+  gatewayPort: 443
   hostnames: [ ]
+  tls: [ ]
+  annotations: { }
   rules: [ ]
 
   # Example:
-  # TLS/cert-manager is configured on the referenced Gateway listener, not on this HTTPRoute.
-  # enabled: true
-  # parentRefs:
-  #   - name: traefik-gateway
-  #     namespace: traefik
-  #     sectionName: websecure # Optional: target a specific Gateway listener
-  # hostnames:
-  #   - auth.example.com # Should match the HTTPS listener hostname/certificate DNS name
-  # rules:
-  #   - matches:
-  #       - path:
-  #           type: PathPrefix
-  #           value: /
-  #     backendRefs:
-  #       - name: vauthenticator
-  #         port: 8080
+  # gateway:
+  #   enabled: true
+  # httpRoute:
+  #   enabled: true
+  #   gatewayClassName: nginx
+  #   gatewayPort: 443
+  #   hostnames:
+  #     - auth.example.com # Must match the HTTPS listener hostname/certificate DNS name
+  #   tls:
+  #     - secretName: auth-tls
+  #   rules:
+  #     - matches:
+  #         - path:
+  #             type: PathPrefix
+  #             value: /
 
 
 resources:

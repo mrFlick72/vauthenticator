@@ -156,6 +156,39 @@ podAnnotations: {}
 | `*.selectorLabels` | Selector labels used by Deployment and Service. Change with care. | workload-specific |
 | `*.podAnnotations` | Extra pod annotations. | `{}` |
 
+## Gateway API (Gateway + HTTPRoute)
+
+Alternative to `ingress.enabled` for routing to the `application` workload via the
+Kubernetes Gateway API. `gateway.enabled` renders a `Gateway` resource named after
+the release; `httpRoute.enabled` renders an `HTTPRoute` bound to that `Gateway` via
+`parentRefs`. Enable both together. `ingress.enabled` and `httpRoute.enabled` are
+mutually exclusive — the chart fails to render if both are `true`.
+
+```yaml
+gateway:
+  enabled: false
+
+httpRoute:
+  enabled: false
+  gatewayClassName: nginx
+  gatewayPort: 443
+  hostnames: []
+  tls: []
+  annotations: {}
+  rules: []
+```
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `gateway.enabled` | Render the `Gateway` resource. | `false` |
+| `httpRoute.enabled` | Render the `HTTPRoute` resource. Fails if `ingress.enabled` is also `true`. | `false` |
+| `httpRoute.gatewayClassName` | `Gateway` spec `gatewayClassName`. | `nginx` |
+| `httpRoute.gatewayPort` | Listener port on the `Gateway`. | `443` |
+| `httpRoute.hostnames` | Hostnames for both the `Gateway` HTTPS listener and the `HTTPRoute`. | `[]` |
+| `httpRoute.tls` | `certificateRefs` list (`- secretName: ...`) for the `Gateway`'s TLS listener. | `[]` |
+| `httpRoute.annotations` | Extra `HTTPRoute` annotations. | `{}` |
+| `httpRoute.rules` | `HTTPRoute` rule `matches` list; `backendRefs` is always the `application` Service on `application.server.port`. | `[]` |
+
 ## Authorization Server
 
 ```yaml
