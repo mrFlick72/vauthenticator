@@ -302,8 +302,10 @@ application:
       cache:
         ttl: 1h
         name: account_cache
-      role:
-        tableName: your_VAuthenticator_Account_Role_table_name
+    group:
+      tableName: your_VAuthenticator_Group_table_name
+    groupToRole:
+      tableName: your_VAuthenticator_GroupToRole_table_name
     role:
       tableName: your_VAuthenticator_Role_table_name
       cache:
@@ -333,6 +335,11 @@ application:
 ```
 
 These values configure the DynamoDB-backed repositories used by the `dynamo` profile.
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `application.dynamoDb.group.tableName` | DynamoDB table used by the group repository. | `your_VAuthenticator_Group_table_name` |
+| `application.dynamoDb.groupToRole.tableName` | DynamoDB table used to store group-to-role mappings. | `your_VAuthenticator_GroupToRole_table_name` |
 
 ### Documents, MFA, Assets, Events
 

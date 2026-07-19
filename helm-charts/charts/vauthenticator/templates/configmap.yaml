@@ -145,6 +145,10 @@ data:
           cache:
             ttl: {{ .Values.application.dynamoDb.account.cache.ttl }}
             name: {{ .Values.application.dynamoDb.account.cache.name }}
+        group:
+          table-name: {{ .Values.application.dynamoDb.group.tableName }}
+        group-to-role:
+          table-name: {{ .Values.application.dynamoDb.groupToRole.tableName }}
         role:
           table-name: {{ .Values.application.dynamoDb.role.tableName }}
           cache:
