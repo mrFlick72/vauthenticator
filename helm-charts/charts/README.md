@@ -105,6 +105,8 @@ pod:
     rediness:
       initialDelaySeconds: 10
       periodSeconds: 30
+  dnsConfig:
+    ndots: "1"
 
 service:
   type: ClusterIP
@@ -141,6 +143,7 @@ podAnnotations: {}
 | --- | --- | --- |
 | `*.pod.probes.liveness.*` | Liveness probe timing. | `10`, `30` |
 | `*.pod.probes.rediness.*` | Readiness probe timing. The value name is currently spelled `rediness` in the chart API. | `10`, `30` |
+| `*.pod.dnsConfig.ndots` | Pod DNS `ndots` option. Kept low so external hostnames (e.g. AWS service endpoints) resolve as absolute names instead of first being tried against inherited search domains, which can misresolve on networks whose upstream resolver answers unknown names under its search domain instead of returning NXDOMAIN. | `"1"` |
 | `*.service.type` | Kubernetes service type. | `ClusterIP` |
 | `*.ingress.host` | Ingress host. | `"*"` |
 | `*.ingress.annotations` | Extra ingress annotations. | `{}` |

@@ -27,6 +27,12 @@ spec:
       {{- if eq .Values.aws.eks.serviceAccount.enabled true }}
       serviceAccountName: {{ include "vauthenticator.name" . }}
       {{- end }}
+      {{- with .Values.pod.dnsConfig }}
+      dnsConfig:
+        options:
+          - name: ndots
+            value: {{ .ndots | quote }}
+      {{- end }}
       volumes:
         - name: application-logs
           emptyDir: {}
