@@ -74,7 +74,7 @@ gateway:
 # httpRoute.enabled are mutually exclusive; the chart fails to render if both are true).
 httpRoute:
   enabled: false
-  gatewayClassName: nginx
+  gatewayClassName: traeefik
   gatewayPort: 443
   hostnames: [ ]
   tls: [ ]
