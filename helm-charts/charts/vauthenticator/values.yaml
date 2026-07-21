@@ -75,7 +75,7 @@ gateway:
 httpRoute:
   enabled: false
   gatewayClassName: traeefik
-  gatewayPort: 443
+  gatewayPort: 8443
   hostnames: [ ]
   tls: [ ]
   annotations: { }
