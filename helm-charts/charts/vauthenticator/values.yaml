@@ -51,8 +51,7 @@ pod:
       initialDelaySeconds: 10
       periodSeconds: 30
   podAnnotations: { }
-  dnsConfig:
-    ndots: "1"
+
 
 
 service:
