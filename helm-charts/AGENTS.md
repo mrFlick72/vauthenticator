@@ -13,43 +13,53 @@ The relevant skill if available for this project is: $helm-chart-patterns
 - Helm 3 application chart
 - Kubernetes manifests rendered from Go templates
 - Optional Bitnami Redis dependency controlled by `in-namespace.redis.enabled`
-- Optional KEDA `ScaledObject` resources for `application` and `managementUi`
+- Optional KEDA `ScaledObject` resource for `application`
 
 ## Repository Layout
 
-This directory holds two independent charts.
+This directory holds three independent charts.
 
 - `README.md`: chart repository usage
 - `charts/README.md`: values and chart configuration documentation for `charts/vauthenticator`
 - `charts/vauthenticator/Chart.yaml`: chart metadata and dependencies
 - `charts/vauthenticator/values.yaml`: default values
-- `charts/vauthenticator/templates`: rendered Kubernetes resources, including workload ConfigMaps in `vauthenticator.yaml` and `vauthenticator-management-ui.yaml`
+- `charts/vauthenticator/templates`: rendered Kubernetes resources, including the workload `ConfigMap` in `configmap.yaml` and the `Deployment` in `deployment.yaml`
 - `changelog`: `charts/vauthenticator` release notes
 - `charts/config-manager/Chart.yaml`, `charts/config-manager/values.yaml`, `charts/config-manager/templates`: the `config-manager` chart
 - `charts/config-manager/README.md`: values and chart configuration documentation for `charts/config-manager`
 - `charts/config-manager/changelog`: `charts/config-manager` release notes
+- `charts/management-ui/Chart.yaml`, `charts/management-ui/values.yaml`, `charts/management-ui/templates`: the `management-ui` chart
+- `charts/management-ui/README.md`: values and chart configuration documentation for `charts/management-ui`
+- `charts/management-ui/changelog`: `charts/management-ui` release notes
 
 ## Workloads
 
 `charts/vauthenticator` renders:
 
 - `application`: the VAuthenticator authorization server
-- `managementUi`: the management UI application image configured by the chart templates
 - optional in-namespace Redis subchart
 
 `charts/config-manager` renders the `config-manager` Go service (Deployment + ClusterIP Service
 only, no Ingress — see `charts/config-manager/README.md`). `config-manager`'s source lives at the
 repository root, separate from this chart.
 
+`charts/management-ui` renders the management UI static React SPA (Deployment + ClusterIP
+Service + optional Ingress/HTTPRoute — see `charts/management-ui/README.md`). The image is an
+nginx container built from the `management-ui` project's `Dockerfile`, which also proxies
+`/api/config` to `config-manager` at request time so the browser never needs to know where
+`config-manager` actually lives (see `management-ui/docker/default.conf.template`).
+
 ## Build And Validation Commands
 
 From `helm-charts`:
 
 - `helm dependency update charts/vauthenticator`
-- `helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost`
-- `helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost`
+- `helm lint charts/vauthenticator --set ingress.host=localhost`
+- `helm template vauthenticator charts/vauthenticator --set ingress.host=localhost`
 - `helm lint charts/config-manager --set application.managementUiServerUrl=http://localhost`
 - `helm template config-manager charts/config-manager --set application.managementUiServerUrl=http://localhost`
+- `helm lint charts/management-ui --set application.configManagerUpstream=http://localhost:8086`
+- `helm template management-ui charts/management-ui --set application.configManagerUpstream=http://localhost:8086`
 
 ## Conventions For Changes
 
@@ -65,7 +75,7 @@ From `helm-charts`:
 ## Files Worth Reading First
 
 - `charts/vauthenticator/values.yaml`
-- `charts/vauthenticator/templates/vauthenticator.yaml`
-- `charts/vauthenticator/templates/vauthenticator-management-ui.yaml`
+- `charts/vauthenticator/templates/deployment.yaml`
+- `charts/vauthenticator/templates/configmap.yaml`
 - `charts/vauthenticator/templates/_helpers.tpl`
 - `charts/README.md`

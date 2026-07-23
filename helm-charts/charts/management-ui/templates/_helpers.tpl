@@ -1,0 +1,31 @@
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "management-ui.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "management-ui.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "management-ui.labels" -}}
+helm.sh/chart: {{ include "management-ui.chart" . }}
+{{ include "management-ui.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "management-ui.selectorLabels" -}}
+{{- toYaml .Values.selectorLabels }}
+app.kubernetes.io/name: {{ include "management-ui.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

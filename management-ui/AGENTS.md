@@ -26,6 +26,7 @@ The package manifest is `src/package.json` and the webpack config is `src/webpac
 - `src/theme`: MUI theme setup
 - `src/utils`: shared frontend utilities
 - `local`: nginx and docker-compose files for local static serving
+- `docker`: production nginx config template used by the root `Dockerfile`
 - `dist`: generated frontend output
 - `changelog`: project release notes
 
@@ -99,6 +100,17 @@ Local defaults point to:
 - config manager: `http://local.ui-config-manager.vauthenticator.com:8086`
 
 Local serving is nginx-based through `local/docker-compose.yml`, which mounts `dist/` into an nginx container and exposes port `8085`.
+
+## Production Image
+
+The root `Dockerfile` builds the SPA (`npm run production-build`) and copies it into an
+`nginx:1.27-alpine` image. `docker/default.conf.template` is the production nginx config,
+rendered at container start via the official nginx image's envsubst-on-templates
+mechanism. It proxies `GET /api/config` to `${CONFIG_MANAGER_UPSTREAM}` (an env var set by
+the `helm-charts/charts/management-ui` chart), resolving that host at request time (not
+just once at startup) so the container doesn't crash-loop if `config-manager`'s Service
+isn't resolvable yet — this requires `NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1`, which the chart
+also sets. See `helm-charts/charts/management-ui/README.md` for the chart side.
 
 ## Build And Run Commands
 

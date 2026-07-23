@@ -5,10 +5,11 @@ This document describes the values for the `charts/vauthenticator` Helm chart.
 The chart currently renders:
 
 - `application`: the VAuthenticator authorization server
-- `managementUi`: the management UI workload configured by the chart
 - optional Redis dependency when `in-namespace.redis.enabled=true`
 
-`config-manager` is not currently part of this chart.
+`config-manager` and the management UI are not part of this chart. The management UI is
+distributed by the separate `charts/management-ui` chart — see
+[`charts/management-ui/README.md`](management-ui/README.md).
 
 ## Development Commands
 
@@ -16,8 +17,8 @@ Run these commands from `helm-charts`:
 
 ```bash
 helm dependency update charts/vauthenticator
-helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
-helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
+helm lint charts/vauthenticator --set ingress.host=localhost
+helm template vauthenticator charts/vauthenticator --set ingress.host=localhost
 ```
 
 ## Redis Dependency
@@ -66,7 +67,7 @@ aws:
 
 ## Common Workload Values
 
-These groups exist under both `application` and `managementUi` unless noted.
+These groups apply to the `application` workload.
 
 ### KEDA
 
@@ -371,62 +372,3 @@ application:
   events:
     enableLoggerConsumer: false
 ```
-
-## Management UI Workload
-
-The chart currently always renders the management UI manifests; there is no `managementUi.enabled` value in `values.yaml`.
-
-```yaml
-managementUi:
-  redis:
-    database: 1
-    host: vauthenticator-redis-master.auth.svc.cluster.local
-  server:
-    port: 8080
-  sso:
-    clientApp:
-      clientId: vauthenticator-management-ui
-      clientSecret: secret
-  baseUrl: http://application-example-host.com
-```
-
-| Name | Description | Default |
-| --- | --- | --- |
-| `managementUi.redis.database` | Redis database index for the management UI workload. | `1` |
-| `managementUi.server.port` | Management UI container port. | `8080` |
-| `managementUi.sso.clientApp.clientId` | OAuth2 client ID used by the management UI workload. | `vauthenticator-management-ui` |
-| `managementUi.sso.clientApp.clientSecret` | OAuth2 client secret used by the management UI workload. | `secret` |
-| `managementUi.baseUrl` | Public management UI base URL. | `http://application-example-host.com` |
-
-### Management UI Documents And Assets
-
-```yaml
-managementUi:
-  documentRepository:
-    engine: s3
-    bucketName: test
-    fsBasePath: dist
-    documentType:
-      mail:
-        cacheName: mail-document-local-cache
-        cacheTtl: 1m
-      staticAsset:
-        cacheName: static-asset-document-local-cache
-        cacheTtl: 1m
-  assetServer:
-    onS3:
-      enabled: false
-      bundleVersion: ""
-    baseUrl: http://localhost:8080
-```
-
-| Name | Description | Default |
-| --- | --- | --- |
-| `managementUi.documentRepository.engine` | Document repository engine. | `s3` |
-| `managementUi.documentRepository.bucketName` | S3 bucket when the S3 document engine is used. | `test` |
-| `managementUi.documentRepository.fsBasePath` | Filesystem base path when filesystem documents are used. | `dist` |
-| `managementUi.documentRepository.documentType.mail.*` | Mail document cache settings. | See `values.yaml` |
-| `managementUi.documentRepository.documentType.staticAsset.*` | Static asset cache settings. | See `values.yaml` |
-| `managementUi.assetServer.onS3.enabled` | Serve assets from S3. | `false` |
-| `managementUi.assetServer.onS3.bundleVersion` | Optional S3 bundle version. | `""` |
-| `managementUi.assetServer.baseUrl` | Asset server base URL. | `http://localhost:8080` |

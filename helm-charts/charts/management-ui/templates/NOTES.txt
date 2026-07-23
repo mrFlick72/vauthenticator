@@ -1,0 +1,16 @@
+management-ui is deployed as a ClusterIP service reachable at:
+
+  {{ include "management-ui.name" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+
+{{- if .Values.ingress.enabled }}
+
+An Ingress is also rendered at host {{ .Values.ingress.host }} (path /) for external access.
+{{- end }}
+{{- if .Values.gateway.enabled }}
+
+A Gateway API HTTPRoute is also rendered for external access.
+{{- end }}
+
+nginx proxies GET /api/config to Values.application.configManagerUpstream at request time.
+Make sure that value points at the config-manager Service backing this release (see the
+config-manager chart's NOTES.txt for its reachable address).

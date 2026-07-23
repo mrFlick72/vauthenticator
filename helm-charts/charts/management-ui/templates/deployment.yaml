@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "management-ui.name" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "management-ui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.pod.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "management-ui.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /logout.html
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: {{ .Values.pod.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pod.probes.liveness.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /logout.html
+              port: {{ .Values.service.port }}
+            initialDelaySeconds: {{ .Values.pod.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.pod.probes.readiness.periodSeconds }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            # Lets nginx resolve CONFIG_MANAGER_UPSTREAM at request time via the cluster
+            # DNS resolver instead of only once at startup, so this container doesn't
+            # crash-loop if that Service isn't resolvable yet when it starts, and picks
+            # up Service IP changes without a restart. See docker/default.conf.template.
+            - name: NGINX_ENTRYPOINT_LOCAL_RESOLVERS
+              value: "1"
+            - name: CONFIG_MANAGER_UPSTREAM
+              value: {{ required "application.configManagerUpstream must be set" .Values.application.configManagerUpstream | quote }}
