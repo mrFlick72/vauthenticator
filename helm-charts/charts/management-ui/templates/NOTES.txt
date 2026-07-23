@@ -6,9 +6,10 @@ management-ui is deployed as a ClusterIP service reachable at:
 
 An Ingress is also rendered at host {{ .Values.ingress.host }} (path /) for external access.
 {{- end }}
-{{- if .Values.gateway.enabled }}
+{{- if .Values.httpRoute.enabled }}
 
-A Gateway API HTTPRoute is also rendered for external access.
+A Gateway API HTTPRoute is also rendered for external access
+{{- if .Values.gateway.enabled }}, bound to a Gateway resource also rendered by this chart{{- end }}.
 {{- end }}
 
 nginx proxies GET /api/config to Values.application.configManagerUpstream at request time.

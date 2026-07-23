@@ -79,27 +79,39 @@ ingress:
 
 The rendered Ingress always routes path `/` to this Service.
 
-## Gateway API HTTPRoute
+## Gateway API (Gateway + HTTPRoute)
+
+Alternative to `ingress.enabled` for routing to this Service via the Kubernetes Gateway
+API, mirroring the pattern used by the `vauthenticator` chart's `application` workload.
+`gateway.enabled` renders a `Gateway` resource named after the release; `httpRoute.enabled`
+renders an `HTTPRoute` bound to that `Gateway` via `parentRefs`. Enable both together.
+`ingress.enabled` and `httpRoute.enabled` are mutually exclusive — the chart fails to
+render if both are `true`.
 
 ```yaml
 gateway:
   enabled: false
-  annotations: {}
-  labels: {}
-  parentRefs: []
+
+httpRoute:
+  enabled: false
+  gatewayClassName: nginx
+  gatewayPort: 443
   hostnames: []
+  tls: []
+  annotations: {}
   rules: []
 ```
 
 | Name | Description | Default |
 | --- | --- | --- |
-| `gateway.enabled` | Render a Gateway API `HTTPRoute` instead of / alongside the Ingress. | `false` |
-| `gateway.parentRefs` | Gateway references. Required (fails the render) when `gateway.enabled=true`. | `[]` |
-| `gateway.hostnames` | Hostnames for the route. | `[]` |
-| `gateway.rules` | Route rules. Defaults to a single `PathPrefix /` rule targeting this Service when empty. | `[]` |
-| `gateway.annotations` / `gateway.labels` | Extra metadata on the `HTTPRoute`. | `{}` |
-
-TLS/cert-manager is configured on the referenced Gateway listener, not on this `HTTPRoute`.
+| `gateway.enabled` | Render the `Gateway` resource. | `false` |
+| `httpRoute.enabled` | Render the `HTTPRoute` resource. Fails if `ingress.enabled` is also `true`. | `false` |
+| `httpRoute.gatewayClassName` | `Gateway` spec `gatewayClassName`. | `nginx` |
+| `httpRoute.gatewayPort` | Listener port on the `Gateway`. | `443` |
+| `httpRoute.hostnames` | Hostnames for both the `Gateway` HTTPS listener and the `HTTPRoute`. | `[]` |
+| `httpRoute.tls` | `certificateRefs` list (`- secretName: ...`) for the `Gateway`'s TLS listener. | `[]` |
+| `httpRoute.annotations` | Extra `HTTPRoute` annotations. | `{}` |
+| `httpRoute.rules` | `HTTPRoute` rule `matches` list; `backendRefs` is always this Service on `service.port`. No default rule is rendered when empty — set this explicitly when `httpRoute.enabled=true`. | `[]` |
 
 ## Application Configuration
 
