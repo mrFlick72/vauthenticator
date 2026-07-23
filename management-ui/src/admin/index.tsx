@@ -1,39 +1,42 @@
-import React from 'react';
+import React, {lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
 
 import {HashRouter} from "react-router-dom";
 import {Route, Routes} from "react-router";
-import HomePage from "./home/HomePage";
-import RolesManagementPage from "./roles/RolesManagementPage";
-import AccountManagementPage from "./account/AccountManagementPage";
-import AccountListPage from "./account/AccountListPage";
-import KeyManagementPage from "./key/KeyManagementPage";
-import MailTemplatePage from "./communication/MailTemplatePage";
-import ClientAppListPage from "./clientapp/pages/clientAppList/ClientAppListPage";
-import ClientAppManagementPage from './clientapp/pages/clientAppManagement/ClientAppManagementPage';
+
+const HomePage = lazy(() => import("./home/HomePage"));
+const RolesManagementPage = lazy(() => import("./roles/RolesManagementPage"));
+const AccountManagementPage = lazy(() => import("./account/AccountManagementPage"));
+const AccountListPage = lazy(() => import("./account/AccountListPage"));
+const KeyManagementPage = lazy(() => import("./key/KeyManagementPage"));
+const MailTemplatePage = lazy(() => import("./communication/MailTemplatePage"));
+const ClientAppListPage = lazy(() => import("./clientapp/pages/clientAppList/ClientAppListPage"));
+const ClientAppManagementPage = lazy(() => import('./clientapp/pages/clientAppManagement/ClientAppManagementPage'));
 
 const VAuthenticatorAdminApp = () =>
     <HashRouter>
-        <Routes>
-            <Route path="/" element={<HomePage/>}/>
+        <Suspense fallback={<div></div>}>
+            <Routes>
+                <Route path="/" element={<HomePage/>}/>
 
-            <Route path="/client-applications/list"
-                   element={<ClientAppListPage/>}/>
+                <Route path="/client-applications/list"
+                       element={<ClientAppListPage/>}/>
 
-            <Route path="/client-applications/save"
-                   element={<ClientAppManagementPage/>}/>
+                <Route path="/client-applications/save"
+                       element={<ClientAppManagementPage/>}/>
 
-            <Route path="/client-applications/edit/:clientAppId"
-                   element={<ClientAppManagementPage/>}/>
+                <Route path="/client-applications/edit/:clientAppId"
+                       element={<ClientAppManagementPage/>}/>
 
-            <Route path="/roles" element={<RolesManagementPage/>}/>
+                <Route path="/roles" element={<RolesManagementPage/>}/>
 
-            <Route path="/accounts" element={<AccountListPage/>}/>
-            <Route path="/accounts/edit/:accountEMail" element={<AccountManagementPage/>}/>
+                <Route path="/accounts" element={<AccountListPage/>}/>
+                <Route path="/accounts/edit/:accountEMail" element={<AccountManagementPage/>}/>
 
-            <Route path="/keys" element={<KeyManagementPage/>}/>
-            <Route path="/email-templates" element={<MailTemplatePage/>}/>
-        </Routes>
+                <Route path="/keys" element={<KeyManagementPage/>}/>
+                <Route path="/email-templates" element={<MailTemplatePage/>}/>
+            </Routes>
+        </Suspense>
     </HashRouter>
 
 
