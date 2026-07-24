@@ -1,0 +1,1 @@
+{"idpBaseUrl":"${IDP_BASE_URL}","clientApplicationId":"${CLIENT_APPLICATION_ID}","redirectUri":"${REDIRECT_URI}","authenticationCheckInterval":${AUTHENTICATION_CHECK_INTERVAL},"apiBaseUrl":"${API_BASE_URL}"}
