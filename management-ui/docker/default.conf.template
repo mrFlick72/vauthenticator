@@ -3,19 +3,12 @@ server {
     listen  [::]:80;
     server_name  _;
 
-    # Resolve the config-manager upstream at request time (not just once at nginx
-    # startup) so this container doesn't crash-loop if config-manager's Service DNS
-    # isn't resolvable yet when nginx starts, and so it picks up Service IP changes
-    # without a restart. Requires NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1 so the base image
-    # exports NGINX_LOCAL_RESOLVERS from /etc/resolv.conf (the cluster DNS resolver).
-    resolver ${NGINX_LOCAL_RESOLVERS} valid=10s;
-
-    location /api/config {
-        set $config_manager_upstream ${CONFIG_MANAGER_UPSTREAM};
-        proxy_pass $config_manager_upstream;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+    # config.json is generated at container start by
+    # /docker-entrypoint.d/40-generate-app-config.sh from docker/config.json.template.
+    # no-store so a redeploy's new values are never served stale from a client/proxy cache.
+    location = /config.json {
+        root /usr/share/nginx/html;
+        add_header Cache-Control "no-store";
     }
 
     location / {

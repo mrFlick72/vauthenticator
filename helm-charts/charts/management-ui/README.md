@@ -5,10 +5,10 @@ This document describes the values for the `charts/management-ui` Helm chart.
 The chart deploys the VAuthenticator management UI (a static React SPA) as a `ClusterIP`
 Service and Deployment, with an optional Ingress and an optional Gateway API `HTTPRoute`
 for external access. The image is built from the `management-ui` project's `Dockerfile`:
-an nginx container serving the built SPA, which also proxies `GET /api/config` to the
-`config-manager` service so the browser fetches runtime configuration same-origin instead
-of needing to know where `config-manager` actually lives. See `management-ui/AGENTS.md`
-and `management-ui/docker/default.conf.template` for the serving contract this chart
+an nginx container serving the built SPA, plus a `GET /config.json` static file generated
+at container start from this chart's `application.*` values (see "Application
+Configuration" below). See `management-ui/AGENTS.md` and
+`management-ui/docker/default.conf.template` for the serving contract this chart
 configures.
 
 ## Development Commands
@@ -16,8 +16,18 @@ configures.
 Run these commands from `helm-charts`:
 
 ```bash
-helm lint charts/management-ui --set application.configManagerUpstream=http://localhost:8086
-helm template management-ui charts/management-ui --set application.configManagerUpstream=http://localhost:8086
+helm lint charts/management-ui \
+  --set application.idpBaseUrl=http://localhost:9090 \
+  --set application.clientApplicationId=vauthenticator-management-ui \
+  --set application.redirectUri=http://localhost:8085/callback \
+  --set application.authenticationCheckInterval=15000 \
+  --set application.apiBaseUrl=http://localhost:9090/api
+helm template management-ui charts/management-ui \
+  --set application.idpBaseUrl=http://localhost:9090 \
+  --set application.clientApplicationId=vauthenticator-management-ui \
+  --set application.redirectUri=http://localhost:8085/callback \
+  --set application.authenticationCheckInterval=15000 \
+  --set application.apiBaseUrl=http://localhost:9090/api
 ```
 
 ## Image, Service, Resources
@@ -117,17 +127,27 @@ httpRoute:
 
 ```yaml
 application:
-  configManagerUpstream: http://config-manager-example-host.com:8086
+  idpBaseUrl: http://application-example-host.com
+  clientApplicationId: vauthenticator-management-ui
+  redirectUri: http://management-ui-example-host.com/callback
+  authenticationCheckInterval: "15000"
+  apiBaseUrl: http://application-example-host.com/api
 ```
 
 | Name | Environment variable | Description | Default |
 | --- | --- | --- | --- |
-| `application.configManagerUpstream` | `CONFIG_MANAGER_UPSTREAM` | Scheme + host + port nginx proxies `GET /api/config` to. Required, no safe default — point it at the `config-manager` chart's Service for this release, e.g. `http://<config-manager-release-name>.<namespace>.svc.cluster.local:8086`. | placeholder |
+| `application.idpBaseUrl` | `IDP_BASE_URL` | Base URL of the authorization server. | placeholder |
+| `application.clientApplicationId` | `CLIENT_APPLICATION_ID` | OAuth2 client ID the SPA authenticates as. | placeholder |
+| `application.redirectUri` | `REDIRECT_URI` | OAuth2 authorization code redirect URI, must match the client app's registered callback. | placeholder |
+| `application.authenticationCheckInterval` | `AUTHENTICATION_CHECK_INTERVAL` | Milliseconds between OIDC session-management checks. | `"15000"` |
+| `application.apiBaseUrl` | `API_BASE_URL` | Base URL the admin SPA calls for management API requests. | placeholder |
 
-This is required by the Deployment template (`required` fails `helm template`/`helm
-install` with a clear error instead of deploying a pod that can't reach config-manager).
+This chart renders these into a `ConfigMap` (`templates/configmap.yaml`), wired into the
+Deployment via `envFrom`. All five are required by the ConfigMap template (`required`
+fails `helm template`/`helm install` with a clear error instead of deploying a pod that
+serves broken config).
 
-nginx resolves this host at request time rather than once at container startup (the
-Deployment always sets `NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1`), so the pod doesn't
-crash-loop if `config-manager`'s Service isn't resolvable yet when it starts, and it
-picks up Service IP changes without a restart.
+nginx's entrypoint script (`management-ui/docker/40-generate-app-config.sh`) reads these
+env vars at container start and renders `management-ui/docker/config.json.template` into
+`/usr/share/nginx/html/config.json`, served at `GET /config.json` with
+`Cache-Control: no-store`.

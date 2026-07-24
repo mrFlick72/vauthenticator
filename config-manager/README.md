@@ -1,5 +1,12 @@
 # config-manager
 
+> **Status: unused, scheduled for removal.** `management-ui` now generates its own
+> `/config.json` at container start from a Helm-managed ConfigMap (see
+> `management-ui/AGENTS.md` and `helm-charts/charts/management-ui/README.md`) and no
+> longer calls this service. It is kept temporarily as a fallback while that change is
+> verified; deleting this service, its Helm chart, and its CI workflow is a planned
+> follow-up change.
+
 `config-manager` exposes the external runtime configuration consumed by the VAuthenticator management UI.
 
 The service is intentionally small: it reads environment-backed configuration with Viper, validates the fields required by the UI, enables CORS for the configured management UI origin, and serves `GET /api/config`.

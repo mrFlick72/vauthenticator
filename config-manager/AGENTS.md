@@ -1,5 +1,11 @@
 # VAuthenticator Config Manager Agent Guide
 
+> **Status: unused, scheduled for removal.** `management-ui` now generates its own
+> `/config.json` at container start from a Helm-managed ConfigMap instead of calling this
+> service (see `management-ui/AGENTS.md` and `helm-charts/charts/management-ui/README.md`).
+> This service is kept temporarily as a fallback while that change is verified; deleting
+> it (the Go service, its Helm chart, and its CI workflow) is a planned follow-up change.
+
 ## Purpose
 
 `config-manager` is a small Go service that exposes runtime configuration for the standalone VAuthenticator management UI.

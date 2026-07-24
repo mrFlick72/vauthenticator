@@ -8,7 +8,7 @@ type ApplicationConfig = {
 
 }
 
-type ConfigManagerResponse = {
+type ApplicationConfigResponse = {
     redirectUri: string,
     clientApplicationId: string,
     idpBaseUrl: string
@@ -18,7 +18,7 @@ type ConfigManagerResponse = {
 
 const appConfigStorageKey = "appConfig"
 const defaultScope = "openid email profile"
-const configManagerEndpoint = "/api/config"
+const appConfigEndpoint = "/config.json"
 let applicationConfigRequest: Promise<ApplicationConfig> | null = null
 
 const isLogoutRequest = () => {
@@ -26,7 +26,7 @@ const isLogoutRequest = () => {
     return pathname.endsWith("/logout") || pathname.endsWith("/logout.html")
 }
 
-const toApplicationConfig = (configData: ConfigManagerResponse): ApplicationConfig => ({
+const toApplicationConfig = (configData: ApplicationConfigResponse): ApplicationConfig => ({
     scope: defaultScope,
     redirectUri: configData.redirectUri,
     clientApplicationId: configData.clientApplicationId,
@@ -43,27 +43,26 @@ const loadApplicationConfigFromCache = (): ApplicationConfig | null => {
     }
 
     try {
-        return toApplicationConfig(JSON.parse(cachedConfig) as ConfigManagerResponse)
+        return toApplicationConfig(JSON.parse(cachedConfig) as ApplicationConfigResponse)
     } catch (e) {
         window.sessionStorage.removeItem(appConfigStorageKey)
         return null
     }
 }
 
-const loadApplicationConfigFromConfigManager = async (): Promise<ApplicationConfig> => {
-    const response = await fetch(configManagerEndpoint, {
+const loadApplicationConfigFromServer = async (): Promise<ApplicationConfig> => {
+    const response = await fetch(appConfigEndpoint, {
         method: "GET",
         headers: {
             "Accept": "application/json",
         },
-        mode: "cors",
     })
 
     if (!response.ok) {
         throw new Error(`Unable to load application configuration: ${response.status}`)
     }
 
-    return toApplicationConfig(await response.json() as ConfigManagerResponse)
+    return toApplicationConfig(await response.json() as ApplicationConfigResponse)
 }
 
 const cacheApplicationConfig = (configData: ApplicationConfig) => {
@@ -87,7 +86,7 @@ export const applicationConfigLoader = async () => {
     }
 
     if (!applicationConfigRequest) {
-        applicationConfigRequest = loadApplicationConfigFromConfigManager()
+        applicationConfigRequest = loadApplicationConfigFromServer()
             .catch((e) => {
                 applicationConfigRequest = null
                 throw e

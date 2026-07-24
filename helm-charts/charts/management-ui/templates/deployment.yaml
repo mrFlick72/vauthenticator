@@ -44,12 +44,6 @@ spec:
             periodSeconds: {{ .Values.pod.probes.readiness.periodSeconds }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          env:
-            # Lets nginx resolve CONFIG_MANAGER_UPSTREAM at request time via the cluster
-            # DNS resolver instead of only once at startup, so this container doesn't
-            # crash-loop if that Service isn't resolvable yet when it starts, and picks
-            # up Service IP changes without a restart. See docker/default.conf.template.
-            - name: NGINX_ENTRYPOINT_LOCAL_RESOLVERS
-              value: "1"
-            - name: CONFIG_MANAGER_UPSTREAM
-              value: {{ required "application.configManagerUpstream must be set" .Values.application.configManagerUpstream | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "management-ui.name" . }}-app-config
