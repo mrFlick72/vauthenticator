@@ -80,5 +80,5 @@ jobs:
           cd management-ui
 
           echo "$DOCKER_TAG"
-          docker build -t mrflick72/vauthenticator-management-ui:$DOCKER_TAG -f Dockerfile .
-          docker push mrflick72/vauthenticator-management-ui:$DOCKER_TAG
+          docker build -t mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG -f Dockerfile .
+          docker push mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG
