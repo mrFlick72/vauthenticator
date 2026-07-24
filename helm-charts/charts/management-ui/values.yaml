@@ -36,8 +36,8 @@ gateway:
 # are mutually exclusive; the chart fails to render if both are true).
 httpRoute:
   enabled: false
-  gatewayClassName: nginx
-  gatewayPort: 443
+  gatewayClassName: traefik
+  gatewayPort: 8443
   hostnames: [ ]
   tls: [ ]
   annotations: { }
