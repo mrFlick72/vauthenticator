@@ -6,6 +6,8 @@ The chart currently renders:
 
 - `application`: the VAuthenticator authorization server
 - optional Redis dependency when `in-namespace.redis.enabled=true`
+- optional PostgreSQL dependency when `in-namespace.db.enabled=true`, used when
+  `application.profiles` includes `database`
 
 The management UI is not part of this chart. It is distributed by the separate
 `charts/management-ui` chart — see
@@ -39,6 +41,44 @@ redis:
 | --- | --- | --- |
 | `in-namespace.redis.enabled` | Install the Bitnami Redis dependency in the release namespace. | `true` |
 | `redis.*` | Values passed to the Bitnami Redis subchart. | See `values.yaml` |
+
+## PostgreSQL Dependency
+
+Rendered only when `application.profiles` includes `database`. The chart's
+`spring.datasource` block (in the `application` ConfigMap) requires
+`application.datasource.url` in that case — rendering fails without it.
+
+```yaml
+in-namespace:
+  db:
+    enabled: true
+
+postgresql:
+  primary:
+    initdb:
+      scriptsConfigMap: vauthenticator-postgres-initdb
+
+application:
+  profiles: dynamo,kms,database
+  datasource:
+    url: jdbc:postgresql://db.local.vauthenticator.com:5432/
+    username: postgres
+    password: postgres
+```
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `in-namespace.db.enabled` | Install the Bitnami PostgreSQL dependency in the release namespace. | `true` |
+| `postgresql.*` | Values passed to the Bitnami PostgreSQL subchart. | See `values.yaml` |
+| `postgresql.primary.initdb.scriptsConfigMap` | Name of the ConfigMap the subchart mounts for `initdb` bootstrap scripts. Must match the ConfigMap the chart renders from `files/schema.sql`. | `vauthenticator-postgres-initdb` |
+| `application.datasource.url` | JDBC URL for the Spring datasource. Required (rendering fails if unset) when `application.profiles` includes `database`. | `""` |
+| `application.datasource.username` | Spring datasource username. | `""` |
+| `application.datasource.password` | Spring datasource password. | `""` |
+
+The chart ships `files/schema.sql`, the SQL schema used to bootstrap a fresh
+PostgreSQL database (roles, groups, group-to-role mappings, etc.). It is rendered
+into a `vauthenticator-postgres-initdb` ConfigMap and consumed by the PostgreSQL
+subchart's `primary.initdb.scriptsConfigMap` on first startup.
 
 ## AWS
 
@@ -212,7 +252,7 @@ application:
 | Name | Description | Default |
 | --- | --- | --- |
 | `application.sessionTimeout` | Server session timeout as a Spring duration. | `24h` |
-| `application.profiles` | Active Spring profiles, for example `dynamo,kms` or `database`. | `dynamo,kms` |
+| `application.profiles` | Active Spring profiles, for example `dynamo,kms` or `dynamo,kms,database`. Including `database` renders `spring.datasource` — see [PostgreSQL Dependency](#postgresql-dependency). | `dynamo,kms` |
 | `application.masterKey` | Master key identifier used by key management configuration. | `ACCOUNT_KMS_KEY` |
 | `application.baseUrl` | Public authorization server base URL. | `http://application-example-host.com` |
 | `application.backChannelBaseUrl` | Internal service URL used for back-channel calls. | `http://vauthenticator:8080` |

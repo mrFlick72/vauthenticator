@@ -4,8 +4,8 @@ This directory contains the Helm chart repository assets for the VAuthenticator 
 
 Two charts are published from this directory:
 
-- `charts/vauthenticator`: VAuthenticator authorization server (`application`) and an optional
-  in-namespace Redis dependency from Bitnami
+- `charts/vauthenticator`: VAuthenticator authorization server (`application`) and optional
+  in-namespace Redis and PostgreSQL dependencies from Bitnami
 - `charts/management-ui`: the standalone management UI static React SPA, served by nginx
 
 ## Usage
