@@ -17,7 +17,7 @@ The relevant skill if available for this project is: $helm-chart-patterns
 
 ## Repository Layout
 
-This directory holds three independent charts.
+This directory holds two independent charts.
 
 - `README.md`: chart repository usage
 - `charts/README.md`: values and chart configuration documentation for `charts/vauthenticator`
@@ -25,9 +25,6 @@ This directory holds three independent charts.
 - `charts/vauthenticator/values.yaml`: default values
 - `charts/vauthenticator/templates`: rendered Kubernetes resources, including the workload `ConfigMap` in `configmap.yaml` and the `Deployment` in `deployment.yaml`
 - `changelog`: `charts/vauthenticator` release notes
-- `charts/config-manager/Chart.yaml`, `charts/config-manager/values.yaml`, `charts/config-manager/templates`: the `config-manager` chart
-- `charts/config-manager/README.md`: values and chart configuration documentation for `charts/config-manager`
-- `charts/config-manager/changelog`: `charts/config-manager` release notes
 - `charts/management-ui/Chart.yaml`, `charts/management-ui/values.yaml`, `charts/management-ui/templates`: the `management-ui` chart
 - `charts/management-ui/README.md`: values and chart configuration documentation for `charts/management-ui`
 - `charts/management-ui/changelog`: `charts/management-ui` release notes
@@ -39,15 +36,13 @@ This directory holds three independent charts.
 - `application`: the VAuthenticator authorization server
 - optional in-namespace Redis subchart
 
-`charts/config-manager` renders the `config-manager` Go service (Deployment + ClusterIP Service
-only, no Ingress — see `charts/config-manager/README.md`). `config-manager`'s source lives at the
-repository root, separate from this chart.
-
 `charts/management-ui` renders the management UI static React SPA (Deployment + ClusterIP
 Service + optional Ingress/HTTPRoute — see `charts/management-ui/README.md`). The image is an
-nginx container built from the `management-ui` project's `Dockerfile`, which also proxies
-`/api/config` to `config-manager` at request time so the browser never needs to know where
-`config-manager` actually lives (see `management-ui/docker/default.conf.template`).
+nginx container built from the `management-ui` project's `Dockerfile`. Runtime config is not
+proxied to a separate service: the chart's `application.*` values are rendered into a
+`ConfigMap` and wired into the Deployment via `envFrom`, and nginx's entrypoint script
+envsubst's them into a static `/config.json` at container start (see
+`management-ui/docker/40-generate-app-config.sh` and `management-ui/docker/default.conf.template`).
 
 ## Build And Validation Commands
 
@@ -56,10 +51,8 @@ From `helm-charts`:
 - `helm dependency update charts/vauthenticator`
 - `helm lint charts/vauthenticator --set ingress.host=localhost`
 - `helm template vauthenticator charts/vauthenticator --set ingress.host=localhost`
-- `helm lint charts/config-manager --set application.managementUiServerUrl=http://localhost`
-- `helm template config-manager charts/config-manager --set application.managementUiServerUrl=http://localhost`
-- `helm lint charts/management-ui --set application.configManagerUpstream=http://localhost:8086`
-- `helm template management-ui charts/management-ui --set application.configManagerUpstream=http://localhost:8086`
+- `helm lint charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.authenticationCheckInterval=15000 --set application.apiBaseUrl=http://localhost/api`
+- `helm template management-ui charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.authenticationCheckInterval=15000 --set application.apiBaseUrl=http://localhost/api`
 
 ## Conventions For Changes
 

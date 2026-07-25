@@ -2,11 +2,10 @@
 
 This directory contains the Helm chart repository assets for the VAuthenticator ecosystem.
 
-Three charts are published from this directory:
+Two charts are published from this directory:
 
 - `charts/vauthenticator`: VAuthenticator authorization server (`application`) and an optional
   in-namespace Redis dependency from Bitnami
-- `charts/config-manager`: the `config-manager` runtime-config service consumed by the management UI
 - `charts/management-ui`: the standalone management UI static React SPA, served by nginx
 
 ## Usage
@@ -27,11 +26,18 @@ helm dependency update charts/vauthenticator
 helm lint charts/vauthenticator --set ingress.host=localhost
 helm template vauthenticator charts/vauthenticator --set ingress.host=localhost
 
-helm lint charts/config-manager --set application.managementUiServerUrl=http://localhost
-helm template config-manager charts/config-manager --set application.managementUiServerUrl=http://localhost
-
-helm lint charts/management-ui --set application.configManagerUpstream=http://localhost:8086
-helm template management-ui charts/management-ui --set application.configManagerUpstream=http://localhost:8086
+helm lint charts/management-ui \
+  --set application.idpBaseUrl=http://localhost \
+  --set application.clientApplicationId=vauthenticator-management-ui \
+  --set application.redirectUri=http://localhost/callback \
+  --set application.authenticationCheckInterval=15000 \
+  --set application.apiBaseUrl=http://localhost/api
+helm template management-ui charts/management-ui \
+  --set application.idpBaseUrl=http://localhost \
+  --set application.clientApplicationId=vauthenticator-management-ui \
+  --set application.redirectUri=http://localhost/callback \
+  --set application.authenticationCheckInterval=15000 \
+  --set application.apiBaseUrl=http://localhost/api
 ```
 
 ## Redis
@@ -42,6 +48,5 @@ The chart can install Redis in the same namespace when `in-namespace.redis.enabl
 
 ## Documentation
 
-Detailed chart values are documented in [charts/README.md](charts/README.md) (vauthenticator),
-[charts/config-manager/README.md](charts/config-manager/README.md) (config-manager), and
-[charts/management-ui/README.md](charts/management-ui/README.md) (management-ui).
+Detailed chart values are documented in [charts/README.md](charts/README.md) (vauthenticator)
+and [charts/management-ui/README.md](charts/management-ui/README.md) (management-ui).

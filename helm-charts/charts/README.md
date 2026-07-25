@@ -7,8 +7,8 @@ The chart currently renders:
 - `application`: the VAuthenticator authorization server
 - optional Redis dependency when `in-namespace.redis.enabled=true`
 
-`config-manager` and the management UI are not part of this chart. The management UI is
-distributed by the separate `charts/management-ui` chart — see
+The management UI is not part of this chart. It is distributed by the separate
+`charts/management-ui` chart — see
 [`charts/management-ui/README.md`](management-ui/README.md).
 
 ## Development Commands
