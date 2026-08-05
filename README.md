@@ -1,6 +1,6 @@
 # VAuthenticator
 
-VAuthenticator is an OpenID Connect and OAuth2 authorization server ecosystem. The repository started from an OAuth2 authorization server built during a master thesis and now contains the backend, admin UI, runtime UI configuration service, and Helm deployment assets.
+VAuthenticator is an OpenID Connect and OAuth2 authorization server ecosystem. The repository started from an OAuth2 authorization server built during a master thesis and now contains the backend, admin UI, and Helm deployment assets.
 
 ## Projects
 
@@ -8,7 +8,6 @@ VAuthenticator is an OpenID Connect and OAuth2 authorization server ecosystem. T
 | --- | --- |
 | `auth-server` | Kotlin/Spring Boot authorization server with OAuth2, OIDC, MFA, account lifecycle, roles, keys, templates, and management APIs. |
 | `management-ui` | Standalone React/TypeScript admin UI for managing clients, accounts, roles, keys, and email templates. |
-| `config-manager` | Go service that exposes runtime configuration consumed by the management UI. |
 | `helm-charts` | Helm chart and chart repository docs for Kubernetes deployment. |
 
 ## Architecture
@@ -42,20 +41,11 @@ Add these hostnames to your local hosts file:
 ```text
 127.0.0.1   local.api.vauthenticator.com
 127.0.0.1   local.management.vauthenticator.com
-127.0.0.1   local.ui-config-manager.vauthenticator.com
 ```
 
 Start the auth-server dependencies and tenant setup from the auth-server local docs:
 
 - [auth-server/local/readme.md](auth-server/local/readme.md)
-
-Run the configuration service used by the management UI:
-
-```bash
-cd config-manager
-export CONFIG_MANAGER_ENV_FILE=.env.example
-make run
-```
 
 Build and serve the management UI locally:
 
@@ -69,7 +59,7 @@ The local UI is served from:
 
 - `http://local.management.vauthenticator.com:8085/secure/admin/index`
 
-The nginx config in `management-ui/local` proxies `GET /api/config` to `config-manager` on `host.docker.internal:8086` and forwards the `Host` header as `local.ui-config-manager.vauthenticator.com`.
+Runtime auth/API settings are loaded from a static `GET /config.json`, generated at container start by the nginx entrypoint from `local/.env` (see `management-ui/AGENTS.md`).
 
 ## Build And Test
 
@@ -79,7 +69,6 @@ The nginx config in `management-ui/local` proxies `GET /api/config` to `config-m
 | `auth-server/src/main/frontend` | `npm install`, `npm run build`, `npm run production-build`, `npm run watch` |
 | `management-ui/src` | `npm install`, `npm run build`, `npm run production-build`, `npm run watch` |
 | `management-ui` | `bash build.sh` |
-| `config-manager` | `make test`, `make run`, `make build`, `make tidy` |
 
 ## Documentation
 
@@ -89,5 +78,4 @@ The nginx config in `management-ui/local` proxies `GET /api/config` to `config-m
 - [Auth server management endpoints](auth-server/docs/management.md)
 - [Auth server security assessment](auth-server/docs/security-assessment.md)
 - [Management UI agent guide](management-ui/AGENTS.md)
-- [Config manager README](config-manager/README.md)
 - [Helm chart README](helm-charts/README.md)

@@ -40,6 +40,34 @@ resource "aws_dynamodb_table" "role_table" {
   tags = merge(tomap({ "Name" = var.role_table_name }), var.common_resource_tags)
 }
 
+resource "aws_dynamodb_table" "group_table" {
+  name = "${var.group_table_name}${var.table_name_suffix}"
+
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "group_name"
+
+  attribute {
+    name = "group_name"
+    type = "S"
+  }
+
+  tags = merge(tomap({ "Name" = var.group_table_name }), var.common_resource_tags)
+}
+
+resource "aws_dynamodb_table" "group_to_role_table" {
+  name = "${var.group_to_role_table_name}${var.table_name_suffix}"
+
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "group_name"
+
+  attribute {
+    name = "group_name"
+    type = "S"
+  }
+
+  tags = merge(tomap({ "Name" = var.group_to_role_table_name }), var.common_resource_tags)
+}
+
 resource "aws_dynamodb_table" "ticket_table" {
   name = "${var.ticket_table_name}${var.table_name_suffix}"
 

@@ -31,6 +31,14 @@ variable "role_table_name" {
   type    = string
   default = "VAuthenticator_Role"
 }
+variable "group_table_name" {
+  type    = string
+  default = "VAuthenticator_Group"
+}
+variable "group_to_role_table_name" {
+  type    = string
+  default = "VAuthenticator_Group_To_Role"
+}
 variable "ticket_table_name" {
   type    = string
   default = "VAuthenticator_Ticket"

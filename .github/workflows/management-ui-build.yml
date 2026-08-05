@@ -13,57 +13,72 @@ on:
         required: true
         type: string
 jobs:
-#  tag-artifact:
-#    if: github.event.inputs.version != '' || github.event.inputs.version != ' '
-#    needs:
-#      - build-backend
-#      - ui-backend
-#
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - name: checkout
-#        uses: actions/checkout@v4
-#
-#      - name: make an echo
-#        run: |
-#          echo version ${{github.event.inputs.version}}
-#
-#      - name: set the Tag version
-#        run: |
-#          git config --global user.email "${{ secrets.GIT_EMAIL }}"
-#          git config --global user.name "${{ secrets.GIT_USERNAME }}"
-#
-#          mvn versions:set -DnewVersion=${{github.event.inputs.version}}
-#          git commit -am "[skip-ci] new version release ${{github.event.inputs.version}}"
-#          git push
-#
-#      - name: Create tag
-#        uses: ncipollo/release-action@v1
-#        with:
-#          bodyFile: changelog/${{github.event.inputs.version}}.md
-#          tag: ${{github.event.inputs.version}}
-#
-#      - name: set the Next Development version
-#        run: |
-#          git config --global user.email "${{ secrets.GIT_EMAIL }}"
-#          git config --global user.name "${{ secrets.GIT_USERNAME }}"
-#
-#          mvn versions:set -DnewVersion=${{github.event.inputs.newversion}}
-#          git commit -am "[skip-ci] new version release ${{github.event.inputs.newversion}}"
-#          git push
+  #  tag-artifact:
+  #    if: github.event.inputs.version != '' || github.event.inputs.version != ' '
+  #    needs:
+  #      - build-backend
+  #      - ui-backend
+  #
+  #    runs-on: ubuntu-22.04
+  #    steps:
+  #      - name: checkout
+  #        uses: actions/checkout@v4
+  #
+  #      - name: make an echo
+  #        run: |
+  #          echo version ${{github.event.inputs.version}}
+  #
+  #      - name: set the Tag version
+  #        run: |
+  #          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+  #          git config --global user.name "${{ secrets.GIT_USERNAME }}"
+  #
+  #          mvn versions:set -DnewVersion=${{github.event.inputs.version}}
+  #          git commit -am "[skip-ci] new version release ${{github.event.inputs.version}}"
+  #          git push
+  #
+  #      - name: Create tag
+  #        uses: ncipollo/release-action@v1
+  #        with:
+  #          bodyFile: changelog/${{github.event.inputs.version}}.md
+  #          tag: ${{github.event.inputs.version}}
+  #
+  #      - name: set the Next Development version
+  #        run: |
+  #          git config --global user.email "${{ secrets.GIT_EMAIL }}"
+  #          git config --global user.name "${{ secrets.GIT_USERNAME }}"
+  #
+  #          mvn versions:set -DnewVersion=${{github.event.inputs.newversion}}
+  #          git commit -am "[skip-ci] new version release ${{github.event.inputs.newversion}}"
+  #          git push
   build-backend:
     runs-on: ubuntu-22.04
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
         with:
-          java-version: 21
-          distribution: 'corretto'
+          node-version: 22
 
       - name: Build
         run: |
           cd management-ui
-          ./build.sh
+          ./production-build.sh
+
+      - name: docker push
+        run: |
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+          
+          if [[ ${GITHUB_REF##*/} == 'main' ]]
+          then
+            DOCKER_TAG="latest"
+          else
+            DOCKER_TAG="${GITHUB_REF##*/}"
+          fi
+          cd management-ui
+
+          echo "$DOCKER_TAG"
+          docker build -t mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG -f Dockerfile .
+          docker push mrflick72/vauthenticator-management-ui-k8s:$DOCKER_TAG

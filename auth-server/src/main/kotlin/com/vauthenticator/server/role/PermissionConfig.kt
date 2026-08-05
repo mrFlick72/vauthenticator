@@ -4,11 +4,13 @@ import com.vauthenticator.server.cache.CacheOperation
 import com.vauthenticator.server.cache.RedisCacheOperation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.role.adapter.CachedRoleRepository
+import com.vauthenticator.server.role.adapter.dynamodb.DynamoDbGroupRepository
 import com.vauthenticator.server.role.adapter.dynamodb.DynamoDbRoleRepository
 import com.vauthenticator.server.role.adapter.jdbc.JdbcGroupRepository
 import com.vauthenticator.server.role.adapter.jdbc.JdbcRoleRepository
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.role.domain.RoleCacheContentConverter
+import com.vauthenticator.server.role.domain.RoleRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -29,6 +31,22 @@ class PermissionConfig {
     fun jdbcGroupRepository(
         jdbcClient: JdbcClient,
     ) = JdbcGroupRepository(jdbcClient)
+
+    @Bean("groupRepository")
+    @Profile("dynamo")
+    fun dynamoGroupRepository(
+        mapper: ObjectMapper,
+        dynamoDbClient: DynamoDbClient,
+        @Value("\${vauthenticator.dynamo-db.group.table-name}") groupTableName: String,
+        @Value("\${vauthenticator.dynamo-db.group-to-role.table-name}") groupToRoleAssociationTableName: String,
+        roleRepository: RoleRepository
+    ) = DynamoDbGroupRepository(
+        mapper,
+        groupTableName,
+        groupToRoleAssociationTableName,
+        dynamoDbClient,
+        roleRepository
+    )
 
     @Bean("roleRepository")
     @Profile("database")

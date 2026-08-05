@@ -5,10 +5,13 @@ This document describes the values for the `charts/vauthenticator` Helm chart.
 The chart currently renders:
 
 - `application`: the VAuthenticator authorization server
-- `managementUi`: the management UI workload configured by the chart
 - optional Redis dependency when `in-namespace.redis.enabled=true`
+- optional PostgreSQL dependency when `in-namespace.db.enabled=true`, used when
+  `application.profiles` includes `database`
 
-`config-manager` is not currently part of this chart.
+The management UI is not part of this chart. It is distributed by the separate
+`charts/management-ui` chart — see
+[`charts/management-ui/README.md`](management-ui/README.md).
 
 ## Development Commands
 
@@ -16,8 +19,8 @@ Run these commands from `helm-charts`:
 
 ```bash
 helm dependency update charts/vauthenticator
-helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
-helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
+helm lint charts/vauthenticator --set ingress.host=localhost
+helm template vauthenticator charts/vauthenticator --set ingress.host=localhost
 ```
 
 ## Redis Dependency
@@ -38,6 +41,44 @@ redis:
 | --- | --- | --- |
 | `in-namespace.redis.enabled` | Install the Bitnami Redis dependency in the release namespace. | `true` |
 | `redis.*` | Values passed to the Bitnami Redis subchart. | See `values.yaml` |
+
+## PostgreSQL Dependency
+
+Rendered only when `application.profiles` includes `database`. The chart's
+`spring.datasource` block (in the `application` ConfigMap) requires
+`application.datasource.url` in that case — rendering fails without it.
+
+```yaml
+in-namespace:
+  db:
+    enabled: true
+
+postgresql:
+  primary:
+    initdb:
+      scriptsConfigMap: vauthenticator-postgres-initdb
+
+application:
+  profiles: dynamo,kms,database
+  datasource:
+    url: jdbc:postgresql://db.local.vauthenticator.com:5432/
+    username: postgres
+    password: postgres
+```
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `in-namespace.db.enabled` | Install the Bitnami PostgreSQL dependency in the release namespace. | `true` |
+| `postgresql.*` | Values passed to the Bitnami PostgreSQL subchart. | See `values.yaml` |
+| `postgresql.primary.initdb.scriptsConfigMap` | Name of the ConfigMap the subchart mounts for `initdb` bootstrap scripts. Must match the ConfigMap the chart renders from `files/schema.sql`. | `vauthenticator-postgres-initdb` |
+| `application.datasource.url` | JDBC URL for the Spring datasource. Required (rendering fails if unset) when `application.profiles` includes `database`. | `""` |
+| `application.datasource.username` | Spring datasource username. | `""` |
+| `application.datasource.password` | Spring datasource password. | `""` |
+
+The chart ships `files/schema.sql`, the SQL schema used to bootstrap a fresh
+PostgreSQL database (roles, groups, group-to-role mappings, etc.). It is rendered
+into a `vauthenticator-postgres-initdb` ConfigMap and consumed by the PostgreSQL
+subchart's `primary.initdb.scriptsConfigMap` on first startup.
 
 ## AWS
 
@@ -66,7 +107,7 @@ aws:
 
 ## Common Workload Values
 
-These groups exist under both `application` and `managementUi` unless noted.
+These groups apply to the `application` workload.
 
 ### KEDA
 
@@ -105,6 +146,8 @@ pod:
     rediness:
       initialDelaySeconds: 10
       periodSeconds: 30
+  dnsConfig:
+    ndots: "1"
 
 service:
   type: ClusterIP
@@ -141,6 +184,7 @@ podAnnotations: {}
 | --- | --- | --- |
 | `*.pod.probes.liveness.*` | Liveness probe timing. | `10`, `30` |
 | `*.pod.probes.rediness.*` | Readiness probe timing. The value name is currently spelled `rediness` in the chart API. | `10`, `30` |
+| `*.pod.dnsConfig.ndots` | Pod DNS `ndots` option. Kept low so external hostnames (e.g. AWS service endpoints) resolve as absolute names instead of first being tried against inherited search domains, which can misresolve on networks whose upstream resolver answers unknown names under its search domain instead of returning NXDOMAIN. | `"1"` |
 | `*.service.type` | Kubernetes service type. | `ClusterIP` |
 | `*.ingress.host` | Ingress host. | `"*"` |
 | `*.ingress.annotations` | Extra ingress annotations. | `{}` |
@@ -155,6 +199,39 @@ podAnnotations: {}
 | `*.lables` | Extra pod labels. The value name is currently spelled `lables` in the chart API. | `{}` |
 | `*.selectorLabels` | Selector labels used by Deployment and Service. Change with care. | workload-specific |
 | `*.podAnnotations` | Extra pod annotations. | `{}` |
+
+## Gateway API (Gateway + HTTPRoute)
+
+Alternative to `ingress.enabled` for routing to the `application` workload via the
+Kubernetes Gateway API. `gateway.enabled` renders a `Gateway` resource named after
+the release; `httpRoute.enabled` renders an `HTTPRoute` bound to that `Gateway` via
+`parentRefs`. Enable both together. `ingress.enabled` and `httpRoute.enabled` are
+mutually exclusive — the chart fails to render if both are `true`.
+
+```yaml
+gateway:
+  enabled: false
+
+httpRoute:
+  enabled: false
+  gatewayClassName: nginx
+  gatewayPort: 443
+  hostnames: []
+  tls: []
+  annotations: {}
+  rules: []
+```
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `gateway.enabled` | Render the `Gateway` resource. | `false` |
+| `httpRoute.enabled` | Render the `HTTPRoute` resource. Fails if `ingress.enabled` is also `true`. | `false` |
+| `httpRoute.gatewayClassName` | `Gateway` spec `gatewayClassName`. | `nginx` |
+| `httpRoute.gatewayPort` | Listener port on the `Gateway`. | `443` |
+| `httpRoute.hostnames` | Hostnames for both the `Gateway` HTTPS listener and the `HTTPRoute`. | `[]` |
+| `httpRoute.tls` | `certificateRefs` list (`- secretName: ...`) for the `Gateway`'s TLS listener. | `[]` |
+| `httpRoute.annotations` | Extra `HTTPRoute` annotations. | `{}` |
+| `httpRoute.rules` | `HTTPRoute` rule `matches` list; `backendRefs` is always the `application` Service on `application.server.port`. | `[]` |
 
 ## Authorization Server
 
@@ -175,7 +252,7 @@ application:
 | Name | Description | Default |
 | --- | --- | --- |
 | `application.sessionTimeout` | Server session timeout as a Spring duration. | `24h` |
-| `application.profiles` | Active Spring profiles, for example `dynamo,kms` or `database`. | `dynamo,kms` |
+| `application.profiles` | Active Spring profiles, for example `dynamo,kms` or `dynamo,kms,database`. Including `database` renders `spring.datasource` — see [PostgreSQL Dependency](#postgresql-dependency). | `dynamo,kms` |
 | `application.masterKey` | Master key identifier used by key management configuration. | `ACCOUNT_KMS_KEY` |
 | `application.baseUrl` | Public authorization server base URL. | `http://application-example-host.com` |
 | `application.backChannelBaseUrl` | Internal service URL used for back-channel calls. | `http://vauthenticator:8080` |
@@ -194,9 +271,30 @@ application:
       endpointOverride:
     dynamodb:
       endpointOverride:
+    sns:
+      endpointOverride:
+    lambda:
+      endpointOverride:
 ```
 
 Use these values for LocalStack or non-default AWS endpoints.
+
+### Lambda Token Enhancement
+
+```yaml
+application:
+  lambda:
+    aws:
+      enabled: false
+      functionName: vauthenticator-token-enhancer
+      functionResultCacheTtl: 10s
+```
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `application.lambda.aws.enabled` | Enable AWS Lambda-based token customization. | `false` |
+| `application.lambda.aws.functionName` | Lambda function name invoked for token enhancement. | `vauthenticator-token-enhancer` |
+| `application.lambda.aws.functionResultCacheTtl` | Cache TTL for Lambda invocation results, as a Spring duration. | `10s` |
 
 ### Password Policy
 
@@ -248,8 +346,10 @@ application:
       cache:
         ttl: 1h
         name: account_cache
-      role:
-        tableName: your_VAuthenticator_Account_Role_table_name
+    group:
+      tableName: your_VAuthenticator_Group_table_name
+    groupToRole:
+      tableName: your_VAuthenticator_GroupToRole_table_name
     role:
       tableName: your_VAuthenticator_Role_table_name
       cache:
@@ -280,6 +380,11 @@ application:
 
 These values configure the DynamoDB-backed repositories used by the `dynamo` profile.
 
+| Name | Description | Default |
+| --- | --- | --- |
+| `application.dynamoDb.group.tableName` | DynamoDB table used by the group repository. | `your_VAuthenticator_Group_table_name` |
+| `application.dynamoDb.groupToRole.tableName` | DynamoDB table used to store group-to-role mappings. | `your_VAuthenticator_GroupToRole_table_name` |
+
 ### Documents, MFA, Assets, Events
 
 ```yaml
@@ -307,62 +412,3 @@ application:
   events:
     enableLoggerConsumer: false
 ```
-
-## Management UI Workload
-
-The chart currently always renders the management UI manifests; there is no `managementUi.enabled` value in `values.yaml`.
-
-```yaml
-managementUi:
-  redis:
-    database: 1
-    host: vauthenticator-redis-master.auth.svc.cluster.local
-  server:
-    port: 8080
-  sso:
-    clientApp:
-      clientId: vauthenticator-management-ui
-      clientSecret: secret
-  baseUrl: http://application-example-host.com
-```
-
-| Name | Description | Default |
-| --- | --- | --- |
-| `managementUi.redis.database` | Redis database index for the management UI workload. | `1` |
-| `managementUi.server.port` | Management UI container port. | `8080` |
-| `managementUi.sso.clientApp.clientId` | OAuth2 client ID used by the management UI workload. | `vauthenticator-management-ui` |
-| `managementUi.sso.clientApp.clientSecret` | OAuth2 client secret used by the management UI workload. | `secret` |
-| `managementUi.baseUrl` | Public management UI base URL. | `http://application-example-host.com` |
-
-### Management UI Documents And Assets
-
-```yaml
-managementUi:
-  documentRepository:
-    engine: s3
-    bucketName: test
-    fsBasePath: dist
-    documentType:
-      mail:
-        cacheName: mail-document-local-cache
-        cacheTtl: 1m
-      staticAsset:
-        cacheName: static-asset-document-local-cache
-        cacheTtl: 1m
-  assetServer:
-    onS3:
-      enabled: false
-      bundleVersion: ""
-    baseUrl: http://localhost:8080
-```
-
-| Name | Description | Default |
-| --- | --- | --- |
-| `managementUi.documentRepository.engine` | Document repository engine. | `s3` |
-| `managementUi.documentRepository.bucketName` | S3 bucket when the S3 document engine is used. | `test` |
-| `managementUi.documentRepository.fsBasePath` | Filesystem base path when filesystem documents are used. | `dist` |
-| `managementUi.documentRepository.documentType.mail.*` | Mail document cache settings. | See `values.yaml` |
-| `managementUi.documentRepository.documentType.staticAsset.*` | Static asset cache settings. | See `values.yaml` |
-| `managementUi.assetServer.onS3.enabled` | Serve assets from S3. | `false` |
-| `managementUi.assetServer.onS3.bundleVersion` | Optional S3 bundle version. | `""` |
-| `managementUi.assetServer.baseUrl` | Asset server base URL. | `http://localhost:8080` |

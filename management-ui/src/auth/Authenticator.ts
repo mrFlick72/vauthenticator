@@ -1,4 +1,5 @@
-import CryptoJS from 'crypto-js';
+import SHA256 from 'crypto-js/sha256';
+import Base64 from 'crypto-js/enc-base64';
 import {applicationConfigLoader} from "../config/ConfigLoader";
 
 export type TokenResponse = {
@@ -25,7 +26,7 @@ export const getAuthorizeUrlFor = async (type: AuthorizeType, storeCodeVerifier 
     const state = randomDataString()
     const codeVerifier = randomDataString()
 
-    const base64 = CryptoJS.enc.Base64.stringify(CryptoJS.SHA256(codeVerifier));
+    const base64 = Base64.stringify(SHA256(codeVerifier));
     const codeChallenge = base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
     let oauth2Config = await applicationConfigLoader()

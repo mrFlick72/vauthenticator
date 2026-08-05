@@ -1,6 +1,13 @@
 in-namespace:
   redis:
     enabled: true
+  db:
+    enabled: true
+
+postgresql:
+  primary:
+    initdb:
+      scriptsConfigMap: vauthenticator-postgres-initdb
 
 redis:
   auth:
@@ -22,9 +29,106 @@ aws:
 
 imagePullSecrets: [ ]
 
+keda:
+  enabled: false
+  spec:
+    minReplicaCount: 1
+    maxReplicaCount: 1
+    pollingInterval: 1
+    cooldownPeriod: 300
+  prometheus:
+    serverAddress: ""
+    metricName: ""
+    threshold: ""
+    query: ""
+
+pod:
+  probes:
+    liveness:
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    rediness:
+      initialDelaySeconds: 10
+      periodSeconds: 30
+  podAnnotations: { }
+
+
+
+service:
+  type: ClusterIP
+
+ingress:
+  host: "*"
+  annotations: { }
+  tls: { }
+  enabled: true
+  class: nginx
+
+gateway:
+  enabled: false
+
+# Gateway API routing. gateway.enabled renders a Gateway resource; httpRoute.enabled
+# renders an HTTPRoute bound to it via parentRefs. Enable both together to route
+# through the Gateway API instead of the Ingress resource (ingress.enabled and
+# httpRoute.enabled are mutually exclusive; the chart fails to render if both are true).
+httpRoute:
+  enabled: false
+  gatewayClassName: traeefik
+  gatewayPort: 8443
+  hostnames: [ ]
+  tls: [ ]
+  annotations: { }
+  rules: [ ]
+
+  # Example:
+  # gateway:
+  #   enabled: true
+  # httpRoute:
+  #   enabled: true
+  #   gatewayClassName: nginx
+  #   gatewayPort: 443
+  #   hostnames:
+  #     - auth.example.com # Must match the HTTPS listener hostname/certificate DNS name
+  #   tls:
+  #     - secretName: auth-tls
+  #   rules:
+  #     - matches:
+  #         - path:
+  #             type: PathPrefix
+  #             value: /
+
+
+resources:
+  requests:
+    cpu: "256m"
+    memory: "256Mi"
+  limits:
+    cpu: "512m"
+    memory: "512Mi"
+replicaCount: 1
+
+image:
+  repository: mrflick72/vauthenticator-k8s
+  pullPolicy: Always
+  tag: "0.8"
+
+labels: { }
+
+selectorLabels:
+  app: vauthenticator
+
 application:
   sessionTimeout: 24h
   profiles: dynamo,kms
+  datasource:
+    # Rendered only when application.profiles includes database.
+    # Example:
+    # url: jdbc:postgresql://db.local.vauthenticator.com:5432/
+    # username: postgres
+    # password: postgres
+    url: ""
+    username: ""
+    password: ""
   password:
     history:
       evaluationLimit: 1
@@ -39,70 +143,8 @@ application:
       minSpecialSymbol: 1
       enablePasswordReusePrevention: true
 
-  aws:
-    s3:
-      endpointOverride:
-    kms:
-      endpointOverride:
-    dynamodb:
-      endpointOverride:
-
-  keda:
-    enabled: false
-    spec:
-      minReplicaCount: 1
-      maxReplicaCount: 1
-      pollingInterval: 1
-      cooldownPeriod: 300
-    prometheus:
-      serverAddress: ""
-      metricName: ""
-      threshold: ""
-      query: ""
-
-
-  pod:
-    probes:
-      liveness:
-        initialDelaySeconds: 10
-        periodSeconds: 30
-      rediness:
-        initialDelaySeconds: 10
-        periodSeconds: 30
-
-  service:
-    type: ClusterIP
-
-  ingress:
-    host: "*"
-    annotations: { }
-    tls: { }
-    enabled: true
-    class: nginx
-
-
-  resources:
-    requests:
-      cpu: "256m"
-      memory: "256Mi"
-    limits:
-      cpu: "512m"
-      memory: "512Mi"
-  replicaCount: 1
-
-  image:
-    repository: mrflick72/vauthenticator-k8s
-    pullPolicy: Always
-    tag: "0.8"
-
-  lables: { }
-
-  selectorLabels:
-    app: vauthenticator
-
-  podAnnotations: { }
-
   masterKey: ACCOUNT_KMS_KEY
+  masterKeyContent: xxxxxxxxx
 
   redis:
     database: 0
@@ -112,11 +154,8 @@ application:
     port: 8080
 
   baseUrl: http://application-example-host.com
-  backChannelBaseUrl: http://vauthenticator:8080
-
 
   emailProvider:
-    enabled: false
     host: localhost
     port: 587
     username: ""
@@ -136,8 +175,10 @@ application:
       cache:
         ttl: 1h
         name: account_cache
-      role:
-        tableName: your_VAuthenticator_Account_Role_table_name
+    group:
+      tableName: your_VAuthenticator_Group_table_name
+    groupToRole:
+      tableName: your_VAuthenticator_GroupToRole_table_name
     role:
       tableName: your_VAuthenticator_Role_table_name
       cache:
@@ -191,90 +232,20 @@ application:
   events:
     enableLoggerConsumer: false
 
-managementUi:
-  keda:
-    enabled: false
-    spec:
-      minReplicaCount: 1
-      maxReplicaCount: 1
-      pollingInterval: 1
-      cooldownPeriod: 300
-    prometheus:
-      serverAddress:
-      metricName:
-      threshold:
-      query:
+  aws:
+    s3:
+      endpointOverride:
+    kms:
+      endpointOverride:
+    dynamodb:
+      endpointOverride:
+    sns:
+      endpointOverride:
+    lambda:
+      endpointOverride:
 
-  pod:
-    probes:
-      liveness:
-        initialDelaySeconds: 10
-        periodSeconds: 30
-      rediness:
-        initialDelaySeconds: 10
-        periodSeconds: 30
-
-  service:
-    type: ClusterIP
-
-  ingress:
-    host: "*"
-    annotations: { }
-    tls: { }
-    enabled: true
-    class: nginx
-
-
-  resources:
-    requests:
-      cpu: "256m"
-      memory: "256Mi"
-    limits:
-      cpu: "512m"
-      memory: "512Mi"
-
-  replicaCount: 1
-
-  image:
-    repository: mrflick72/vauthenticator-management-ui-k8s
-    pullPolicy: Always
-    tag: "0.8"
-
-  lables: { }
-
-  selectorLabels:
-    app: vauthenticator-management-ui
-
-  podAnnotations: { }
-
-  redis:
-    database: 1
-    host: vauthenticator-redis-master.auth.svc.cluster.local
-
-  server:
-    port: 8080
-
-  documentRepository:
-    engine: s3
-    bucketName: test
-    fsBasePath: dist
-    documentType:
-      mail:
-        cacheName: mail-document-local-cache
-        cacheTtl: 1m
-      staticAsset:
-        cacheName: static-asset-document-local-cache
-        cacheTtl: 1m
-
-  sso:
-    clientApp:
-      clientId: vauthenticator-management-ui
-      clientSecret: secret
-
-  baseUrl: http://application-example-host.com
-
-  assetServer:
-    onS3:
+  lambda:
+    aws:
       enabled: false
-      bundleVersion: ""
-    baseUrl: http://localhost:8080
+      functionName: vauthenticator-token-enhancer
+      functionResultCacheTtl: 10s

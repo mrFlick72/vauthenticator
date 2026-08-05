@@ -26,6 +26,8 @@ data "aws_iam_policy_document" "dynamo_policy" {
       data.aws_dynamodb_table.client_application_table.arn,
       data.aws_dynamodb_table.account_table.arn,
       data.aws_dynamodb_table.role_table.arn,
+      data.aws_dynamodb_table.group_table.arn,
+      data.aws_dynamodb_table.group_to_role_table.arn,
       data.aws_dynamodb_table.ticket_table.arn,
       data.aws_dynamodb_table.mfa_account_methods_table.arn,
       data.aws_dynamodb_table.mfa_keys_table.arn,
@@ -44,6 +46,12 @@ data aws_dynamodb_table account_table {
 }
 data aws_dynamodb_table role_table {
   name = "${var.role_table_name}${var.table_name_suffix}"
+}
+data aws_dynamodb_table group_table {
+  name = "${var.group_table_name}${var.table_name_suffix}"
+}
+data aws_dynamodb_table group_to_role_table {
+  name = "${var.group_to_role_table_name}${var.table_name_suffix}"
 }
 data aws_dynamodb_table ticket_table {
   name = "${var.ticket_table_name}${var.table_name_suffix}"

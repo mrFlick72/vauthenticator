@@ -2,13 +2,11 @@
 
 This directory contains the Helm chart repository assets for the VAuthenticator ecosystem.
 
-The current chart deploys:
+Two charts are published from this directory:
 
-- VAuthenticator authorization server (`application`)
-- VAuthenticator management UI workload (`managementUi`)
-- optional in-namespace Redis dependency from Bitnami
-
-`config-manager` is a separate Go project in this monorepo and is not currently rendered by the chart.
+- `charts/vauthenticator`: VAuthenticator authorization server (`application`) and optional
+  in-namespace Redis and PostgreSQL dependencies from Bitnami
+- `charts/management-ui`: the standalone management UI static React SPA, served by nginx
 
 ## Usage
 
@@ -25,8 +23,21 @@ For local chart development from this repository:
 ```bash
 cd helm-charts
 helm dependency update charts/vauthenticator
-helm lint charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
-helm template vauthenticator charts/vauthenticator --set application.ingress.host=localhost --set managementUi.ingress.host=localhost
+helm lint charts/vauthenticator --set ingress.host=localhost
+helm template vauthenticator charts/vauthenticator --set ingress.host=localhost
+
+helm lint charts/management-ui \
+  --set application.idpBaseUrl=http://localhost \
+  --set application.clientApplicationId=vauthenticator-management-ui \
+  --set application.redirectUri=http://localhost/callback \
+  --set application.authenticationCheckInterval=15000 \
+  --set application.apiBaseUrl=http://localhost/api
+helm template management-ui charts/management-ui \
+  --set application.idpBaseUrl=http://localhost \
+  --set application.clientApplicationId=vauthenticator-management-ui \
+  --set application.redirectUri=http://localhost/callback \
+  --set application.authenticationCheckInterval=15000 \
+  --set application.apiBaseUrl=http://localhost/api
 ```
 
 ## Redis
@@ -37,4 +48,5 @@ The chart can install Redis in the same namespace when `in-namespace.redis.enabl
 
 ## Documentation
 
-Detailed chart values are documented in [charts/README.md](charts/README.md).
+Detailed chart values are documented in [charts/README.md](charts/README.md) (vauthenticator)
+and [charts/management-ui/README.md](charts/management-ui/README.md) (management-ui).

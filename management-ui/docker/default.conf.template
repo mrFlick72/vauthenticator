@@ -1,0 +1,32 @@
+server {
+    listen       80;
+    listen  [::]:80;
+    server_name  _;
+
+    # config.json is generated at container start by
+    # /docker-entrypoint.d/40-generate-app-config.sh from docker/config.json.template.
+    # no-store so a redeploy's new values are never served stale from a client/proxy cache.
+    location = /config.json {
+        root /usr/share/nginx/html;
+        add_header Cache-Control "no-store";
+    }
+
+    location / {
+        default_type text/html;
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+        try_files $uri.html $uri =404;
+    }
+
+    location /secure/admin {
+        default_type text/html;
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+        try_files $uri.html $uri =404;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+}

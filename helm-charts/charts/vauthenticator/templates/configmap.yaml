@@ -1,31 +1,3 @@
-{{- if eq .Values.application.keda.enabled true }}
-
----
-apiVersion: keda.sh/v1alpha1
-kind: ScaledObject
-metadata:
-  name: {{ include "vauthenticator.name" . }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    deploymentName: {{ include "vauthenticator.name" . }}
-spec:
-  minReplicaCount: {{ .Values.application.keda.spec.minReplicaCount }}
-  maxReplicaCount: {{ .Values.application.keda.spec.maxReplicaCount }}
-  pollingInterval: {{ .Values.application.keda.spec.pollingInterval }}
-  cooldownPeriod: {{ .Values.application.keda.spec.cooldownPeriod }}
-  scaleTargetRef:
-    name: {{ include "vauthenticator.name" . }}
-  triggers:
-    - type: prometheus
-      metadata:
-        serverAddress: {{ .Values.application.keda.prometheus.serverAddress }}
-        metricName: {{ .Values.application.keda.prometheus.metricName }}
-        threshold: {{ .Values.application.keda.prometheus.threshold | quote  }}
-        query: {{ .Values.application.keda.prometheus.query }}
-
-  {{ end }}
----
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -40,6 +12,10 @@ data:
         endpointOverride: {{ .Values.application.aws.kms.endpointOverride }}
       dynamodb:
         endpointOverride: {{ .Values.application.aws.dynamodb.endpointOverride }}
+      sns:
+        endpointOverride: {{ .Values.application.aws.sns.endpointOverride }}
+      lambda:
+        endpointOverride: {{ .Values.application.aws.lambda.endpointOverride }}
 
     password:
       password-history:
@@ -61,8 +37,8 @@ data:
         id: {{ .Values.application.masterKey }}
         storage:
           content:
-            key: {{ .Values.application.masterKey }}
-            
+            {{ .Values.application.masterKey }}: {{ .Values.application.masterKeyContent }}
+
     oidcEndSessionUrl: {{ .Values.application.baseUrl }}/oidc/logout
     auth.oidcIss: {{ .Values.application.baseUrl }}
 
@@ -86,8 +62,6 @@ data:
             name: {{ .Values.application.documentRepository.documentType.staticAsset.cacheName }}
             ttl: {{ .Values.application.documentRepository.documentType.staticAsset.cacheTtl }}
 
-
-    {{- if eq .Values.application.emailProvider.enabled true }}
     no-reply:
       email:
         from: {{ .Values.application.email.from }}
@@ -95,7 +69,6 @@ data:
         verificationEMailSubject: {{ .Values.application.email.verificationEMailSubject }}
         resetPasswordEMailSubject: {{ .Values.application.email.resetPasswordEMailSubject }}
         mfaEMailSubject: {{ .Values.application.email.mfaEMailSubject }}
-  {{- end }}
 
     event:
       consumer:
@@ -106,13 +79,19 @@ data:
         length: {{ .Values.application.mfa.otp.otpLength }}
         timeToLiveInSeconds: {{ .Values.application.mfa.otp.otpTimeToLiveInSeconds }}
 
+    {{- $databaseProfileEnabled := regexMatch "(^|.*,\\s*)database(\\s*,.*|\\s*$)" .Values.application.profiles }}
     spring:
       profiles:
         active: {{ .Values.application.profiles }}
+      {{- if $databaseProfileEnabled }}
+      datasource:
+        url: {{ required "application.datasource.url must be set when application.profiles includes database" .Values.application.datasource.url | quote }}
+        username: {{ .Values.application.datasource.username | quote }}
+        password: {{ .Values.application.datasource.password | quote }}
+      {{- end }}
 
       main:
         lazy-initialization: false
-    {{- if eq .Values.application.emailProvider.enabled true }}
       mail:
         host: {{ .Values.application.emailProvider.host }}
         port: {{ .Values.application.emailProvider.port }}
@@ -120,8 +99,6 @@ data:
         password: {{ .Values.application.emailProvider.password }}
         properties:
         {{- toYaml .Values.application.emailProvider.properties | nindent 10 }}
-
-    {{- end }}
 
       security:
         oauth2:
@@ -168,6 +145,10 @@ data:
           cache:
             ttl: {{ .Values.application.dynamoDb.account.cache.ttl }}
             name: {{ .Values.application.dynamoDb.account.cache.name }}
+        group:
+          table-name: {{ .Values.application.dynamoDb.group.tableName }}
+        group-to-role:
+          table-name: {{ .Values.application.dynamoDb.groupToRole.tableName }}
         role:
           table-name: {{ .Values.application.dynamoDb.role.tableName }}
           cache:
@@ -196,142 +177,30 @@ data:
           table-name: {{ .Values.application.dynamoDb.defaultMfaAccountMethods.tableName  }}
 
       host: {{ .Values.application.baseUrl }}
+      lambda:
+        aws:
+          enabled: {{ .Values.application.lambda.aws.enabled }}
+          function-name: {{ .Values.application.lambda.aws.functionName }}
+          function-result-cache-ttl: {{ .Values.application.lambda.aws.functionResultCacheTtl }}
     {{- if eq .Values.aws.iamUser.enabled true }}
     iamUserAwsCredentialsProvider: true
-    {{ end }}
+    {{- end }}
 
     {{- if eq .Values.aws.eks.serviceAccount.enabled true }}
     iamServiceAccountAwsCredentialsProvider: true
-    {{ end }}
+    {{- end }}
+
+
+{{- if (index .Values "in-namespace" "db" "enabled") }}
 
 ---
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "vauthenticator.name" . }}
-  namespace: {{ .Release.Namespace }}
-spec:
-  replicas: {{ .Values.application.replicaCount }}
-  selector:
-    matchLabels:
-  {{- include "vauthenticator.selectorLabels" . | nindent 6 }}
-  template:
-    metadata:
-      {{- with .Values.application.podAnnotations }}
-      annotations:
-      {{- toYaml . | nindent 8 }}
-      {{- end }}
-      labels:
-      {{- with .Values.application.lables }}
-      {{- toYaml .Values.application.lables | nindent 8 }}
-      {{ end }}
-    {{- include "vauthenticator.selectorLabels" . | nindent 8 }}
-    spec:
-      {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-      {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- if eq .Values.aws.eks.serviceAccount.enabled true }}
-      serviceAccountName: {{ include "vauthenticator.name" . }}
-        {{ end }}
-      volumes:
-        - name: application-logs
-          emptyDir: { }
-
-        - name: application-config
-          configMap:
-            name: application-config
-
-      containers:
-        - name: {{ .Chart.Name }}
-          volumeMounts:
-            - name: application-logs
-              mountPath: /var/log/onlyone-portal/logs/
-
-            - name: application-config
-              subPath: application.yml
-              mountPath: /usr/local/onlyone-portal/config/application.yml
-
-          image: "{{ .Values.application.image.repository }}:{{ .Values.application.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.application.image.pullPolicy }}
-          ports:
-            - containerPort: {{ .Values.application.server.port }}
-            - containerPort: 8081
-          livenessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8081
-            initialDelaySeconds: {{ .Values.application.pod.probes.liveness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.application.pod.probes.liveness.periodSeconds }}
-
-          readinessProbe:
-            httpGet:
-              path: /actuator/health
-              port: 8081
-            initialDelaySeconds: {{ .Values.application.pod.probes.rediness.initialDelaySeconds }}
-            periodSeconds: {{ .Values.application.pod.probes.rediness.periodSeconds }}
-          resources:
-          {{- toYaml .Values.application.resources | nindent 12 }}
-          env:
-            {{- if eq .Values.aws.iamUser.enabled true }}
-            - name: AWS_ACCESS_KEY_ID
-              value: {{ .Values.aws.iamUser.accessKey }}
-
-            - name: AWS_SECRET_ACCESS_KEY
-              value: {{ .Values.aws.iamUser.secretKey }}
-            {{ end }}
-            - name: AWS_REGION
-              value: {{ .Values.aws.region }}
-
-            - name: spring.config.additional-location
-              value: /usr/local/onlyone-portal/config/
-
----
-
 apiVersion: v1
-kind: Service
+kind: ConfigMap
 metadata:
-  name: {{ include "vauthenticator.name" . }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "vauthenticator.labels" . | nindent 4 }}
-spec:
-  type: {{ .Values.application.service.type }}
-  ports:
-    - port: {{ .Values.application.server.port }}
-      name: http
-  selector:
-    {{- include "vauthenticator.selectorLabels" . | nindent 4 }}
-
----
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: {{ include "vauthenticator.name" . }}
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    kubernetes.io/ingress.class: {{ .Values.application.ingress.class }}
-    {{- with .Values.application.ingress.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
+  name: vauthenticator-postgres-initdb
+data:
+  init.sql: |
+{{ .Files.Get "files/schema.sql" | indent 4 }}
 
 
-spec:
-  rules:
-    - http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ include "vauthenticator.name" . }}
-                port:
-                  number: {{ .Values.application.server.port }}
-      host: {{  .Values.application.ingress.host }}
-    {{- with .Values.application.ingress.tls }}
-  tls:
-  {{- toYaml . | nindent 4}}
-    {{- end }}
-
+{{- end }}

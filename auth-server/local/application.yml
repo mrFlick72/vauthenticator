@@ -47,9 +47,10 @@ spring:
         jwt:
           jwk-set-uri: http://localhost:${server.port}/oauth2/jwks
 
-  redis:
-    database: 0
-    host: localhost
+  data:
+    redis:
+      database: 0
+      host: localhost
 
 server:
   port: 9090

@@ -1,0 +1,87 @@
+imagePullSecrets: []
+
+replicaCount: 1
+
+image:
+  repository: mrflick72/vauthenticator-management-ui-k8s
+  pullPolicy: Always
+  tag: "latest"
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "32Mi"
+  limits:
+    cpu: "100m"
+    memory: "64Mi"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  host: "*"
+  annotations: { }
+  tls: { }
+  enabled: true
+  class: nginx
+
+gateway:
+  enabled: false
+
+# Gateway API routing, mirroring the pattern used by the `vauthenticator` chart's
+# `application` workload. gateway.enabled renders a Gateway resource; httpRoute.enabled
+# renders an HTTPRoute bound to it via parentRefs. Enable both together to route through
+# the Gateway API instead of the Ingress resource (ingress.enabled and httpRoute.enabled
+# are mutually exclusive; the chart fails to render if both are true).
+httpRoute:
+  enabled: false
+  gatewayClassName: traefik
+  gatewayPort: 8443
+  hostnames: [ ]
+  tls: [ ]
+  annotations: { }
+  rules: [ ]
+
+  # Example:
+  # gateway:
+  #   enabled: true
+  # httpRoute:
+  #   enabled: true
+  #   gatewayClassName: nginx
+  #   gatewayPort: 443
+  #   hostnames:
+  #     - management-ui.example.com # Must match the HTTPS listener hostname/certificate DNS name
+  #   tls:
+  #     - secretName: management-ui-tls
+  #   rules:
+  #     - matches:
+  #         - path:
+  #             type: PathPrefix
+  #             value: /
+
+pod:
+  probes:
+    liveness:
+      initialDelaySeconds: 5
+      periodSeconds: 30
+    readiness:
+      initialDelaySeconds: 5
+      periodSeconds: 30
+  podAnnotations: { }
+
+labels: { }
+
+selectorLabels:
+  app: vauthenticator-management-ui
+
+# Rendered into a ConfigMap and wired into the Deployment via envFrom. nginx's
+# entrypoint script (management-ui/docker/40-generate-app-config.sh) reads these as
+# env vars and envsubst's them into /usr/share/nginx/html/config.json at container
+# start, served at GET /config.json. No safe defaults -- all five are required.
+application:
+  idpBaseUrl: http://application-example-host.com
+  clientApplicationId: vauthenticator-management-ui
+  redirectUri: http://management-ui-example-host.com/callback
+  authenticationCheckInterval: "15000"
+  apiBaseUrl: http://application-example-host.com/api

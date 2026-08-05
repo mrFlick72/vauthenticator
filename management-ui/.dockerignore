@@ -1,0 +1,4 @@
+local
+changelog
+src/node_modules
+.git

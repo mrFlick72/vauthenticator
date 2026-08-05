@@ -1,6 +1,6 @@
 apiVersion: v2
-name: vauthenticator
-description: A Helm chart for the VAuthenticator authorization server
+name: management-ui
+description: A Helm chart for the VAuthenticator management UI (static React SPA served by nginx)
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,20 +15,10 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: "0.12.0"
+version: "0.1.0"
 
-# This is the version number of the application being deployed. This version number should be
+# This is the version number of the application being deployed. This number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "0.8"
-
-dependencies:
-  - name: redis
-    version: "25.3.11"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: in-namespace.redis.enabled
-  - name: postgresql
-    version: "18.5.24"
-    repository: "https://charts.bitnami.com/bitnami"
-    condition: in-namespace.db.enabled
+appVersion: "latest"
