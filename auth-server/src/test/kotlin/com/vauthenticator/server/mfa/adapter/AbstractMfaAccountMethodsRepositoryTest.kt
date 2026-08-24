@@ -53,6 +53,21 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
     }
 
     @Test
+    fun `findAll does not leak other accounts' mfa methods`() {
+        val otherEmail = "other-$email"
+
+        uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
+        uut.save(otherEmail, MfaMethod.EMAIL_MFA_METHOD, otherEmail, true)
+
+        val mfaAccountMethods = uut.findAll(email)
+
+        assertEquals(
+            listOf(MfaAccountMethod(email, mfaDeviceId, key, MfaMethod.EMAIL_MFA_METHOD, email, true)),
+            mfaAccountMethods
+        )
+    }
+
+    @Test
     fun `when try to get one specific enrolment association`() {
         every { keyRepository.createKeyFrom(masterKid, KeyType.SYMMETRIC, KeyPurpose.MFA) } returns Kid("")
 
