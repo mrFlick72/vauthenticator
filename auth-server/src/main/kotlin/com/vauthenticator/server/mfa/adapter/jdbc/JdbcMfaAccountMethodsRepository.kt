@@ -32,8 +32,11 @@ class JdbcMfaAccountMethodsRepository(
         ).firstOrNull()
 
     override fun findAll(userName: String): List<MfaAccountMethod> =
-        jdbcTemplate.query("SELECT * FROM MFA_ACCOUNT_METHODS")
-        { rs, _ -> mfaAccountMethodFrom(rs) }
+        jdbcTemplate.query(
+            "SELECT * FROM MFA_ACCOUNT_METHODS WHERE user_name=?",
+            { rs, _ -> mfaAccountMethodFrom(rs) },
+            userName
+        )
 
 
     override fun save(
