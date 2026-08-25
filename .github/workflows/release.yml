@@ -16,18 +16,11 @@ on:
 jobs:
   tag-artifact:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write # to push chart release and create a release (helm/chart-releaser-action)
-      packages: write # needed for ghcr access
-      id-token: write # needed for keyless signing
     steps:
       - name: checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-
-      - name: Fetch history
-        run: git fetch --prune --unshallow
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
