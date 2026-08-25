@@ -50,7 +50,7 @@ jobs:
       - name: Create tag
         uses: ncipollo/release-action@v1
         with:
-          bodyFile: auth-server/changelog/${{ github.event.inputs.version }}.md
+          bodyFile: changelog/${{ github.event.inputs.version }}.md
           tag: ${{ github.event.inputs.version }}
 
       - name: set the Next Development version
