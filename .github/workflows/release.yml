@@ -1,0 +1,97 @@
+name: Release VAuthenticator
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag (e.g. 0.9)'
+        required: true
+        type: string
+
+      newversion:
+        description: 'Next development version (e.g. 0.10-SNAPSHOT)'
+        required: false
+        type: string
+
+jobs:
+  tag-artifact:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: 'corretto'
+
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.10.0
+          
+      - name: set the release version
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+          # auth-server version management
+          cd auth-server
+          mvn versions:set -DnewVersion="$RELEASE_VERSION"
+          cd ..
+
+
+          # management-ui version management
+          cd management-ui/src
+          npm pkg set version="$RELEASE_VERSION"
+          cd ../..
+
+          # helm chart version management
+          sed -i "s/^appVersion:.*/appVersion: \"$RELEASE_VERSION\"/" helm-charts/charts/vauthenticator/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"$RELEASE_VERSION\"/" helm-charts/charts/management-ui/Chart.yaml
+
+          git commit -am "[skip-ci] new version release $RELEASE_VERSION"
+          git push origin HEAD:${{ github.ref_name }}
+
+      - name: Create tag
+        uses: ncipollo/release-action@v1
+        with:
+          bodyFile: changelog/${{ github.event.inputs.version }}.md
+          tag: ${{ github.event.inputs.version }}
+
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.4.1
+        with:
+          charts_repo_url: https://github.com/vauthenticator/vauthenticator-helm-charts
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          
+      - name: set the next development version
+        if: github.event.inputs.newversion != ''
+        env:
+          NEXT_VERSION: ${{ github.event.inputs.newversion }}
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+          cd auth-server
+          mvn versions:set -DnewVersion="$NEXT_VERSION"
+          cd ..
+
+          cd management-ui/src
+          npm pkg set version="$NEXT_VERSION"
+          cd ../..
+
+          git commit -am "[skip-ci] new version release $NEXT_VERSION"
+          git push origin HEAD:${{ github.ref_name }}
