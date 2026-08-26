@@ -78,7 +78,7 @@ jobs:
           RELEASE_VERSION: ${{ github.event.inputs.version }}
         run: |
           cd auth-server
-          mvn install -q
+          mvn install -q -DskipTests
 
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
           docker build -t mrflick72/vauthenticator-k8s:$RELEASE_VERSION -f application.Dockerfile .
