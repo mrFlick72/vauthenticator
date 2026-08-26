@@ -57,11 +57,43 @@ jobs:
           cd ../..
 
           # helm chart version management
+          bump_chart_patch_version() {
+            local file="$1"
+            local current major minor patch
+            current=$(grep -m1 '^version:' "$file" | sed -E 's/version: *"?([0-9]+\.[0-9]+\.[0-9]+)"?/\1/')
+            IFS='.' read -r major minor patch <<< "$current"
+            sed -i "s/^version:.*/version: \"$major.$minor.$((patch + 1))\"/" "$file"
+          }
+          bump_chart_patch_version helm-charts/charts/vauthenticator/Chart.yaml
+          bump_chart_patch_version helm-charts/charts/management-ui/Chart.yaml
+
           sed -i "s/^appVersion:.*/appVersion: \"$RELEASE_VERSION\"/" helm-charts/charts/vauthenticator/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"$RELEASE_VERSION\"/" helm-charts/charts/management-ui/Chart.yaml
 
           git commit -am "[skip-ci] new version release $RELEASE_VERSION"
           git push origin HEAD:${{ github.ref_name }}
+
+      - name: Build and push auth-server docker image
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          cd auth-server
+          mvn install -q
+
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+          docker build -t mrflick72/vauthenticator-k8s:$RELEASE_VERSION -f application.Dockerfile .
+          docker push mrflick72/vauthenticator-k8s:$RELEASE_VERSION
+
+      - name: Build and push management-ui docker image
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          cd management-ui
+          ./production-build.sh
+
+          docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+          docker build -t mrflick72/vauthenticator-management-ui-k8s:$RELEASE_VERSION -f Dockerfile .
+          docker push mrflick72/vauthenticator-management-ui-k8s:$RELEASE_VERSION
 
       - name: Create tag
         uses: ncipollo/release-action@v1
@@ -69,14 +101,16 @@ jobs:
           bodyFile: changelog/${{ github.event.inputs.version }}.md
           tag: ${{ github.event.inputs.version }}
 
+      - name: Update helm chart dependencies
+        run: helm dependency update helm-charts/charts/vauthenticator
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.4.1
         with:
-          charts_repo_url: https://github.com/vauthenticator/vauthenticator-helm-charts
+          charts_dir: helm-charts/charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          
+
       - name: set the next development version
         if: github.event.inputs.newversion != ''
         env:

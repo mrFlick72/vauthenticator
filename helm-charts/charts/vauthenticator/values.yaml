@@ -110,7 +110,7 @@ replicaCount: 1
 image:
   repository: mrflick72/vauthenticator-k8s
   pullPolicy: Always
-  tag: "0.8"
+  tag: "latest"
 
 labels: { }
 

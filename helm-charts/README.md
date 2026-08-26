@@ -13,7 +13,7 @@ Two charts are published from this directory:
 Helm must be installed to use the charts. Once Helm is available, add the chart repository:
 
 ```bash
-helm repo add vauthenticator https://vauthenticator.github.io/helm-charts
+helm repo add vauthenticator https://mrflick72.github.io/vauthenticator
 helm repo update
 helm search repo vauthenticator
 ```

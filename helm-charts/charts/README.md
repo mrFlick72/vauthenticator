@@ -172,7 +172,7 @@ replicaCount: 1
 image:
   repository: mrflick72/vauthenticator-k8s
   pullPolicy: Always
-  tag: "0.8"
+  tag: "latest"
 
 lables: {}
 selectorLabels:
@@ -195,7 +195,7 @@ podAnnotations: {}
 | `*.replicaCount` | Deployment replica count. | `1` |
 | `*.image.repository` | Container image repository. | workload-specific |
 | `*.image.pullPolicy` | Container image pull policy. | `Always` |
-| `*.image.tag` | Container image tag. | `0.8` |
+| `*.image.tag` | Container image tag. | `latest` |
 | `*.lables` | Extra pod labels. The value name is currently spelled `lables` in the chart API. | `{}` |
 | `*.selectorLabels` | Selector labels used by Deployment and Service. Change with care. | workload-specific |
 | `*.podAnnotations` | Extra pod annotations. | `{}` |
