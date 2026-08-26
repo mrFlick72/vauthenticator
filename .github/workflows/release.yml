@@ -65,8 +65,12 @@ jobs:
           set_chart_version helm-charts/charts/vauthenticator/Chart.yaml
           set_chart_version helm-charts/charts/management-ui/Chart.yaml
 
-          git commit -am "[skip-ci] new version release $RELEASE_VERSION"
-          git push origin HEAD:${{ github.ref_name }}
+          if git diff --quiet; then
+            echo "No version changes to commit (already at $RELEASE_VERSION)."
+          else
+            git commit -am "[skip-ci] new version release $RELEASE_VERSION"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
 
       - name: Build and push auth-server docker image
         env:
@@ -124,5 +128,9 @@ jobs:
           npm pkg set version="$NEXT_VERSION"
           cd ../..
 
-          git commit -am "[skip-ci] new version release $NEXT_VERSION"
-          git push origin HEAD:${{ github.ref_name }}
+          if git diff --quiet; then
+            echo "No version changes to commit (already at $NEXT_VERSION)."
+          else
+            git commit -am "[skip-ci] new version release $NEXT_VERSION"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
