@@ -97,7 +97,9 @@ jobs:
           tag: ${{ github.event.inputs.version }}
 
       - name: Update helm chart dependencies
-        run: helm dependency update helm-charts/charts/vauthenticator
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm dependency update helm-charts/charts/vauthenticator
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.7.0
