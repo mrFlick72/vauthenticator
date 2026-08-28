@@ -69,11 +69,11 @@ class AuthorizationServerConfig {
     lateinit var corsConfigurationSource: CorsConfigurationSource
 
     @Bean
-    fun jwkSource(keyRepository: KeyRepository, keyDecrypter: KeyDecrypter): JWKSource<SecurityContext?> =
+    fun jwkSource(keyRepository: KeyRepository, keyDecrypter: KeyDecrypter): JWKSource<SecurityContext> =
         KeysJWKSource(keyDecrypter, keyRepository)
 
     @Bean
-    fun nimbusJwsEncoder(jwkSource: JWKSource<SecurityContext?>?): JwtEncoder {
+    fun nimbusJwsEncoder(jwkSource: JWKSource<SecurityContext>): JwtEncoder {
         return NimbusJwtEncoder(jwkSource)
     }
 

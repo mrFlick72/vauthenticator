@@ -20,7 +20,7 @@ class OAuth2TokenEnhancer(
             val signatureKey = keyRepository.signatureKeys().peekOneAtRandomWithout(assignedKeys)
             context.jwsHeader.keyId(signatureKey.kid.content())
 
-            if (context.authorizationGrantType.equals(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
+            if (context.authorizationGrantType?.equals(AuthorizationGrantType.CLIENT_CREDENTIALS) == true) {
                 val clientId = context.registeredClient.clientId
                 val findOne = clientApplicationRepository.findOne(ClientAppId(clientId))
                 findOne?.let {

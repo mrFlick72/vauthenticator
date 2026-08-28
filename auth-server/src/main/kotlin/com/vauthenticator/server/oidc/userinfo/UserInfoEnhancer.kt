@@ -79,4 +79,4 @@ object OpenIdClaimsProvider : ClaimsProvider {
 }
 
 fun userName(principal: OidcUserInfoAuthenticationContext) =
-    (principal.authorization.accessToken.claims?.get("sub") ?: throw ClaimsNotFoundException("sub claims not found")) as String
+    (principal.authorization.accessToken?.claims?.get("sub") ?: throw ClaimsNotFoundException("sub claims not found")) as String
