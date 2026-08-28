@@ -10,7 +10,7 @@
   "author": "mrFlick72",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "7.28.5",
+    "@babel/core": "^7.29.7",
     "@babel/preset-env": "7.28.5",
     "@babel/preset-react": "7.28.5",
     "clean-webpack-plugin": "4.0.0",
@@ -18,7 +18,7 @@
     "html-webpack-plugin": "5.6.4",
     "style-loader": "4.0.0",
     "ts-loader": "^9.5.4",
-    "webpack": "5.102.1",
+    "webpack": "^5.110.1",
     "webpack-cli": "6.0.1"
   },
   "dependencies": {
