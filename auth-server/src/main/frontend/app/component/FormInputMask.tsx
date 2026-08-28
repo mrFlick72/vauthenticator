@@ -38,7 +38,7 @@ interface FormInputMaskProps {
 }
 
 const FormInputMask: React.FC<FormInputMaskProps> = ({id, label, required, value, handler}) => {
-    return <Grid container spacing={8} alignItems="flex-end">
+    return <Grid container spacing={8} sx={{alignItems: 'flex-end'}}>
         <Grid size={{ xs: 12 }}>
             <TextField
                 fullWidth
@@ -49,8 +49,10 @@ const FormInputMask: React.FC<FormInputMaskProps> = ({id, label, required, value
                 onChange={handler}
                 name={id}
                 id={id}
-                InputProps={{
-                    inputComponent: InputMask as any,
+                slotProps={{
+                    input: {
+                        inputComponent: InputMask as any,
+                    },
                 }}
             />
         </Grid>

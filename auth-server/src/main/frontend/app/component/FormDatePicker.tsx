@@ -14,7 +14,7 @@ interface FormDatePickerProps {
 
 const FormDatePicker: React.FC<FormDatePickerProps> = ({label, value, onClickHandler, pattern}) => {
     let val = value && moment(value, pattern)
-    return <Grid container alignItems="flex-end">
+    return <Grid container sx={{alignItems: 'flex-end'}}>
         <Grid size={{ xs: 12 }}>
             <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DesktopDatePicker
