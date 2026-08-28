@@ -1,6 +1,7 @@
 name: build VAuthenticator Auth Server
 
 on:
+  workflow_call: { }
   push: { }
 
 jobs:
