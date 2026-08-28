@@ -1,8 +1,7 @@
 import React, {lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
 
-import {HashRouter} from "react-router-dom";
-import {Route, Routes} from "react-router";
+import {HashRouter, Route, Routes} from "react-router";
 
 const HomePage = lazy(() => import("./home/HomePage"));
 const RolesManagementPage = lazy(() => import("./roles/RolesManagementPage"));
