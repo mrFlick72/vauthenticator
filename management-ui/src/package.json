@@ -5,18 +5,23 @@
   "scripts": {
     "build": "webpack --config webpack.config.js --mode=development",
     "production-build": "webpack --config webpack.config.js --mode=production",
-    "watch": "webpack --config webpack.config.js --mode=development --watch"
+    "watch": "webpack --config webpack.config.js --mode=development --watch",
+    "typecheck": "tsc --noEmit"
   },
   "author": "mrFlick72",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "8.0.2",
+    "@babel/preset-react": "8.0.1",
+    "@babel/preset-typescript": "^8.0.1",
     "@types/crypto-js": "^4.2.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
+    "babel-loader": "10.1.1",
     "css-loader": "7.1.5",
     "html-webpack-plugin": "^5.6.8",
     "style-loader": "4.0.0",
-    "ts-loader": "^9.6.2",
     "webpack": "^5.110.1",
     "webpack-cli": "7.2.3"
   },
