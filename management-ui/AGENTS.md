@@ -38,7 +38,7 @@ Webpack builds three entry points:
 - `callback` -> `src/auth/Callback.tsx`
 - `logout` -> `src/auth/Logout.tsx`
 
-The admin app uses `HashRouter`. Current top-level routes include:
+The admin app uses `BrowserRouter` with `basename="/secure/admin"`. Current top-level routes include:
 
 - home
 - client applications list/create/edit
@@ -135,7 +135,7 @@ Notes:
 
 - Keep feature logic inside the existing admin domains such as `account`, `clientapp`, `communication`, `key`, and `roles`.
 - Reuse shared components from `src/components` before introducing new one-off widgets.
-- Preserve the existing routing style with `HashRouter` unless a broader routing migration is explicitly requested.
+- Preserve the existing routing style with `BrowserRouter` (basename `/secure/admin`) unless a broader routing migration is explicitly requested. Internal navigation must go through `react-router`'s `Link`/`useNavigate` (which respect the basename automatically) rather than raw `<a href>` tags, which bypass it.
 - Keep runtime values in the `/config.json` response and `src/config/ConfigLoader.ts`; do not hardcode backend hosts or client IDs into feature components.
 - When changing authentication, token usage, or OIDC session management, verify the callback, logout, config cache, and session-storage flow together.
 - If a page fetches backend data, inspect the matching repository file first and keep request/response changes aligned with backend APIs.
