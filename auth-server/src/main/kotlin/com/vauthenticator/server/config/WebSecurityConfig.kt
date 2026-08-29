@@ -176,10 +176,9 @@ class WebSecurityConfig {
                 .orEmpty()
 
             val authoritiesClaims = (jwt.getClaim<List<String>>("authorities") ?: emptyList())
-                ?.map { role: String -> SimpleGrantedAuthority(role) }
-                .orEmpty()
+                .map { role: String -> SimpleGrantedAuthority(role) }
 
-            logger.debug("authorities: {}", authoritiesClaims + scope)
+            logger.debug("authorities: ${authoritiesClaims + scope}")
             authoritiesClaims + scope
         }
         jwtAuthenticationConverter.setPrincipalClaimName("user_name")

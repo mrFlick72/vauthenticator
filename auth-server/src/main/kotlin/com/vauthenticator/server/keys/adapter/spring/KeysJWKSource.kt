@@ -12,8 +12,8 @@ import com.vauthenticator.server.keys.domain.KeyRepository
 class KeysJWKSource(
     private val keyDecrypter: KeyDecrypter,
     private val keyRepository: KeyRepository
-) : JWKSource<SecurityContext> {
-    override fun get(jwkSelector: JWKSelector, context: SecurityContext): MutableList<JWK> {
+) : JWKSource<SecurityContext?> {
+    override fun get(jwkSelector: JWKSelector, context: SecurityContext?): MutableList<JWK> {
         val rsaKey: List<RSAKey> = keyRepository.signatureKeys().generateRsas(keyDecrypter)
         val jwkSet = JWKSet(rsaKey)
         return jwkSelector.select(jwkSet)

@@ -2,7 +2,6 @@ package com.vauthenticator.server.keys.adapter.spring
 
 import com.nimbusds.jose.jwk.JWKMatcher
 import com.nimbusds.jose.jwk.JWKSelector
-import com.nimbusds.jose.proc.SecurityContext
 import com.vauthenticator.server.keys.domain.KeyDecrypter
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.Keys
@@ -16,13 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 internal class KeysJWKSourceTest {
 
     @MockK
-    private lateinit var keyRepository: KeyRepository
-
+    private lateinit var keyRepository : KeyRepository
     @MockK
     private lateinit var keyDecrypter: KeyDecrypter
-
-    @MockK
-    private lateinit var securityContext: SecurityContext
 
     @Test
     internal fun `when the context is loaded`() {
@@ -30,6 +25,6 @@ internal class KeysJWKSourceTest {
 
         every { keyRepository.signatureKeys() } returns Keys(emptyList())
 
-        underTest.get(JWKSelector(JWKMatcher.Builder().build()), securityContext)
+        underTest.get(JWKSelector(JWKMatcher.Builder().build()), null)
     }
 }
