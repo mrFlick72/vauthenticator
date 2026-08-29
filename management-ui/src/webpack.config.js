@@ -46,6 +46,7 @@ module.exports = {
     ],
     output: {
         filename: '[name].[fullhash].js',
-        path: BUILD_DIR
+        path: BUILD_DIR,
+        publicPath: '/'
     }
 };
