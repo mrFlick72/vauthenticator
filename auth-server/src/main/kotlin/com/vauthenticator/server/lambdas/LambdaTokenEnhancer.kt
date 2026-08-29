@@ -37,7 +37,7 @@ class AwsLambdaFunctionContextFactory(private val accountRepository: AccountRepo
     LambdaFunctionContextFactory<JwtEncodingContext> {
     override fun newLambdaFunctionContext(input: JwtEncodingContext): LambdaFunctionContext {
         val clientId = input.registeredClient.clientId
-        val grantFlow = input.authorizationGrantType.value
+        val grantFlow = input.authorizationGrantType!!.value
         val authorizedScope = input.authorizedScopes
         val userContext = mutableMapOf<String, Any>()
         val generalContext = mutableMapOf<String, Any>()

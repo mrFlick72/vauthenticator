@@ -1,5 +1,5 @@
 import React from 'react';
-import {Link} from "react-router-dom";
+import {Link} from "react-router";
 import {Card, CardActionArea, CardContent, CardHeader, Grid} from "@mui/material";
 
 const classes = {

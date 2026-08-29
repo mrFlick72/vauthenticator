@@ -73,7 +73,7 @@ class AuthorizationServerConfig {
         KeysJWKSource(keyDecrypter, keyRepository)
 
     @Bean
-    fun nimbusJwsEncoder(jwkSource: JWKSource<SecurityContext?>?): JwtEncoder {
+    fun nimbusJwsEncoder(jwkSource: JWKSource<SecurityContext>): JwtEncoder {
         return NimbusJwtEncoder(jwkSource)
     }
 

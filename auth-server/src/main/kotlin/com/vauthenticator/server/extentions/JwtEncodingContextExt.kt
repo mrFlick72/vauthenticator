@@ -5,4 +5,4 @@ import org.springframework.security.oauth2.server.authorization.token.JwtEncodin
 
 
 fun JwtEncodingContext.isATokenForAUserFrom(): Boolean =
-    !this.authorizationGrantType.equals(AuthorizationGrantType.CLIENT_CREDENTIALS)
+    this.authorizationGrantType!! != AuthorizationGrantType.CLIENT_CREDENTIALS

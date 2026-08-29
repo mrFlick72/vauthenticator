@@ -25,7 +25,7 @@ const FormInputTextField: React.FC<FormInputTextFieldProps> = ({
   handler,
 }) => {
   return (
-    <Grid container spacing={8} alignItems="flex-end">
+    <Grid container spacing={8} sx={{alignItems: 'flex-end'}}>
       <Grid size={{ xs: 12 }}>
         <TextField
           name={id}

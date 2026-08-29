@@ -1,6 +1,7 @@
 name: build VAuthenticator Auth Server
 
 on:
+  workflow_call: { }
   push: { }
 
 jobs:
@@ -65,7 +66,7 @@ jobs:
       - name: install node
         uses: actions/setup-node@v4
         with:
-          node-version: 21
+          node-version: 22
 
       - name: Build frontend artifacts
         run: |

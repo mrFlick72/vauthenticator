@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Link} from "react-router-dom";
-import {useNavigate} from "react-router";
+import {Link, useNavigate} from "react-router";
 import {Apps, Delete, Edit, VpnKey} from "@mui/icons-material";
 import {deleteClientApplicationFor, findAllClientApplications} from "../../domain/ClientAppRepository";
 import AdminTemplate from "../../../../components/AdminTemplate";

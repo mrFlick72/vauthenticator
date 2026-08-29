@@ -14,7 +14,7 @@ class IdTokenEnhancer(
     override fun customize(context: JwtEncodingContext) {
         val tokenType = context.tokenType.value
 
-        if ("id_token" == tokenType && !context.authorizationGrantType.equals(AuthorizationGrantType.CLIENT_CREDENTIALS)) {
+        if ("id_token" == tokenType && context.authorizationGrantType?.equals(AuthorizationGrantType.CLIENT_CREDENTIALS) != true) {
             val signatureKey = keyRepository.signatureKeys().peekOneAtRandomWithout(assignedKeys)
             context.jwsHeader.keyId(signatureKey.kid.content())
 

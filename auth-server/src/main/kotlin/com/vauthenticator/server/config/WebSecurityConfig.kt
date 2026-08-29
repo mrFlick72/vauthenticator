@@ -169,10 +169,11 @@ class WebSecurityConfig {
         val jwtAuthenticationConverter = JwtAuthenticationConverter()
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter { jwt: Jwt ->
             val scope = jwt.getClaim<List<String>>("scope")
-                .filter { scope -> scope != Scope.OPEN_ID.content }
-                .filter { scope -> scope != Scope.EMAIL.content }
-                .filter { scope -> scope != Scope.PROFILE.content }
-                .map { role: String -> SimpleGrantedAuthority(role) }
+                ?.filter { scope -> scope != Scope.OPEN_ID.content }
+                ?.filter { scope -> scope != Scope.EMAIL.content }
+                ?.filter { scope -> scope != Scope.PROFILE.content }
+                ?.map { role: String -> SimpleGrantedAuthority(role) }
+                .orEmpty()
 
             val authoritiesClaims = (jwt.getClaim<List<String>>("authorities") ?: emptyList())
                 .map { role: String -> SimpleGrantedAuthority(role) }
