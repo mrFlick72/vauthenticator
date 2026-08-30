@@ -37,7 +37,7 @@ class CompositeLoginWorkflowEngine(
         } else {
             session.setAttribute("CompositeLoginWorkflowEngine_index", nextHandlerIndex)
             val loginWorkflowHandler = handlers[index]
-            logger.debug("evaluate loginWorkflowHandler $loginWorkflowHandler")
+            logger.debug("evaluate loginWorkflowHandler {}", loginWorkflowHandler)
             loginWorkflowHandler
         }
 

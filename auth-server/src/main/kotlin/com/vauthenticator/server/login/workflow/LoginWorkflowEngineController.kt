@@ -33,11 +33,11 @@ class LoginWorkflowEngineController(
         authentication: Authentication
     ) {
         val workflowsNextHop = engine.workflowsNextHop(session)
-        logger.debug("workflowsNextHop: $workflowsNextHop")
+        logger.debug("workflowsNextHop: {}", workflowsNextHop)
 
         val canHandle = workflowsNextHop.canHandle(request, response)
         if (canHandle) {
-            logger.debug("go to redirect on ${workflowsNextHop.view()}")
+            logger.debug("go to redirect on {}", workflowsNextHop.view())
             redirectStrategy.sendRedirect(request, response, workflowsNextHop.view())
         } else if (engine.workflowsHasNextHop(session)) {
             logger.debug("go to redirect on next step")
