@@ -7,6 +7,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { Breakpoint } from "@mui/system";
 import { isAuthenticated } from "../auth/Authenticator";
 import SessionManagement from "../auth/SessionManagement";
+import { Link } from "react-router";
 
 interface AdminTemplateProps {
     page: string,
@@ -26,7 +27,7 @@ const AdminTemplate: React.FC<AdminTemplateProps> = ({ page, maxWidth, children 
             <SessionManagement/>
             <AppBar position="static">
                 <Toolbar variant="dense">
-                    <a href="#">
+                    <Link to="/index">
                         <IconButton edge="start"
                             style={classes.menuButton}
                             color="default"
@@ -34,7 +35,7 @@ const AdminTemplate: React.FC<AdminTemplateProps> = ({ page, maxWidth, children 
                             <MenuIcon style={classes.menuButton}
                                 color="inherit" />
                         </IconButton>
-                    </a>
+                    </Link>
 
                     <Typography variant="h6" style={classes.title}>
                         VAuthenticator Administration {page}

@@ -1,7 +1,7 @@
 import React, {lazy, Suspense} from 'react';
 import {createRoot} from 'react-dom/client';
 
-import {HashRouter, Route, Routes} from "react-router";
+import {BrowserRouter, Navigate, Route, Routes} from "react-router";
 
 const HomePage = lazy(() => import("./home/HomePage"));
 const RolesManagementPage = lazy(() => import("./roles/RolesManagementPage"));
@@ -13,10 +13,10 @@ const ClientAppListPage = lazy(() => import("./clientapp/pages/clientAppList/Cli
 const ClientAppManagementPage = lazy(() => import('./clientapp/pages/clientAppManagement/ClientAppManagementPage'));
 
 const VAuthenticatorAdminApp = () =>
-    <HashRouter>
+    <BrowserRouter basename="/secure/admin">
         <Suspense fallback={<div></div>}>
             <Routes>
-                <Route path="/" element={<HomePage/>}/>
+                <Route path="/index" element={<HomePage/>}/>
 
                 <Route path="/client-applications/list"
                        element={<ClientAppListPage/>}/>
@@ -34,9 +34,11 @@ const VAuthenticatorAdminApp = () =>
 
                 <Route path="/keys" element={<KeyManagementPage/>}/>
                 <Route path="/email-templates" element={<MailTemplatePage/>}/>
+
+                <Route path="*" element={<Navigate to="/index" replace/>}/>
             </Routes>
         </Suspense>
-    </HashRouter>
+    </BrowserRouter>
 
 
 if (document.getElementById('app')) {

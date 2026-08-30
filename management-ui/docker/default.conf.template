@@ -22,7 +22,7 @@ server {
         default_type text/html;
         root   /usr/share/nginx/html;
         index  index.html index.htm;
-        try_files $uri.html $uri =404;
+        try_files $uri /secure/admin/index.html;
     }
 
     error_page   500 502 503 504  /50x.html;
