@@ -27,7 +27,7 @@ const AdminTemplate: React.FC<AdminTemplateProps> = ({ page, maxWidth, children 
             <SessionManagement/>
             <AppBar position="static">
                 <Toolbar variant="dense">
-                    <Link to="/">
+                    <Link to="/index">
                         <IconButton edge="start"
                             style={classes.menuButton}
                             color="default"

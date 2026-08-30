@@ -16,7 +16,7 @@ const VAuthenticatorAdminApp = () =>
     <BrowserRouter basename="/secure/admin">
         <Suspense fallback={<div></div>}>
             <Routes>
-                <Route path="/" element={<HomePage/>}/>
+                <Route path="/index" element={<HomePage/>}/>
 
                 <Route path="/client-applications/list"
                        element={<ClientAppListPage/>}/>
@@ -35,7 +35,7 @@ const VAuthenticatorAdminApp = () =>
                 <Route path="/keys" element={<KeyManagementPage/>}/>
                 <Route path="/email-templates" element={<MailTemplatePage/>}/>
 
-                <Route path="*" element={<Navigate to="/" replace/>}/>
+                <Route path="*" element={<Navigate to="/index" replace/>}/>
             </Routes>
         </Suspense>
     </BrowserRouter>
