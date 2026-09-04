@@ -59,6 +59,7 @@ react-router/react-router-dom).
 | VA-SEC-11 | **Low** | Missing cookie/transport hardening (Secure/SameSite/channel) |
 | VA-SEC-12 | **Low** | Jinjava email templates = privileged code execution surface (document & gate) |
 | VA-SEC-13 | **Low** | Possible flag-mapping bug: `accountNonLocked` decoded from `credentialsNonExpired` |
+| VA-SEC-14 | **Medium** | `WebSecurityConfig` scope rule for email-template read never matches; falls back to authenticated-only |
 
 ---
 
@@ -71,8 +72,8 @@ react-router/react-router-dom).
 **Where:**
 - `account/api/AdminApiAccountEndPoint.kt:14` (`GET /api/admin/accounts/{email}/email`), `:21` (`PUT /api/admin/accounts`)
 - `account/domain/AccountUpdateAdminAction.kt:13` (writes `authorities`, `enabled`, `accountNonLocked` from request body)
-- `role/api/RoleEndPoint.kt:19` (`PUT /api/roles`), `:25` (`DELETE`)
-- `role/api/GroupEndPoint.kt:17`, `:23`, `:29` (`PUT /api/groups/{id}/roles`)
+- `role/api/RoleEndPoint.kt:15` (`GET /api/roles`), `:19` (`PUT /api/roles`), `:25` (`DELETE`)
+- `role/api/GroupEndPoint.kt:11` (`GET /api/groups`), `:17`, `:23`, `:29` (`PUT /api/groups/{id}/roles`)
 - `config/WebSecurityConfig.kt:141` — catch-all `.requestMatchers("/api/**").authenticated()`
 
 **Problem:** These controllers neither call `permissionValidator` nor have a scope rule in
@@ -85,6 +86,8 @@ including a normal end-user's `openid` access token.
   grants admin to any account.
 - `GET /api/admin/accounts/{email}/email` enumerates accounts and discloses their authorities + lock/enabled state.
 - `PUT /api/roles` / `PUT /api/groups/{id}/roles` define and bind authorities.
+- `GET /api/roles` / `GET /api/groups` disclose the full role/group and permission structure to any
+  authenticated principal — lower severity than the writes above, but still no authorization check.
 
 **Why it's a likely oversight:** the correct pattern already exists — `ClientApplicationEndPoint`,
 `MfaEnrolmentAssociationEndPoint`, `EMailVerificationEndPoint`, `AccountEndPoint` (signup),
@@ -239,6 +242,32 @@ as dev-only (and ensure prod uses KMS or a secret-managed key), replace `println
 
 ---
 
+### VA-SEC-14 — Email-template read scope rule never matches its endpoint
+- [ ] Fixed
+- [ ] Tests added
+
+**Where:**
+- `config/WebSecurityConfig.kt:115-120` — `.requestMatchers(HttpMethod.GET, "/api/email-template").hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content, ...)`.
+- `communication/api/EMailEndPoint.kt:15` — the actual mapping is `GET /api/email-template/{emailType}`.
+
+**Problem:** `PathPatternRequestMatcher` (used throughout `WebSecurityConfig`, see the import at
+`:31`) requires an exact match for a pattern with no wildcard. `/api/email-template` never matches
+a request to `/api/email-template/{emailType}`, so this rule is dead code — the GET falls through
+to the catch-all `.requestMatchers("/api/**").authenticated()` instead. The sibling `PUT
+/api/email-template` rule (`:122-127`) is unaffected, since that mapping has no path variable and
+matches exactly.
+
+**Impact:** Any authenticated principal (any valid token, any scope) can read any email template
+via `GET /api/email-template/{emailType}`, not only callers holding `MAIL_TEMPLATE_READER` /
+`ADMIN_FULL_ACCESS` / the admin role as intended. Information disclosure of internal communication
+templates, not a privilege-escalation path.
+
+**Fix:** change the matcher to `"/api/email-template/**"` (or `/api/email-template/{emailType}`)
+so it actually covers the mapped path; add a test asserting a token with only `openid` gets 403 on
+this route.
+
+---
+
 ## LOW / hygiene
 
 ### VA-SEC-10 — CORS fragility
@@ -285,7 +314,7 @@ Verify this path; conflating the two flags could mis-lock/unlock accounts.
 1. **VA-SEC-01** and **VA-SEC-02** — drop-everything; reachable with no special preconditions, both look like oversights.
 2. **VA-SEC-03** (brute force) and **VA-SEC-05** (consent/refresh) — core IdP correctness.
 3. **VA-SEC-04** (AES-GCM) — needs a migration plan for already-stored keys.
-4. **VA-SEC-06**, **VA-SEC-07** — small, high-value access-control fixes.
+4. **VA-SEC-06**, **VA-SEC-07**, **VA-SEC-14** — small, high-value access-control fixes.
 5. **VA-SEC-08**, **VA-SEC-09** — headers + defaults hardening.
 6. Low/hygiene batch (**VA-SEC-10..13**).
 
