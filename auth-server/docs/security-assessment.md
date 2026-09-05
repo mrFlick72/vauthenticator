@@ -60,22 +60,33 @@ react-router/react-router-dom).
 | VA-SEC-12 | **Low** | Jinjava email templates = privileged code execution surface (document & gate) |
 | VA-SEC-13 | **Low** | Possible flag-mapping bug: `accountNonLocked` decoded from `credentialsNonExpired` |
 | VA-SEC-14 | **Medium** | `WebSecurityConfig` scope rule for email-template read never matches; falls back to authenticated-only |
+| VA-SEC-15 | **Medium** | `admin:account-writer` can self-grant `VAUTHENTICATOR_ADMIN` via caller-supplied `authorities` |
+| VA-SEC-16 | **Low** | `WebSecurityConfig` `/api/accounts` `permitAll()` matcher had no HTTP-method qualifier, covering self-service `PUT` too |
 
 ---
 
 ## CRITICAL
 
 ### VA-SEC-01 — Admin account / role / group APIs have no authorization
-- [ ] Fixed
-- [ ] Tests added
+- [x] Fixed
+- [x] Tests added
 
-**2026-09-05 update — Role/Group portion fixed, Account portion still open:** `RoleEndPoint` and
+**2026-09-05 update — Role/Group portion fixed:** `RoleEndPoint` and
 `GroupEndPoint` now call `permissionValidator.validate(principal, Scopes.from(...))` with new
 `admin:role-{reader,writer,eraser}` / `admin:group-{reader,writer,eraser}` scopes (3-tier, matching
 `ClientApplicationEndPoint`'s convention; see issue
-[#362](https://github.com/mrFlick72/vauthenticator/issues/362)). `AdminApiAccountEndPoint`
-(`PUT /api/admin/accounts`, `GET /api/admin/accounts/{email}/email`) is unchanged and still has no
-authorization check — this finding stays open until that's addressed separately.
+[#362](https://github.com/mrFlick72/vauthenticator/issues/362), ADR
+`docs/adr/0001-role-group-admin-scope-authorization.md`).
+
+**2026-09-05 update — Account portion fixed:** `AdminApiAccountEndPoint` now calls
+`permissionValidator.validate(principal, Scopes.from(...))` with new flat 2-tier
+`admin:account-reader` (`GET /api/admin/accounts/{email}/email`) / `admin:account-writer`
+(`PUT /api/admin/accounts`) scopes — 2-tier rather than 3-tier since this controller has no delete
+endpoint (see issue [#364](https://github.com/mrFlick72/vauthenticator/issues/364), ADR
+`docs/adr/0002-admin-account-scope-authorization.md`). This closes VA-SEC-01, but note
+`admin:account-writer` can still be used to self-grant `VAUTHENTICATOR_ADMIN` via the `authorities`
+field on the request — that narrower risk is deliberately deferred and tracked separately as
+**VA-SEC-15**.
 
 **Where:**
 - `account/api/AdminApiAccountEndPoint.kt:14` (`GET /api/admin/accounts/{email}/email`), `:21` (`PUT /api/admin/accounts`)
@@ -276,6 +287,38 @@ this route.
 
 ---
 
+### VA-SEC-15 — `admin:account-writer` can self-grant admin authorities
+
+- [ ] Fixed
+- [ ] Tests added
+
+**Where:**
+- `account/domain/AccountUpdateAdminAction.kt:13` — `execute()` copies `request.authorities` onto
+  the stored account unconditionally.
+- `account/api/AdminApiAccountEndPoint.kt:21` — `PUT /api/admin/accounts`, now gated by
+  `admin:account-writer` (VA-SEC-01 fix).
+
+**Problem:** `admin:account-writer` was designed to cover account-admin duties like lock/unlock and
+enable/disable, but it's the same scope that authorizes overwriting `authorities` — there's no
+separate gate on granting `VAUTHENTICATOR_ADMIN` / `admin:full-access` specifically. Structurally
+the same shape as **VA-SEC-06** (signup trusting caller-supplied `authorities`).
+
+**Impact:** Any caller holding plain `admin:account-writer` can grant itself or any other account
+`VAUTHENTICATOR_ADMIN` via `PUT /api/admin/accounts`, escalating from an account-admin-scoped
+identity to full admin.
+
+**Why deferred rather than fixed alongside VA-SEC-01:** identified during the #364 grill/design
+session (see ADR `docs/adr/0002-admin-account-scope-authorization.md`, "Considered options"). Fixing
+it requires `AccountUpdateAdminAction` to diff the incoming `authorities` against the stored
+account and demand a stricter scope only when they differ — real logic, not just a scope annotation
+— so it was deliberately scoped out of #364 to keep that PR focused. Tracked in issue
+[#365](https://github.com/mrFlick72/vauthenticator/issues/365).
+
+**Fix:** see issue #365's proposed direction — gate `authorities` changes behind an additional,
+stricter scope (e.g. `admin:account-authorities-writer`) on top of `admin:account-writer`.
+
+---
+
 ## LOW / hygiene
 
 ### VA-SEC-10 — CORS fragility
@@ -315,6 +358,24 @@ the underlying sandbox bug is patched — is still open.**
 `account/domain/Account.kt:148` decodes `accountNonLocked = it["credentialsNonExpired"] as Boolean`.
 Verify this path; conflating the two flags could mis-lock/unlock accounts.
 
+### VA-SEC-16 — `/api/accounts` `permitAll()` matcher covered `PUT` too
+- [x] Fixed
+
+**Where:** `config/WebSecurityConfig.kt:100` — `.requestMatchers("/api/accounts").permitAll()` had
+no `HttpMethod` qualifier, so it matched both `POST /api/accounts` (signup — intentionally
+pre-auth, per `Scope.SIGN_UP` checked in-controller) and `PUT /api/accounts` (self-service update,
+`AccountEndPoint.kt:53`).
+
+**Problem:** `PUT /api/accounts` was never actually reachable anonymously in practice, but only
+because its controller method declares a non-nullable `principal: JwtAuthenticationToken`
+parameter — an unauthenticated call fails at Spring's argument-binding boundary, not because any
+explicit authorization rule rejected it. Same shape as VA-SEC-14: a `WebSecurityConfig` rule that
+doesn't do what a reader would assume from the config alone.
+
+**Fix:** scoped the matcher to `HttpMethod.POST, "/api/accounts"` so only signup is `permitAll()`;
+`PUT /api/accounts` now falls through to the catch-all `.requestMatchers("/api/**").authenticated()`,
+making the requirement explicit instead of implicit. Found and fixed alongside #364.
+
 ---
 
 ## Suggested remediation order
@@ -322,7 +383,7 @@ Verify this path; conflating the two flags could mis-lock/unlock accounts.
 1. **VA-SEC-01** and **VA-SEC-02** — drop-everything; reachable with no special preconditions, both look like oversights.
 2. **VA-SEC-03** (brute force) and **VA-SEC-05** (consent/refresh) — core IdP correctness.
 3. **VA-SEC-04** (AES-GCM) — needs a migration plan for already-stored keys.
-4. **VA-SEC-06**, **VA-SEC-07**, **VA-SEC-14** — small, high-value access-control fixes.
+4. **VA-SEC-06**, **VA-SEC-07**, **VA-SEC-14**, **VA-SEC-15** — small, high-value access-control fixes.
 5. **VA-SEC-08**, **VA-SEC-09** — headers + defaults hardening.
 6. Low/hygiene batch (**VA-SEC-10..13**).
 

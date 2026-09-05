@@ -97,7 +97,7 @@ class WebSecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/reset-password/{ticket}").permitAll()
 
                     .requestMatchers(*WHITE_LIST).permitAll()
-                    .requestMatchers("/api/accounts").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/accounts").permitAll()
 
                     .requestMatchers(HttpMethod.PUT, "/api/sign-up/welcome")
                     .hasAnyAuthority(Scope.WELCOME.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)

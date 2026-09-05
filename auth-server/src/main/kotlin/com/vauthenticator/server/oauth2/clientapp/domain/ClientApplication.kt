@@ -304,6 +304,9 @@ data class Scope(val content: String) {
         val SAVE_GROUP = Scope("admin:group-writer")
         val DELETE_GROUP = Scope("admin:group-eraser")
 
+        val READ_ACCOUNT = Scope("admin:account-reader")
+        val SAVE_ACCOUNT = Scope("admin:account-writer")
+
         val AVAILABLE_SCOPES = listOf(
             OPEN_ID,
             PROFILE,
@@ -337,7 +340,10 @@ data class Scope(val content: String) {
 
             READ_GROUP,
             SAVE_GROUP,
-            DELETE_GROUP
+            DELETE_GROUP,
+
+            READ_ACCOUNT,
+            SAVE_ACCOUNT
         )
 
     }
