@@ -61,6 +61,7 @@ react-router/react-router-dom).
 | VA-SEC-13 | **Low** | Possible flag-mapping bug: `accountNonLocked` decoded from `credentialsNonExpired` |
 | VA-SEC-14 | **Medium** | `WebSecurityConfig` scope rule for email-template read never matches; falls back to authenticated-only |
 | VA-SEC-15 | **Medium** | `admin:account-writer` can self-grant `VAUTHENTICATOR_ADMIN` via caller-supplied `authorities` |
+| VA-SEC-16 | **Low** | `WebSecurityConfig` `/api/accounts` `permitAll()` matcher had no HTTP-method qualifier, covering self-service `PUT` too |
 
 ---
 
@@ -356,6 +357,24 @@ the underlying sandbox bug is patched — is still open.**
 
 `account/domain/Account.kt:148` decodes `accountNonLocked = it["credentialsNonExpired"] as Boolean`.
 Verify this path; conflating the two flags could mis-lock/unlock accounts.
+
+### VA-SEC-16 — `/api/accounts` `permitAll()` matcher covered `PUT` too
+- [x] Fixed
+
+**Where:** `config/WebSecurityConfig.kt:100` — `.requestMatchers("/api/accounts").permitAll()` had
+no `HttpMethod` qualifier, so it matched both `POST /api/accounts` (signup — intentionally
+pre-auth, per `Scope.SIGN_UP` checked in-controller) and `PUT /api/accounts` (self-service update,
+`AccountEndPoint.kt:53`).
+
+**Problem:** `PUT /api/accounts` was never actually reachable anonymously in practice, but only
+because its controller method declares a non-nullable `principal: JwtAuthenticationToken`
+parameter — an unauthenticated call fails at Spring's argument-binding boundary, not because any
+explicit authorization rule rejected it. Same shape as VA-SEC-14: a `WebSecurityConfig` rule that
+doesn't do what a reader would assume from the config alone.
+
+**Fix:** scoped the matcher to `HttpMethod.POST, "/api/accounts"` so only signup is `permitAll()`;
+`PUT /api/accounts` now falls through to the catch-all `.requestMatchers("/api/**").authenticated()`,
+making the requirement explicit instead of implicit. Found and fixed alongside #364.
 
 ---
 
