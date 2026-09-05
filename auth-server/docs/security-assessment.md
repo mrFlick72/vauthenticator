@@ -69,6 +69,14 @@ react-router/react-router-dom).
 - [ ] Fixed
 - [ ] Tests added
 
+**2026-09-05 update — Role/Group portion fixed, Account portion still open:** `RoleEndPoint` and
+`GroupEndPoint` now call `permissionValidator.validate(principal, Scopes.from(...))` with new
+`admin:role-{reader,writer,eraser}` / `admin:group-{reader,writer,eraser}` scopes (3-tier, matching
+`ClientApplicationEndPoint`'s convention; see issue
+[#362](https://github.com/mrFlick72/vauthenticator/issues/362)). `AdminApiAccountEndPoint`
+(`PUT /api/admin/accounts`, `GET /api/admin/accounts/{email}/email`) is unchanged and still has no
+authorization check — this finding stays open until that's addressed separately.
+
 **Where:**
 - `account/api/AdminApiAccountEndPoint.kt:14` (`GET /api/admin/accounts/{email}/email`), `:21` (`PUT /api/admin/accounts`)
 - `account/domain/AccountUpdateAdminAction.kt:13` (writes `authorities`, `enabled`, `accountNonLocked` from request body)

@@ -296,6 +296,14 @@ data class Scope(val content: String) {
         val SAVE_CLIENT_APPLICATION = Scope("admin:client-app-writer")
         val DELETE_CLIENT_APPLICATION = Scope("admin:client-app-eraser")
 
+        val READ_ROLE = Scope("admin:role-reader")
+        val SAVE_ROLE = Scope("admin:role-writer")
+        val DELETE_ROLE = Scope("admin:role-eraser")
+
+        val READ_GROUP = Scope("admin:group-reader")
+        val SAVE_GROUP = Scope("admin:group-writer")
+        val DELETE_GROUP = Scope("admin:group-eraser")
+
         val AVAILABLE_SCOPES = listOf(
             OPEN_ID,
             PROFILE,
@@ -321,7 +329,15 @@ data class Scope(val content: String) {
 
             READ_CLIENT_APPLICATION,
             SAVE_CLIENT_APPLICATION,
-            DELETE_CLIENT_APPLICATION
+            DELETE_CLIENT_APPLICATION,
+
+            READ_ROLE,
+            SAVE_ROLE,
+            DELETE_ROLE,
+
+            READ_GROUP,
+            SAVE_GROUP,
+            DELETE_GROUP
         )
 
     }
