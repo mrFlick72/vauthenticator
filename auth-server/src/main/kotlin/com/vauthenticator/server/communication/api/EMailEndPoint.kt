@@ -31,7 +31,9 @@ class EMailEndPoint(
     }
 
     @PutMapping("/api/email-template")
-    fun saveMailTemplate(@RequestBody request: EMailTemplate): ResponseEntity<Unit> {
+    fun saveMailTemplate(principal: JwtAuthenticationToken, @RequestBody request: EMailTemplate): ResponseEntity<Unit> {
+        permissionValidator.validate(principal, Scopes.from(Scope.MAIL_TEMPLATE_WRITER))
+
         documentRepository.saveDocument(
             DocumentType.EMAIL.content, //todo MAIL should be EMAIL
             Document(

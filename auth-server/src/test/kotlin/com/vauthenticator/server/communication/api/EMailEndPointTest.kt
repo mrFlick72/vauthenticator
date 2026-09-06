@@ -119,6 +119,7 @@ class EMailEndPointTest {
 
     @Test
     fun `when a new mail template is uploaded`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MAIL_TEMPLATE_WRITER.content))
         val request = EMailTemplate(
             EMailType.WELCOME,
             "A_TEMPLATE"
@@ -137,6 +138,54 @@ class EMailEndPointTest {
 
         mockMvc.perform(
             put("/api/email-template")
+                .principal(jwtAuthenticationToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        ).andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `uploading a new mail template fails for insufficient scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
+        val request = EMailTemplate(
+            EMailType.WELCOME,
+            "A_TEMPLATE"
+        )
+
+        mockMvc.perform(
+            put("/api/email-template")
+                .principal(jwtAuthenticationToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) {
+            documentRepository.saveDocument(DocumentType.EMAIL.content, any())
+        }
+    }
+
+    @Test
+    fun `uploading a new mail template with admin full access scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
+        val request = EMailTemplate(
+            EMailType.WELCOME,
+            "A_TEMPLATE"
+        )
+
+        every {
+            documentRepository.saveDocument(
+                DocumentType.EMAIL.content,
+                Document(
+                    "text/html",
+                    "templates/welcome.html",
+                    "A_TEMPLATE".toByteArray()
+                )
+            )
+        } just runs
+
+        mockMvc.perform(
+            put("/api/email-template")
+                .principal(jwtAuthenticationToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
         ).andExpect(status().isNoContent)
