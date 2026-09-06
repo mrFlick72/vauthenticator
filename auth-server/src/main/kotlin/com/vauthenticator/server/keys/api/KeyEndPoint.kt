@@ -47,13 +47,16 @@ class KeyEndPoint(
     }
 
     @DeleteMapping("/api/keys")
-    fun deleteKey(@RequestBody body: DeleteKeyRequest) =
-        keyRepository.deleteKeyFor(
+    fun deleteKey(principal: JwtAuthenticationToken, @RequestBody body: DeleteKeyRequest): ResponseEntity<Unit> {
+        permissionValidator.validate(principal, Scopes.from(Scope.KEY_EDITOR))
+
+        return keyRepository.deleteKeyFor(
             Kid(body.kid),
             body.keyPurpose,
             Duration.ofSeconds(body.keyTtl)
         )
             .let { ResponseEntity.noContent().build<Unit>() }
+    }
 
     @ExceptionHandler(KeyDeletionException::class)
     fun keyDeletionExceptionHandler(ex: KeyDeletionException) = ResponseEntity.badRequest().body(ex.message);

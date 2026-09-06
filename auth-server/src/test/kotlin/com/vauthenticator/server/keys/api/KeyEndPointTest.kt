@@ -154,10 +154,13 @@ class KeyEndPointTest {
 
     @Test
     fun `when we are able to delete a new key`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.KEY_EDITOR.content))
+
         every { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) } just runs
 
         mokMvc.perform(
             delete(API_PATH)
+                .principal(jwtAuthenticationToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(deletePayload))
         )
@@ -166,14 +169,47 @@ class KeyEndPointTest {
 
     @Test
     fun `when we are not able to delete a new key`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.KEY_EDITOR.content))
+
         every { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) } throws KeyDeletionException("")
 
         mokMvc.perform(
             delete(API_PATH)
+                .principal(jwtAuthenticationToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(deletePayload))
         )
             .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `deleting a key fails for insufficient scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
+
+        mokMvc.perform(
+            delete(API_PATH)
+                .principal(jwtAuthenticationToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(deletePayload))
+        )
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) }
+    }
+
+    @Test
+    fun `deleting a key with admin full access scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
+
+        every { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) } just runs
+
+        mokMvc.perform(
+            delete(API_PATH)
+                .principal(jwtAuthenticationToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(deletePayload))
+        )
+            .andExpect(status().isNoContent)
     }
 
     @Test
