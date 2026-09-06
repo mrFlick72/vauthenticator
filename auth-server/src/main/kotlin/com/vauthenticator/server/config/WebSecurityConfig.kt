@@ -112,20 +112,6 @@ class WebSecurityConfig {
                         Role.adminRole().name
                     )
 
-                    .requestMatchers(HttpMethod.GET, "/api/email-template")
-                    .hasAnyAuthority(
-                        Scope.MAIL_TEMPLATE_READER.content,
-                        Scope.ADMIN_FULL_ACCESS.content,
-                        Role.adminRole().name
-                    )
-
-                    .requestMatchers(HttpMethod.PUT, "/api/email-template")
-                    .hasAnyAuthority(
-                        Scope.MAIL_TEMPLATE_WRITER.content,
-                        Scope.ADMIN_FULL_ACCESS.content,
-                        Role.adminRole().name
-                    )
-
                     .requestMatchers("/api/**")
                     .authenticated()
             }
