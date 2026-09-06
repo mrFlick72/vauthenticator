@@ -1,9 +1,15 @@
 package com.vauthenticator.server.keys.api
 
 import com.vauthenticator.server.keys.domain.*
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope
+import com.vauthenticator.server.role.domain.PermissionValidator
+import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.KeysUtils.aKid
 import com.vauthenticator.server.support.KeysUtils.aMasterKey
 import com.vauthenticator.server.support.KeysUtils.anotherKid
+import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -36,6 +42,9 @@ class KeyEndPointTest {
     @MockK
     lateinit var signatureKeyRotation: SignatureKeyRotation
 
+    @MockK
+    lateinit var clientApplicationRepository: ClientApplicationRepository
+
     private val mapper = ObjectMapper()
     private val payload = mapOf("masterKey" to "A_MASTER_KEY", "kid" to "A_KID")
     private val deletePayload = mapOf("kid" to "A_KID", "key_purpose" to "SIGNATURE", "key_ttl" to 0L)
@@ -43,13 +52,21 @@ class KeyEndPointTest {
 
     @BeforeEach
     fun setUp() {
-        mokMvc = standaloneSetup(KeyEndPoint("A_MASTER_KEY", keyRepository, signatureKeyRotation)).build()
+        mokMvc = standaloneSetup(
+            KeyEndPoint(
+                "A_MASTER_KEY",
+                keyRepository,
+                signatureKeyRotation,
+                PermissionValidator(clientApplicationRepository)
+            )
+        ).setControllerAdvice(ExceptionAdviceController()).build()
     }
 
     @Test
     fun `when we are able to load master key, kid of all  keys`() {
         val kpg = KeyPairGenerator.getInstance("RSA")
         kpg.initialize(2048)
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.KEY_READER.content))
 
         every { keyRepository.signatureKeys() } returns Keys(
             listOf(
@@ -67,9 +84,41 @@ class KeyEndPointTest {
 
         println(mapper.writeValueAsString(listOf(payload)))
 
-        mokMvc.perform(get(API_PATH))
+        mokMvc.perform(get(API_PATH).principal(jwtAuthenticationToken))
             .andExpect(status().isOk)
             .andExpect(content().json(mapper.writeValueAsString(listOf(payload))))
+    }
+
+    @Test
+    fun `loading all keys fails for insufficient scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
+
+        mokMvc.perform(get(API_PATH).principal(jwtAuthenticationToken))
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { keyRepository.signatureKeys() }
+    }
+
+    @Test
+    fun `loading all keys with admin full access scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
+
+        every { keyRepository.signatureKeys() } returns Keys(
+            listOf(
+                Key(
+                    DataKey.from("", ""),
+                    aMasterKey,
+                    aKid,
+                    true,
+                    KeyType.ASYMMETRIC,
+                    KeyPurpose.SIGNATURE,
+                    0L
+                )
+            )
+        )
+
+        mokMvc.perform(get(API_PATH).principal(jwtAuthenticationToken))
+            .andExpect(status().isOk)
     }
 
     @Test
