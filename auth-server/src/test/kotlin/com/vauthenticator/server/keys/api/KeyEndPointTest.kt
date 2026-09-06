@@ -179,6 +179,7 @@ class KeyEndPointTest {
     @Test
     fun `when we rotate a signature key`() {
         val expectedKid = anotherKid
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.KEY_EDITOR.content))
 
         every {
             signatureKeyRotation.rotate(
@@ -190,6 +191,7 @@ class KeyEndPointTest {
 
         mokMvc.perform(
             post("/api/keys/rotate")
+                .principal(jwtAuthenticationToken)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(rotationPayload))
         )
@@ -202,5 +204,42 @@ class KeyEndPointTest {
                 Duration.ofSeconds(100)
             )
         }
+    }
+
+    @Test
+    fun `rotating a signature key fails for insufficient scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
+
+        mokMvc.perform(
+            post("/api/keys/rotate")
+                .principal(jwtAuthenticationToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(rotationPayload))
+        )
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { signatureKeyRotation.rotate(aMasterKey, aKid, Duration.ofSeconds(100)) }
+    }
+
+    @Test
+    fun `rotating a signature key with admin full access scope`() {
+        val expectedKid = anotherKid
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
+
+        every {
+            signatureKeyRotation.rotate(
+                aMasterKey,
+                aKid,
+                Duration.ofSeconds(100)
+            )
+        } returns expectedKid
+
+        mokMvc.perform(
+            post("/api/keys/rotate")
+                .principal(jwtAuthenticationToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(rotationPayload))
+        )
+            .andExpect(status().isNoContent)
     }
 }

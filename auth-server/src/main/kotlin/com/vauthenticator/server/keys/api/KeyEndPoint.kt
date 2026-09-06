@@ -39,9 +39,12 @@ class KeyEndPoint(
     }
 
     @PostMapping("/api/keys/rotate")
-    fun rotateKey(@RequestBody body: RotateKeyRequest) =
-        signatureKeyRotation.rotate(MasterKid(masterKey), Kid(body.kid), Duration.ofSeconds(body.keyTtl))
+    fun rotateKey(principal: JwtAuthenticationToken, @RequestBody body: RotateKeyRequest): ResponseEntity<Unit> {
+        permissionValidator.validate(principal, Scopes.from(Scope.KEY_EDITOR))
+
+        return signatureKeyRotation.rotate(MasterKid(masterKey), Kid(body.kid), Duration.ofSeconds(body.keyTtl))
             .let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Unit>() }
+    }
 
     @DeleteMapping("/api/keys")
     fun deleteKey(@RequestBody body: DeleteKeyRequest) =
