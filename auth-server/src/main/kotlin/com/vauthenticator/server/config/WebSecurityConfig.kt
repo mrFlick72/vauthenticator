@@ -126,18 +126,6 @@ class WebSecurityConfig {
                         Role.adminRole().name
                     )
 
-                    .requestMatchers(HttpMethod.GET, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_READER.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
-
-                    .requestMatchers(HttpMethod.POST, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
-
-                    .requestMatchers(HttpMethod.POST, "/api/keys/rotate")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
-
-                    .requestMatchers(HttpMethod.DELETE, "/api/keys")
-                    .hasAnyAuthority(Scope.KEY_EDITOR.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
-
                     .requestMatchers("/api/**")
                     .authenticated()
             }
