@@ -31,9 +31,12 @@ class KeyEndPoint(
 
 
     @PostMapping("/api/keys")
-    fun createKey() =
-        keyRepository.createKeyFrom(MasterKid(masterKey))
+    fun createKey(principal: JwtAuthenticationToken): ResponseEntity<Unit> {
+        permissionValidator.validate(principal, Scopes.from(Scope.KEY_EDITOR))
+
+        return keyRepository.createKeyFrom(MasterKid(masterKey))
             .let { ResponseEntity.status(HttpStatus.CREATED).build<Unit>() }
+    }
 
     @PostMapping("/api/keys/rotate")
     fun rotateKey(@RequestBody body: RotateKeyRequest) =

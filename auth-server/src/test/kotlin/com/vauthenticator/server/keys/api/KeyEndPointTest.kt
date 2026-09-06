@@ -123,11 +123,33 @@ class KeyEndPointTest {
 
     @Test
     fun `when we are able to create a new key`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.KEY_EDITOR.content))
+
         every { keyRepository.createKeyFrom(aMasterKey) } returns Kid("123")
 
-        mokMvc.perform(post(API_PATH))
+        mokMvc.perform(post(API_PATH).principal(jwtAuthenticationToken))
             .andExpect(status().isCreated)
 
+    }
+
+    @Test
+    fun `creating a new key fails for insufficient scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
+
+        mokMvc.perform(post(API_PATH).principal(jwtAuthenticationToken))
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { keyRepository.createKeyFrom(aMasterKey) }
+    }
+
+    @Test
+    fun `creating a new key with admin full access scope`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
+
+        every { keyRepository.createKeyFrom(aMasterKey) } returns Kid("123")
+
+        mokMvc.perform(post(API_PATH).principal(jwtAuthenticationToken))
+            .andExpect(status().isCreated)
     }
 
     @Test
