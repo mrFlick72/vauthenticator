@@ -113,6 +113,14 @@ including a normal end-user's `openid` access token.
 `RestPasswordEndPoint` all call `permissionValidator.validate(principal, Scopes.from(...))`.
 These three were missed.
 
+**2026-09-06 update — `KeyEndPoint` migrated to the same in-controller pattern:** `KeyEndPoint`
+(`/api/keys*`) was never part of this finding (it already had working `WebSecurityConfig`
+`hasAnyAuthority(...)` rules), but it was the last admin controller relying solely on filter-chain
+config instead of `permissionValidator.validate(...)`. Issue [#367](https://github.com/mrFlick72/vauthenticator/issues/367)
+migrated it for testability (unit-testable authorization without a full Spring Security filter
+chain) and consistency; see ADR `docs/adr/0003-key-endpoint-scope-authorization.md`. No scope or
+behavior changes — `admin:key-reader`/`admin:key-editor` are unchanged.
+
 **Fix:**
 - Add explicit scope/role rules in `WebSecurityConfig` for `/api/admin/**`, `/api/roles/**`,
   `/api/groups/**` (e.g. require `ADMIN_FULL_ACCESS` or a dedicated account-admin scope + `VAUTHENTICATOR_ADMIN`).
