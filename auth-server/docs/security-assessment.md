@@ -410,3 +410,16 @@ making the requirement explicit instead of implicit. Found and fixed alongside #
   `https://github.com/mrFlick72/vauthenticator/security/dependabot` periodically; VA-SEC-12 shows
   a dependency CVE can invalidate this doc's "framework stack is current" assumption for a
   specific library even when the overall stack is recent.
+- **2026-09-07 — `WelcomeEMailEndPoint` dead session-param cleanup (not a VA-SEC finding):** while
+  fixing VA-SEC-14, noticed `WelcomeEMailEndPoint.welcome()` called the 3-arg
+  `PermissionValidator.validate(principal, session, scopes)` overload even though its `principal`
+  parameter is a non-nullable `JwtAuthenticationToken` — same shape as **VA-SEC-16** (a rule/param
+  that looks meaningful but can never actually fire, because an unauthenticated call already fails
+  at Spring's argument-binding boundary before it matters). Unlike `AccountEndPoint.signUp`
+  (nullable principal, genuinely reachable pre-auth, where the session-based client-app fallback is
+  load-bearing), this endpoint had no real use for it. Not a vulnerability — already fail-closed via
+  the non-null binding — just misleading/unnecessary code. Fixed by switching to the 2-arg
+  `validate(principal, scopes)` and dropping the unused `HttpSession` parameter, matching
+  `KeyEndPoint`/`EMailEndPoint`/`AdminApiAccountEndPoint`. See issue
+  [#374](https://github.com/mrFlick72/vauthenticator/issues/374) / PR
+  [#373](https://github.com/mrFlick72/vauthenticator/pull/373).
