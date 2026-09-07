@@ -270,8 +270,21 @@ as dev-only (and ensure prod uses KMS or a secret-managed key), replace `println
 ---
 
 ### VA-SEC-14 — Email-template read scope rule never matches its endpoint
-- [ ] Fixed
-- [ ] Tests added
+- [x] Fixed
+- [x] Tests added
+
+**2026-09-06 update — Fixed:** `EMailEndPoint` now calls
+`permissionValidator.validate(principal, Scopes.from(...))` in both `getMailTemplate()` (requires
+`admin:email-template-reader`) and `saveMailTemplate()` (requires `admin:email-template-writer`),
+matching the in-controller pattern used everywhere else (see ADR
+`docs/adr/0004-email-template-endpoint-scope-authorization.md`). Rather than patching the dead
+`WebSecurityConfig` GET pattern to `/api/email-template/**` as originally suggested below, both
+`WebSecurityConfig` rules for `/api/email-template*` were deleted outright — enforcement no longer
+depends on a filter-chain pattern staying in sync with the controller's mapping. Issue
+[#368](https://github.com/mrFlick72/vauthenticator/issues/368). A regression test
+(`retrieving a mail template fails for insufficient scope`) pins the fix: it asserts 403 for a
+principal without `admin:email-template-reader`, which is exactly the request VA-SEC-14 describes
+as previously succeeding.
 
 **Where:**
 - `config/WebSecurityConfig.kt:115-120` — `.requestMatchers(HttpMethod.GET, "/api/email-template").hasAnyAuthority(Scope.MAIL_TEMPLATE_READER.content, ...)`.
