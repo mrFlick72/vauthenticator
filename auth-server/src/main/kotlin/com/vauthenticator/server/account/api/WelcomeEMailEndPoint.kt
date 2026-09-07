@@ -5,7 +5,6 @@ import com.vauthenticator.server.account.domain.welcome.SayWelcome
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
-import jakarta.servlet.http.HttpSession
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -22,9 +21,9 @@ class WelcomeEMailEndPoint(
     @PutMapping("/api/sign-up/welcome")
     fun welcome(
         @RequestBody request: WelcomeEMailRequest,
-        session: HttpSession, principal: JwtAuthenticationToken
+        principal: JwtAuthenticationToken
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, session, Scopes.from(Scope.WELCOME))
+        permissionValidator.validate(principal, Scopes.from(Scope.WELCOME))
         sayWelcome.welcome(request.email)
         return ResponseEntity.noContent().build()
     }
