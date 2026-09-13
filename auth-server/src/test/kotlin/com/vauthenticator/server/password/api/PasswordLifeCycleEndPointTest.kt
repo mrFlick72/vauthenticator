@@ -1,10 +1,13 @@
 package com.vauthenticator.server.password.api
 
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.domain.PasswordLifeCycleAction
 import com.vauthenticator.server.password.domain.PasswordLifeCycleRule
 import com.vauthenticator.server.password.domain.PasswordLifeCycleStrategyExecutor
+import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.MfaFixture.account
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -32,11 +35,18 @@ class PasswordLifeCycleEndPointTest {
     @MockK
     lateinit var passwordLifeCycleStrategyExecutor: PasswordLifeCycleStrategyExecutor
 
+    @MockK
+    lateinit var clientApplicationRepository: ClientApplicationRepository
+
     @BeforeEach
     fun setUp() {
         mokMvc = standaloneSetup(
-            PasswordLifeCycleEndPoint(passwordLifeCycleStrategyExecutor)
-        ).build()
+            PasswordLifeCycleEndPoint(
+                PermissionValidator(clientApplicationRepository),
+                passwordLifeCycleStrategyExecutor
+            )
+        ).setControllerAdvice(ExceptionAdviceController())
+            .build()
     }
 
     @Test
@@ -47,7 +57,7 @@ class PasswordLifeCycleEndPointTest {
             ttl = Duration.ofHours(1),
             action = PasswordLifeCycleAction.PASSWORD_RESET
         )
-        val m2mPrincipal = m2mPrincipalFor("m2m", listOf("SCOPE_ADMIN"))
+        val m2mPrincipal = m2mPrincipalFor("m2m", listOf("admin:password-lifecycle-editor"))
         every { passwordLifeCycleStrategyExecutor.execute(passwordLifeCycleRule) } just runs
 
         mokMvc.perform(
@@ -63,5 +73,30 @@ class PasswordLifeCycleEndPointTest {
             .andExpect { status().isNoContent }
 
         verify { passwordLifeCycleStrategyExecutor.execute(passwordLifeCycleRule) }
+    }
+
+    @Test
+    fun `when a new password policy fails for permission constraints`() {
+        val anAccount = account
+        val passwordLifeCycleRule = PasswordLifeCycleRule(
+            userName = anAccount.email,
+            ttl = Duration.ofHours(1),
+            action = PasswordLifeCycleAction.PASSWORD_RESET
+        )
+        val m2mPrincipal = m2mPrincipalFor("m2m", listOf("admin:whatever"))
+
+        mokMvc.perform(
+            put("/api/admin/accounts/password/lifecycle")
+                .principal(m2mPrincipal)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        passwordLifeCycleRule
+                    )
+                )
+        )
+            .andExpect { status().isForbidden }
+
+        verify(exactly = 0) { passwordLifeCycleStrategyExecutor.execute(passwordLifeCycleRule) }
     }
 }

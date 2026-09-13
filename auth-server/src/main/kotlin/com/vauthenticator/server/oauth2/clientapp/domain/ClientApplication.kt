@@ -282,6 +282,7 @@ data class Scope(val content: String) {
         val GENERATE_PASSWORD = Scope("admin:generate-password")
         val RESET_PASSWORD = Scope("admin:reset-password")
         val CHANGE_PASSWORD = Scope("admin:change-password")
+        val CHANGE_PASSWORD_LIFECYCLE = Scope("admin:password-lifecycle-editor")
 
         val MAIL_TEMPLATE_READER = Scope("admin:email-template-reader")
         val MAIL_TEMPLATE_WRITER = Scope("admin:email-template-writer")
@@ -320,6 +321,7 @@ data class Scope(val content: String) {
             RESET_PASSWORD,
             CHANGE_PASSWORD,
             GENERATE_PASSWORD,
+            CHANGE_PASSWORD_LIFECYCLE,
 
             KEY_READER,
             KEY_EDITOR,
