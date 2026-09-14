@@ -1,12 +1,13 @@
 package com.vauthenticator.server.password.api
 
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
-import com.vauthenticator.server.password.domain.PasswordLifeCycleAction
-import com.vauthenticator.server.password.domain.PasswordLifeCycleRule
-import com.vauthenticator.server.password.domain.PasswordLifeCycleStrategyExecutor
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutor
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.MfaFixture.account
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.passwordLifeCycleRule
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -23,7 +24,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
 import tools.jackson.databind.ObjectMapper
-import java.time.Duration
 
 @ExtendWith(MockKExtension::class)
 class PasswordLifeCycleEndPointTest {
@@ -31,9 +31,8 @@ class PasswordLifeCycleEndPointTest {
     private val objectMapper = ObjectMapper()
 
     lateinit var mokMvc: MockMvc
-
     @MockK
-    lateinit var passwordLifeCycleStrategyExecutor: PasswordLifeCycleStrategyExecutor
+    lateinit var passwordLifeCycleExecutor: PasswordLifeCycleExecutor
 
     @MockK
     lateinit var clientApplicationRepository: ClientApplicationRepository
@@ -43,7 +42,7 @@ class PasswordLifeCycleEndPointTest {
         mokMvc = standaloneSetup(
             PasswordLifeCycleEndPoint(
                 PermissionValidator(clientApplicationRepository),
-                passwordLifeCycleStrategyExecutor
+                passwordLifeCycleExecutor
             )
         ).setControllerAdvice(ExceptionAdviceController())
             .build()
@@ -51,14 +50,8 @@ class PasswordLifeCycleEndPointTest {
 
     @Test
     fun `when a new password policy is set`() {
-        val anAccount = account
-        val passwordLifeCycleRule = PasswordLifeCycleRule(
-            userName = anAccount.email,
-            ttl = Duration.ofHours(1),
-            action = PasswordLifeCycleAction.PASSWORD_RESET
-        )
         val m2mPrincipal = m2mPrincipalFor("m2m", listOf("admin:password-lifecycle-editor"))
-        every { passwordLifeCycleStrategyExecutor.execute(passwordLifeCycleRule) } just runs
+        every { passwordLifeCycleExecutor.register(passwordLifeCycleRule) } just runs
 
         mokMvc.perform(
             put("/api/admin/accounts/password/lifecycle")
@@ -72,17 +65,11 @@ class PasswordLifeCycleEndPointTest {
         )
             .andExpect { status().isNoContent }
 
-        verify { passwordLifeCycleStrategyExecutor.execute(passwordLifeCycleRule) }
+        verify { passwordLifeCycleExecutor.register(passwordLifeCycleRule) }
     }
 
     @Test
     fun `when a new password policy fails for permission constraints`() {
-        val anAccount = account
-        val passwordLifeCycleRule = PasswordLifeCycleRule(
-            userName = anAccount.email,
-            ttl = Duration.ofHours(1),
-            action = PasswordLifeCycleAction.PASSWORD_RESET
-        )
         val m2mPrincipal = m2mPrincipalFor("m2m", listOf("admin:whatever"))
 
         mokMvc.perform(
@@ -97,6 +84,6 @@ class PasswordLifeCycleEndPointTest {
         )
             .andExpect { status().isForbidden }
 
-        verify(exactly = 0) { passwordLifeCycleStrategyExecutor.execute(passwordLifeCycleRule) }
+        verify(exactly = 0) { passwordLifeCycleExecutor.register(passwordLifeCycleRule) }
     }
 }

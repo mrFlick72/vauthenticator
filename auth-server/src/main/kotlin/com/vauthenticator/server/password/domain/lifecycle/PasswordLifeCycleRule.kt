@@ -1,4 +1,4 @@
-package com.vauthenticator.server.password.domain
+package com.vauthenticator.server.password.domain.lifecycle
 
 import java.time.Duration
 
