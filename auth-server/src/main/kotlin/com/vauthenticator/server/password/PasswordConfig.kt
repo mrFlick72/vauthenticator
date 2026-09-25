@@ -16,6 +16,7 @@ import com.vauthenticator.server.password.adapter.jdbc.JdbcPasswordHistoryReposi
 import com.vauthenticator.server.password.domain.*
 import com.vauthenticator.server.password.domain.changepassword.ChangePassword
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordEventConsumer
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutorJob
 import com.vauthenticator.server.password.domain.resetpassword.ResetAccountPassword
 import com.vauthenticator.server.password.domain.resetpassword.ResetPasswordEventConsumer
 import com.vauthenticator.server.password.domain.resetpassword.SendResetPasswordMailChallenge
@@ -29,6 +30,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import java.time.Clock
 
@@ -172,4 +175,15 @@ class ResetPasswordConfig {
             )
         )
 
+}
+
+@Service
+class PasswordLifeCycleExecutorJobTaskConfig(
+    private val passwordLifeCycleExecutorJob: PasswordLifeCycleExecutorJob
+) {
+
+    @Scheduled(cron = "\${password.password-life-cycle.cron}")
+    fun run() {
+        passwordLifeCycleExecutorJob.execute()
+    }
 }
