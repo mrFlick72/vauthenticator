@@ -8,4 +8,6 @@ interface PasswordLifeCycleRepository {
 
     fun delete(userName: String)
 
+    fun findAllRules(page: Int, size: Int): List<PasswordLifeCycleRule>
+
 }
