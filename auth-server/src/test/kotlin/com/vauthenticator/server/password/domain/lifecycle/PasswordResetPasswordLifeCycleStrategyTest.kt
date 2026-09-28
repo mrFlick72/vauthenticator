@@ -19,7 +19,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private const val CREATION_DATE = "2026-12-14T10:15:30Z"
 private const val NOW = "2026-12-20T10:15:30Z"
 
 @ExtendWith(MockKExtension::class)
@@ -39,12 +38,14 @@ class PasswordResetPasswordLifeCycleStrategyTest {
 
     @Test
     fun `when a password reset rule is executed`() {
+        val creationDate = "2026-12-14T10:15:30Z"
+
         val anAccount = anAccount()
 
         val rule = PasswordLifeCycleRule(
             anAccount.username,
             ttl = Duration.ofDays(1),
-            creationDate = LocalDateTime.parse(CREATION_DATE, DateTimeFormatter.ISO_DATE_TIME),
+            creationDate = LocalDateTime.parse(creationDate, DateTimeFormatter.ISO_DATE_TIME),
             lastEvaluationDate = null,
             action = PasswordLifeCycleAction.PASSWORD_RESET
         )
@@ -57,6 +58,31 @@ class PasswordResetPasswordLifeCycleStrategyTest {
 
         verify { accountRepository.accountFor(anAccount.username) }
         verify { accountRepository.save(anAccount.copy(mandatoryAction = AccountMandatoryAction.RESET_PASSWORD)) }
+
+        assertTrue(uut.canHandle(rule))
+    }
+
+    @Test
+    fun `when a password reset rule is not executed, ttl has not expired`() {
+        val creationDate = "2026-12-20T10:15:30Z"
+
+        val anAccount = anAccount()
+
+        val rule = PasswordLifeCycleRule(
+            anAccount.username,
+            ttl = Duration.ofDays(1),
+            creationDate = LocalDateTime.parse(creationDate, DateTimeFormatter.ISO_DATE_TIME),
+            lastEvaluationDate = null,
+            action = PasswordLifeCycleAction.PASSWORD_RESET
+        )
+        every { accountRepository.accountFor(anAccount.username) } returns anAccount
+
+
+        uut.execute(rule)
+
+
+        verify { accountRepository.accountFor(anAccount.username) }
+        verify(exactly = 0) { accountRepository.save(anAccount.copy(mandatoryAction = AccountMandatoryAction.RESET_PASSWORD)) }
 
         assertTrue(uut.canHandle(rule))
     }
