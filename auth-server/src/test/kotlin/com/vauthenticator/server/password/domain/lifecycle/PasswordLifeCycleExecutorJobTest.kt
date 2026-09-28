@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Duration
+import java.time.LocalDateTime
 
 @ExtendWith(MockKExtension::class)
 class PasswordLifeCycleExecutorJobTest {
@@ -31,20 +32,29 @@ class PasswordLifeCycleExecutorJobTest {
     fun `when a lot of rules are processed`() {
         every { passwordLifeCycleRepository.findAllRules(page = 0, size = 100) } returns listOf(
             PasswordLifeCycleRule(
-                "user_1",
-                Duration.ZERO, PasswordLifeCycleAction.ACCOUNT_LOCK
+                userName = "user_1",
+                ttl =                 Duration.ZERO,
+                creationDate = LocalDateTime.now(),
+                lastEvaluationDate = null,
+                action = PasswordLifeCycleAction.ACCOUNT_LOCK
             )
         )
         every { passwordLifeCycleRepository.findAllRules(page = 1, size = 100) } returns listOf(
             PasswordLifeCycleRule(
-                "user_1",
-                Duration.ZERO, PasswordLifeCycleAction.ACCOUNT_LOCK
+                userName = "user_1",
+                ttl =                 Duration.ZERO,
+                creationDate = LocalDateTime.now(),
+                lastEvaluationDate = null,
+                action = PasswordLifeCycleAction.ACCOUNT_LOCK
             )
         )
         every { passwordLifeCycleRepository.findAllRules(page = 2, size = 100) } returns listOf(
             PasswordLifeCycleRule(
-                "user_2",
-                Duration.ZERO, PasswordLifeCycleAction.ACCOUNT_LOCK
+                userName = "user_2",
+                ttl =                 Duration.ZERO,
+                creationDate = LocalDateTime.now(),
+                lastEvaluationDate = null,
+                action = PasswordLifeCycleAction.ACCOUNT_LOCK
             )
         )
 
@@ -53,16 +63,36 @@ class PasswordLifeCycleExecutorJobTest {
         every {
             passwordLifeCycleExecutor.execute(
                 PasswordLifeCycleRule(
-                    "user_1",
-                    Duration.ZERO, PasswordLifeCycleAction.ACCOUNT_LOCK
+                    userName = "user_1",
+                    ttl =                 Duration.ZERO,
+                    creationDate = LocalDateTime.now(),
+                    lastEvaluationDate = null,
+                    action = PasswordLifeCycleAction.ACCOUNT_LOCK
+                )
+            )
+        } just runs
+
+        every { passwordLifeCycleRepository.findAllRules(page = 3, size = 100) } returns emptyList()
+
+        every {
+            passwordLifeCycleExecutor.execute(
+                PasswordLifeCycleRule(
+                    userName = "user_1",
+                    ttl =                 Duration.ZERO,
+                    creationDate = LocalDateTime.now(),
+                    lastEvaluationDate = null,
+                    action = PasswordLifeCycleAction.ACCOUNT_LOCK
                 )
             )
         } just runs
         every {
             passwordLifeCycleExecutor.execute(
                 PasswordLifeCycleRule(
-                    "user_2",
-                    Duration.ZERO, PasswordLifeCycleAction.ACCOUNT_LOCK
+                    userName = "user_2",
+                    ttl =                 Duration.ZERO,
+                    creationDate = LocalDateTime.now(),
+                    lastEvaluationDate = null,
+                    action = PasswordLifeCycleAction.ACCOUNT_LOCK
                 )
             )
         } just runs
@@ -74,6 +104,7 @@ class PasswordLifeCycleExecutorJobTest {
         verify { passwordLifeCycleRepository.findAllRules(page = 2, size = 100) }
         verify { passwordLifeCycleRepository.findAllRules(page = 3, size = 100) }
     }
+
     @Test
     fun `when no rules are processed`() {
         every { passwordLifeCycleRepository.findAllRules(page = 0, size = 100) }  returns emptyList()
