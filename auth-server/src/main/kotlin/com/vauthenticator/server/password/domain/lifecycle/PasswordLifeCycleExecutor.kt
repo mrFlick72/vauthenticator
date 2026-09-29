@@ -41,7 +41,7 @@ class PasswordResetPasswordLifeCycleStrategy(
     override fun execute(rule: PasswordLifeCycleRule) {
         accountRepository.accountFor(rule.userName)?.let { account ->
 
-            // last evaluation date is null so we need to evaluate if teh ttl has expired upon the creation date of the rule
+            // last evaluation date is null so we need to evaluate if the ttl has expired upon the creation date of the rule
             val lastEvaluationDate = rule.lastEvaluationDate ?: rule.creationDate
             val expirationDate = lastEvaluationDate.plus(rule.ttl)
             if (LocalDateTime.now(clock).isAfter(expirationDate)) {
