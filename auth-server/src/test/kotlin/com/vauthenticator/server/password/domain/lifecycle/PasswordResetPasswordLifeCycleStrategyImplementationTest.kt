@@ -4,10 +4,10 @@ import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountMandatoryAction
 
 
-class PasswordResetPasswordLifeCycleStrategyTest : AbstractPasswordLifeCycleStrategyTest() {
+class PasswordResetPasswordLifeCycleStrategyImplementationTest : AbstractPasswordLifeCycleStrategyTest() {
 
     override fun initPasswordLifeCycleStrategy(): PasswordLifeCycleStrategy {
-        return PasswordResetPasswordLifeCycleStrategy(clock, accountRepository())
+        return BasePasswordLifeCycleStrategy(clock, accountRepository(), PasswordResetPasswordLifeCycleStrategyImplementation(accountRepository()))
     }
 
 

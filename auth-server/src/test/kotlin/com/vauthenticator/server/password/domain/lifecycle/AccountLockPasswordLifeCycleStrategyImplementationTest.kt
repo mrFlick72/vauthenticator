@@ -2,9 +2,9 @@ package com.vauthenticator.server.password.domain.lifecycle
 
 import com.vauthenticator.server.account.domain.Account
 
-class AccountLockPasswordLifeCycleStrategyTest : AbstractPasswordLifeCycleStrategyTest() {
+class AccountLockPasswordLifeCycleStrategyImplementationTest : AbstractPasswordLifeCycleStrategyTest() {
     override fun initPasswordLifeCycleStrategy(): PasswordLifeCycleStrategy {
-        return AccountLockPasswordLifeCycleStrategy(clock, accountRepository())
+        return BasePasswordLifeCycleStrategy(clock, accountRepository(), AccountLockPasswordLifeCycleStrategyImplementation(accountRepository()))
     }
 
     override fun newAccountFrom(account: Account): Account =
