@@ -63,10 +63,28 @@ class PasswordResetPasswordLifeCycleStrategy(
     }
 }
 
-class AccountLockPasswordLifeCycleStrategy : PasswordLifeCycleStrategy {
+class AccountLockPasswordLifeCycleStrategy(
+    private val clock: Clock,
+    private val accountRepository: AccountRepository
+) : PasswordLifeCycleStrategy {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     override fun execute(rule: PasswordLifeCycleRule) {
-        // Implement the logic to lock the account for the user
-        println("Locking account for user: ${rule.userName}")
+        accountRepository.accountFor(rule.userName)?.let { account ->
+
+            // last evaluation date is null so we need to evaluate if the ttl has expired upon the creation date of the rule
+            val lastEvaluationDate = rule.lastEvaluationDate ?: rule.creationDate
+            val expirationDate = lastEvaluationDate.plus(rule.ttl)
+            if (LocalDateTime.now(clock).isAfter(expirationDate)) {
+                accountRepository.save(
+                    account.copy(accountNonLocked = true)
+                )
+            } else {
+                logger.info("Account lock rule expired for user: ${rule.userName}")
+            }
+
+        } ?: throw AccountNotFoundException("Account not found for user: ${rule.userName}")
     }
 
     override fun canHandle(rule: PasswordLifeCycleRule): Boolean {
