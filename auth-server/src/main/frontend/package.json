@@ -33,7 +33,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "babel-loader": "10.1.1",
-    "moment": "2.30.1",
+    "moment": "2.31.0",
     "prop-types": "15.8.1",
     "react": "19.2.8",
     "react-datetime": "3.3.1",
