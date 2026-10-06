@@ -5,12 +5,14 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutor
 import com.vauthenticator.server.role.domain.PermissionValidator
+import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
+@Profile("database")
 @RestController
 class PasswordLifeCycleEndPoint(
     private val permissionValidator: PermissionValidator,

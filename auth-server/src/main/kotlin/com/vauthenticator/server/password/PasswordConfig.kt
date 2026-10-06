@@ -16,9 +16,12 @@ import com.vauthenticator.server.password.adapter.jdbc.JdbcPasswordLifeCycleRepo
 import com.vauthenticator.server.password.domain.*
 import com.vauthenticator.server.password.domain.changepassword.ChangePassword
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordEventConsumer
+import com.vauthenticator.server.password.domain.lifecycle.AccountLockPasswordLifeCycleStrategyImplementation
+import com.vauthenticator.server.password.domain.lifecycle.BasePasswordLifeCycleStrategy
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutor
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutorJob
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
+import com.vauthenticator.server.password.domain.lifecycle.PasswordResetPasswordLifeCycleStrategyImplementation
 import com.vauthenticator.server.password.domain.resetpassword.ResetAccountPassword
 import com.vauthenticator.server.password.domain.resetpassword.ResetPasswordEventConsumer
 import com.vauthenticator.server.password.domain.resetpassword.SendResetPasswordMailChallenge
@@ -188,10 +191,25 @@ class PasswordLifeCycleConfig {
 
     @Bean
     fun passwordLifeCycleExecutor(
+        clock: Clock,
+        accountRepository: AccountRepository,
         passwordLifeCycleRepository: PasswordLifeCycleRepository,
     ) = PasswordLifeCycleExecutor(
         passwordLifeCycleRepository,
-        listOf(),
+        listOf(
+            BasePasswordLifeCycleStrategy(
+                clock,
+                accountRepository,
+                passwordLifeCycleRepository,
+                PasswordResetPasswordLifeCycleStrategyImplementation(accountRepository)
+            ),
+            BasePasswordLifeCycleStrategy(
+                clock,
+                accountRepository,
+                passwordLifeCycleRepository,
+                AccountLockPasswordLifeCycleStrategyImplementation(accountRepository)
+            ),
+        ),
     )
 
     @Bean

@@ -21,6 +21,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private const val NOW = "2026-12-20T10:15:30Z"
+private val NOW_DATE_TIME = LocalDateTime.of(2026, 12, 20, 10, 15, 30)
 
 @ExtendWith(MockKExtension::class)
 abstract class AbstractPasswordLifeCycleStrategyTest {
@@ -29,6 +30,9 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
 
     @MockK
     lateinit var accountRepository: AccountRepository
+
+    @MockK
+    lateinit var passwordLifeCycleRepository: PasswordLifeCycleRepository
 
     lateinit var uut: PasswordLifeCycleStrategy
 
@@ -46,11 +50,15 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
         return accountRepository
     }
 
+    fun passwordLifeCycleRepository(): PasswordLifeCycleRepository {
+        return passwordLifeCycleRepository
+    }
+
     @Test
     fun `when a password reset rule is executed`() {
         val creationDate = "2026-12-14T10:15:30Z"
 
-        val anAccount = anAccount()
+        val anAccount = anAccount().copy(accountNonLocked = true)
 
         val rule = PasswordLifeCycleRule(
             anAccount.username,
@@ -61,6 +69,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
         )
         every { accountRepository.accountFor(anAccount.username) } returns anAccount
         every { accountRepository.save(newAccountFrom(anAccount)) } just runs
+        every { passwordLifeCycleRepository.updateLastEvaluationDate(rule, NOW_DATE_TIME) } just runs
 
 
         uut.execute(rule)
@@ -68,6 +77,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
 
         verify { accountRepository.accountFor(anAccount.username) }
         verify { accountRepository.save(newAccountFrom(anAccount)) }
+        verify { passwordLifeCycleRepository.updateLastEvaluationDate(rule, NOW_DATE_TIME) }
 
         assertTrue(uut.canHandle(rule))
     }
@@ -76,7 +86,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
     fun `when a password reset rule is not executed, ttl has not expired`() {
         val creationDate = "2026-12-20T10:15:30Z"
 
-        val anAccount = anAccount()
+        val anAccount = anAccount().copy(accountNonLocked = true)
 
         val rule = PasswordLifeCycleRule(
             anAccount.username,
@@ -93,6 +103,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
 
         verify { accountRepository.accountFor(anAccount.username) }
         verify(exactly = 0) { accountRepository.save(newAccountFrom(anAccount)) }
+        verify(exactly = 0) { passwordLifeCycleRepository.updateLastEvaluationDate(any(), any()) }
 
         assertTrue(uut.canHandle(rule))
     }

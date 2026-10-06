@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Duration
+import java.time.LocalDateTime
 
 class JdbcPasswordLifeCycleRepositoryTest {
 
@@ -33,6 +34,20 @@ class JdbcPasswordLifeCycleRepositoryTest {
             assertTrue(rules.any { it.action == PasswordLifeCycleAction.ACCOUNT_LOCK })
         }
 
+    }
+
+    @Test
+    fun `when the last evaluation date of a password lifecycle policy is updated`() {
+        val lastEvaluationDate = LocalDateTime.of(2026, 10, 6, 10, 0, 0)
+        uut.store(passwordLifeCycleRule)
+        uut.store(passwordLifeCycleRule.copy(action = PasswordLifeCycleAction.ACCOUNT_LOCK))
+
+        uut.updateLastEvaluationDate(passwordLifeCycleRule, lastEvaluationDate)
+
+        retrieve(EMAIL).let { rules ->
+            assertEquals(lastEvaluationDate, rules.first { it.action == PasswordLifeCycleAction.PASSWORD_RESET }.lastEvaluationDate)
+            assertNull(rules.first { it.action == PasswordLifeCycleAction.ACCOUNT_LOCK }.lastEvaluationDate)
+        }
     }
 
     @Test

@@ -39,6 +39,7 @@ interface PasswordLifeCycleStrategyImplementation {
 class BasePasswordLifeCycleStrategy(
     private val clock: Clock,
     private val accountRepository: AccountRepository,
+    private val passwordLifeCycleRepository: PasswordLifeCycleRepository,
     private val implementation: PasswordLifeCycleStrategyImplementation
 ) : PasswordLifeCycleStrategy {
 
@@ -50,10 +51,12 @@ class BasePasswordLifeCycleStrategy(
             // last evaluation date is null so we need to evaluate if the ttl has expired upon the creation date of the rule
             val lastEvaluationDate = rule.lastEvaluationDate ?: rule.creationDate
             val expirationDate = lastEvaluationDate.plus(rule.ttl)
-            if (LocalDateTime.now(clock).isAfter(expirationDate)) {
+            val now = LocalDateTime.now(clock)
+            if (now.isAfter(expirationDate)) {
                 implementation.execute(account)
+                passwordLifeCycleRepository.updateLastEvaluationDate(rule, now)
             } else {
-                logger.info("Password reset rule expired for user: ${rule.userName}")
+                logger.info("Password lifecycle rule ${rule.action} not expired yet for user: ${rule.userName}")
             }
 
         } ?: throw AccountNotFoundException("Account not found for user: ${rule.userName}")
@@ -84,7 +87,7 @@ class AccountLockPasswordLifeCycleStrategyImplementation
 
     override fun execute(account: Account) {
         accountRepository.save(
-            account.copy(accountNonLocked = true)
+            account.copy(accountNonLocked = false)
         )
     }
 

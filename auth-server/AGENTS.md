@@ -53,7 +53,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `mfa`: MFA enrollment, challenge, association, and login workflow integration
 - `oauth2`: authorization storage, registered client adaptation, and token enhancement
 - `oidc`: RP-initiated logout, OIDC Session Management, userinfo, and ID token enrichment
-- `password`: password reset, change, generation, and policy/history logic
+- `password`: password reset, change, generation, policy/history logic, and password lifecycle rules (`domain/lifecycle`) evaluated by a scheduled job
 - `role`: groups, roles, and permission validation
 - `ticket`: ticket creation and storage used by multi-step flows
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
@@ -144,6 +144,10 @@ Documented MFA endpoints:
 - `POST /api/mfa/enrollment`
 - `POST /api/mfa/associate`
 
+Documented password lifecycle endpoint (`database` profile only, see `docs/password-lifecycle.md`):
+
+- `PUT /api/admin/accounts/password/lifecycle` (scope `admin:password-lifecycle-editor`)
+
 Lambda-based token customization is supported when `vauthenticator.lambda.aws.enabled=true`. The documented default lambda name is `vauthenticator-token-enhancer`.
 
 ## Conventions For Changes
@@ -163,6 +167,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - `docs/profiles.md`
 - `docs/management.md`
 - `docs/mfa.md`
+- `docs/password-lifecycle.md`
 - `docs/lambda.md`
 - `src/main/kotlin/com/vauthenticator/server/config/AuthorizationServerConfig.kt`
 - `src/main/kotlin/com/vauthenticator/server/config/WebSecurityConfig.kt`
@@ -171,4 +176,5 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 ## Practical Notes For Future Agents
 
 - `application.yml` at the root resource level is intentionally minimal, so expect most behavior to come from profile-specific or component-specific configuration classes and local overrides.
+- Scheduling is enabled with `@EnableScheduling` on `VAuthenticatorApplication`. The password lifecycle job runs on the `password.password-life-cycle.cron` Spring cron expression (six fields, seconds first; defaults to `0 0 * * * *`, every hour).
 - The local helper scripts and docs are important in this project because a large part of the runtime setup lives outside the default Spring Boot process.

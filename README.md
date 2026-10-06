@@ -24,6 +24,7 @@ Backend capabilities include:
 - Signup, welcome email, email verification, password reset, and password change flows
 - MFA with email, SMS, and OTP support
 - Post-login workflows, including forced password reset
+- Password lifecycle rules that force a password reset or lock an account after a TTL (PostgreSQL profile)
 - RP-initiated logout and OIDC Session Management
 - Custom actuator management endpoints for setup and cleanup
 

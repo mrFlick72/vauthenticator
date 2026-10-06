@@ -7,7 +7,7 @@ import com.vauthenticator.server.account.domain.AccountMandatoryAction
 class PasswordResetPasswordLifeCycleStrategyImplementationTest : AbstractPasswordLifeCycleStrategyTest() {
 
     override fun initPasswordLifeCycleStrategy(): PasswordLifeCycleStrategy {
-        return BasePasswordLifeCycleStrategy(clock, accountRepository(), PasswordResetPasswordLifeCycleStrategyImplementation(accountRepository()))
+        return BasePasswordLifeCycleStrategy(clock, accountRepository(), passwordLifeCycleRepository(), PasswordResetPasswordLifeCycleStrategyImplementation(accountRepository()))
     }
 
 

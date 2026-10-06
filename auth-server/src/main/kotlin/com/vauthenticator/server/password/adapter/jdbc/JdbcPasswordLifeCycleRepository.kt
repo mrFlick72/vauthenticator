@@ -5,6 +5,7 @@ import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepo
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import org.springframework.jdbc.core.JdbcTemplate
 import java.time.Duration
+import java.time.LocalDateTime
 
 class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : PasswordLifeCycleRepository {
     override fun store(rule: PasswordLifeCycleRule) {
@@ -16,6 +17,13 @@ class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : 
 
     override fun delete(userName: String) {
         jdbcTemplate.update("DELETE FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ?", userName)
+    }
+
+    override fun updateLastEvaluationDate(rule: PasswordLifeCycleRule, lastEvaluationDate: LocalDateTime) {
+        jdbcTemplate.update(
+            "UPDATE PASSWORD_LIFECYCLE_RULES SET last_evaluation_date = ? WHERE user_name = ? AND action = ?",
+            lastEvaluationDate, rule.userName, rule.action.name
+        )
     }
 
     override fun findAllRules(page: Int, size: Int): List<PasswordLifeCycleRule> =
