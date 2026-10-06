@@ -19,15 +19,17 @@ class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : 
     }
 
     override fun findAllRules(page: Int, size: Int): List<PasswordLifeCycleRule> =
-    jdbcTemplate.query("SELECT * FROM PASSWORD_LIFECYCLE_RULES LIMIT ? OFFSET ?", arrayOf(size, page * size))
-    {
-        rs, _ ->
-        PasswordLifeCycleRule(
-            userName = rs.getString("user_name"),
-            ttl = Duration.ofSeconds(rs.getLong("ttl")),
-            creationDate = rs.getObject("created_at", java.time.LocalDateTime::class.java),
-            lastEvaluationDate = rs.getObject("last_evaluation_date", java.time.LocalDateTime::class.java),
-            action = PasswordLifeCycleAction.valueOf(rs.getString("action"))
+        jdbcTemplate.query(
+            "SELECT * FROM PASSWORD_LIFECYCLE_RULES ORDER BY user_name LIMIT ? OFFSET ?",
+            { rs, _ ->
+                PasswordLifeCycleRule(
+                    userName = rs.getString("user_name"),
+                    ttl = Duration.ofSeconds(rs.getLong("ttl")),
+                    creationDate = rs.getObject("created_at", java.time.LocalDateTime::class.java),
+                    lastEvaluationDate = rs.getObject("last_evaluation_date", java.time.LocalDateTime::class.java),
+                    action = PasswordLifeCycleAction.valueOf(rs.getString("action"))
+                )
+            },
+            size, page * size
         )
-    }
 }
