@@ -29,8 +29,7 @@ interface PasswordLifeCycleStrategy {
 }
 
 class NoopPasswordLifeCycleStrategyException(rule: PasswordLifeCycleRule) :
-    RuntimeException("No strategy found for rule: $rule") {
-}
+    RuntimeException("No strategy found for rule: $rule")
 
 interface PasswordLifeCycleStrategyImplementation {
     fun execute(account: Account)

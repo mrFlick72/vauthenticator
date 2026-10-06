@@ -30,72 +30,22 @@ class PasswordLifeCycleExecutorJobTest {
 
     @Test
     fun `when a lot of rules are processed`() {
-        every { passwordLifeCycleRepository.findAllRules(page = 0, size = 100) } returns listOf(
-            PasswordLifeCycleRule(
-                userName = "user_1",
-                ttl =                 Duration.ZERO,
-                creationDate = LocalDateTime.now(),
-                lastEvaluationDate = null,
-                action = PasswordLifeCycleAction.ACCOUNT_LOCK
-            )
+        val now = LocalDateTime.of(2026, 1, 1, 0, 0)
+        val user1Rule = PasswordLifeCycleRule(
+            userName = "user_1",
+            ttl = Duration.ZERO,
+            creationDate = now,
+            lastEvaluationDate = null,
+            action = PasswordLifeCycleAction.ACCOUNT_LOCK
         )
-        every { passwordLifeCycleRepository.findAllRules(page = 1, size = 100) } returns listOf(
-            PasswordLifeCycleRule(
-                userName = "user_1",
-                ttl =                 Duration.ZERO,
-                creationDate = LocalDateTime.now(),
-                lastEvaluationDate = null,
-                action = PasswordLifeCycleAction.ACCOUNT_LOCK
-            )
-        )
-        every { passwordLifeCycleRepository.findAllRules(page = 2, size = 100) } returns listOf(
-            PasswordLifeCycleRule(
-                userName = "user_2",
-                ttl =                 Duration.ZERO,
-                creationDate = LocalDateTime.now(),
-                lastEvaluationDate = null,
-                action = PasswordLifeCycleAction.ACCOUNT_LOCK
-            )
-        )
+        val user2Rule = user1Rule.copy(userName = "user_2")
 
+        every { passwordLifeCycleRepository.findAllRules(page = 0, size = 100) } returns listOf(user1Rule)
+        every { passwordLifeCycleRepository.findAllRules(page = 1, size = 100) } returns listOf(user1Rule)
+        every { passwordLifeCycleRepository.findAllRules(page = 2, size = 100) } returns listOf(user2Rule)
         every { passwordLifeCycleRepository.findAllRules(page = 3, size = 100) } returns emptyList()
-
-        every {
-            passwordLifeCycleExecutor.execute(
-                PasswordLifeCycleRule(
-                    userName = "user_1",
-                    ttl =                 Duration.ZERO,
-                    creationDate = LocalDateTime.now(),
-                    lastEvaluationDate = null,
-                    action = PasswordLifeCycleAction.ACCOUNT_LOCK
-                )
-            )
-        } just runs
-
-        every { passwordLifeCycleRepository.findAllRules(page = 3, size = 100) } returns emptyList()
-
-        every {
-            passwordLifeCycleExecutor.execute(
-                PasswordLifeCycleRule(
-                    userName = "user_1",
-                    ttl =                 Duration.ZERO,
-                    creationDate = LocalDateTime.now(),
-                    lastEvaluationDate = null,
-                    action = PasswordLifeCycleAction.ACCOUNT_LOCK
-                )
-            )
-        } just runs
-        every {
-            passwordLifeCycleExecutor.execute(
-                PasswordLifeCycleRule(
-                    userName = "user_2",
-                    ttl =                 Duration.ZERO,
-                    creationDate = LocalDateTime.now(),
-                    lastEvaluationDate = null,
-                    action = PasswordLifeCycleAction.ACCOUNT_LOCK
-                )
-            )
-        } just runs
+        every { passwordLifeCycleExecutor.execute(user1Rule) } just runs
+        every { passwordLifeCycleExecutor.execute(user2Rule) } just runs
 
         uut.execute()
 
@@ -103,6 +53,8 @@ class PasswordLifeCycleExecutorJobTest {
         verify { passwordLifeCycleRepository.findAllRules(page = 1, size = 100) }
         verify { passwordLifeCycleRepository.findAllRules(page = 2, size = 100) }
         verify { passwordLifeCycleRepository.findAllRules(page = 3, size = 100) }
+        verify(exactly = 2) { passwordLifeCycleExecutor.execute(user1Rule) }
+        verify(exactly = 1) { passwordLifeCycleExecutor.execute(user2Rule) }
     }
 
     @Test
