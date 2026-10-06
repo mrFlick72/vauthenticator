@@ -313,7 +313,13 @@ application:
       minSize: 1
       minSpecialSymbol: 1
       enablePasswordReusePrevention: true
+    lifeCycle:
+      cron: "0 0 * * * *"
 ```
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `application.password.lifeCycle.cron` | Spring cron expression (six fields, seconds first) for the password lifecycle job. Used only when `application.profiles` includes `database`. | `"0 0 * * * *"` |
 
 ### Email
 

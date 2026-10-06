@@ -1,3 +1,14 @@
+CREATE TABLE PASSWORD_LIFECYCLE_RULES
+(
+    id                   serial       not null primary key,
+    user_name            varchar(255) not null,
+    ttl                  bigint       not null,
+    created_at           TIMESTAMP    not null,
+    last_evaluation_date TIMESTAMP,
+    action               varchar(255) not null
+);
+CREATE INDEX password_lifecycle_rules_user_name ON PASSWORD_LIFECYCLE_RULES (user_name);
+
 CREATE TABLE ROLE
 (
     name        varchar(64)  not null PRIMARY KEY,

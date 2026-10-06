@@ -142,6 +142,9 @@ application:
       minSize: 1
       minSpecialSymbol: 1
       enablePasswordReusePrevention: true
+    lifeCycle:
+      # Spring cron expression (six fields, seconds first) for the password lifecycle job, database profile only.
+      cron: "0 0 * * * *"
 
   masterKey: ACCOUNT_KMS_KEY
   masterKeyContent: xxxxxxxxx
