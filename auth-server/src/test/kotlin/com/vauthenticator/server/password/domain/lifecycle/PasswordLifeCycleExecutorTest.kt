@@ -16,23 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 class PasswordLifeCycleExecutorTest {
 
     @MockK
-    lateinit var passwordLifeCycleRepository: PasswordLifeCycleRepository
-    @MockK
-    lateinit var passwordResetStrategy:  PasswordLifeCycleStrategy
+    lateinit var passwordResetStrategy: PasswordLifeCycleStrategy
 
     lateinit var uut: PasswordLifeCycleExecutor
 
-
     @BeforeEach
     fun setUp() {
-        uut = PasswordLifeCycleExecutor(passwordLifeCycleRepository, listOf(passwordResetStrategy))
-    }
-
-    @Test
-    fun `when a new password lifecycle rule is registered`() {
-        every { passwordLifeCycleRepository.store(passwordLifeCycleRule) } just runs
-        uut.register(passwordLifeCycleRule)
-        verify { passwordLifeCycleRepository.store(passwordLifeCycleRule) }
+        uut = PasswordLifeCycleExecutor(listOf(passwordResetStrategy))
     }
 
     @Test
@@ -42,6 +32,7 @@ class PasswordLifeCycleExecutorTest {
         uut.execute(passwordLifeCycleRule)
         verify { passwordResetStrategy.execute(passwordLifeCycleRule) }
     }
+
     @Test
     fun `when a strategy requested can not be handled`() {
         every { passwordResetStrategy.canHandle(passwordLifeCycleRule) } returns false

@@ -5,9 +5,9 @@ CREATE TABLE PASSWORD_LIFECYCLE_RULES
     ttl                  bigint       not null,
     created_at           TIMESTAMP    not null,
     last_evaluation_date TIMESTAMP,
-    action               varchar(255) not null
+    action               varchar(255) not null,
+    UNIQUE (user_name, action)
 );
-CREATE INDEX password_lifecycle_rules_user_name ON PASSWORD_LIFECYCLE_RULES (user_name);
 
 CREATE TABLE ROLE
 (

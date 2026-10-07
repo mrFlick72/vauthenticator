@@ -4,40 +4,56 @@ import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleActi
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.RowMapper
 import java.time.Duration
 import java.time.LocalDateTime
 
+private const val UPSERT_RULE_QUERY = """
+    INSERT INTO PASSWORD_LIFECYCLE_RULES (user_name, ttl, created_at, last_evaluation_date, action) VALUES (?,?,?,?,?)
+    ON CONFLICT (user_name, action) DO UPDATE
+    SET ttl = EXCLUDED.ttl, created_at = EXCLUDED.created_at, last_evaluation_date = EXCLUDED.last_evaluation_date
+    """
+private const val DELETE_RULE_QUERY = "DELETE FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ? AND action = ?"
+private const val UPDATE_LAST_EVALUATION_DATE_QUERY =
+    "UPDATE PASSWORD_LIFECYCLE_RULES SET last_evaluation_date = ? WHERE user_name = ? AND action = ?"
+private const val FIND_RULES_FOR_USER_QUERY =
+    "SELECT * FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ? ORDER BY action"
+private const val FIND_FIRST_RULES_QUERY =
+    "SELECT * FROM PASSWORD_LIFECYCLE_RULES ORDER BY user_name, action LIMIT ?"
+private const val FIND_RULES_AFTER_QUERY =
+    "SELECT * FROM PASSWORD_LIFECYCLE_RULES WHERE (user_name, action) > (?, ?) ORDER BY user_name, action LIMIT ?"
+
 class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : PasswordLifeCycleRepository {
-    override fun store(rule: PasswordLifeCycleRule) {
-        jdbcTemplate.update(
-            "INSERT INTO PASSWORD_LIFECYCLE_RULES (user_name, ttl, created_at, last_evaluation_date,action) VALUES (?,?,?,?,?)",
-            rule.userName, rule.ttl.toSeconds(), rule.creationDate, rule.lastEvaluationDate, rule.action.name
+
+    private val ruleMapper = RowMapper { rs, _ ->
+        PasswordLifeCycleRule(
+            userName = rs.getString("user_name"),
+            interval = Duration.ofSeconds(rs.getLong("ttl")),
+            creationDate = rs.getObject("created_at", LocalDateTime::class.java),
+            lastEvaluationDate = rs.getObject("last_evaluation_date", LocalDateTime::class.java),
+            action = PasswordLifeCycleAction.valueOf(rs.getString("action"))
         )
     }
 
-    override fun delete(userName: String) {
-        jdbcTemplate.update("DELETE FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ?", userName)
+    override fun store(rule: PasswordLifeCycleRule) {
+        jdbcTemplate.update(
+            UPSERT_RULE_QUERY,
+            rule.userName, rule.interval.toSeconds(), rule.creationDate, rule.lastEvaluationDate, rule.action.name
+        )
+    }
+
+    override fun delete(userName: String, action: PasswordLifeCycleAction) {
+        jdbcTemplate.update(DELETE_RULE_QUERY, userName, action.name)
     }
 
     override fun updateLastEvaluationDate(rule: PasswordLifeCycleRule, lastEvaluationDate: LocalDateTime) {
-        jdbcTemplate.update(
-            "UPDATE PASSWORD_LIFECYCLE_RULES SET last_evaluation_date = ? WHERE user_name = ? AND action = ?",
-            lastEvaluationDate, rule.userName, rule.action.name
-        )
+        jdbcTemplate.update(UPDATE_LAST_EVALUATION_DATE_QUERY, lastEvaluationDate, rule.userName, rule.action.name)
     }
 
-    override fun findAllRules(page: Int, size: Int): List<PasswordLifeCycleRule> =
-        jdbcTemplate.query(
-            "SELECT * FROM PASSWORD_LIFECYCLE_RULES ORDER BY user_name LIMIT ? OFFSET ?",
-            { rs, _ ->
-                PasswordLifeCycleRule(
-                    userName = rs.getString("user_name"),
-                    ttl = Duration.ofSeconds(rs.getLong("ttl")),
-                    creationDate = rs.getObject("created_at", java.time.LocalDateTime::class.java),
-                    lastEvaluationDate = rs.getObject("last_evaluation_date", java.time.LocalDateTime::class.java),
-                    action = PasswordLifeCycleAction.valueOf(rs.getString("action"))
-                )
-            },
-            size, page * size
-        )
+    override fun findRulesFor(userName: String): List<PasswordLifeCycleRule> =
+        jdbcTemplate.query(FIND_RULES_FOR_USER_QUERY, ruleMapper, userName)
+
+    override fun findAllRulesAfter(after: PasswordLifeCycleRule?, size: Int): List<PasswordLifeCycleRule> =
+        after?.let { jdbcTemplate.query(FIND_RULES_AFTER_QUERY, ruleMapper, it.userName, it.action.name, size) }
+            ?: jdbcTemplate.query(FIND_FIRST_RULES_QUERY, ruleMapper, size)
 }

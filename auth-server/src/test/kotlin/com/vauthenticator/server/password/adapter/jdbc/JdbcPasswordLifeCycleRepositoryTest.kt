@@ -1,13 +1,13 @@
 package com.vauthenticator.server.password.adapter.jdbc
 
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.PASSWORD_RESET
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.JdbcUtils.jdbcTemplate
 import com.vauthenticator.server.support.JdbcUtils.resetDb
 import com.vauthenticator.server.support.passwordLifeCycleRule
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.time.Duration
@@ -17,6 +17,9 @@ class JdbcPasswordLifeCycleRepositoryTest {
 
     lateinit var uut: PasswordLifeCycleRepository
 
+    private val resetRule = passwordLifeCycleRule
+    private val lockRule = passwordLifeCycleRule.copy(action = ACCOUNT_LOCK)
+
     @BeforeEach
     fun setUp() {
         resetDb()
@@ -24,59 +27,77 @@ class JdbcPasswordLifeCycleRepositoryTest {
     }
 
     @Test
-    fun `when a new password lifecycle policy is stored`() {
-        uut.store(passwordLifeCycleRule)
-        uut.store(passwordLifeCycleRule.copy(action = PasswordLifeCycleAction.ACCOUNT_LOCK))
+    fun `when a new password lifecycle rule is stored`() {
+        uut.store(resetRule)
+        uut.store(lockRule)
 
-        uut.findAllRules(0, 10).let { rules ->
-            assertEquals(2, rules.size)
-            assertTrue(rules.any { it.action == PasswordLifeCycleAction.PASSWORD_RESET })
-            assertTrue(rules.any { it.action == PasswordLifeCycleAction.ACCOUNT_LOCK })
-        }
-
+        assertEquals(listOf(lockRule, resetRule), uut.findRulesFor(EMAIL))
     }
 
     @Test
-    fun `when the last evaluation date of a password lifecycle policy is updated`() {
+    fun `when a rule for the same account and action is stored again it is replaced`() {
+        uut.store(resetRule)
+        uut.updateLastEvaluationDate(resetRule, LocalDateTime.of(2026, 10, 2, 10, 0, 0))
+
+        val replacement = resetRule.copy(
+            interval = Duration.ofDays(30),
+            creationDate = LocalDateTime.of(2026, 10, 7, 10, 0, 0),
+            lastEvaluationDate = null
+        )
+        uut.store(replacement)
+
+        assertEquals(listOf(replacement), uut.findRulesFor(EMAIL))
+    }
+
+    @Test
+    fun `when the last evaluation date of a password lifecycle rule is updated`() {
         val lastEvaluationDate = LocalDateTime.of(2026, 10, 6, 10, 0, 0)
-        uut.store(passwordLifeCycleRule)
-        uut.store(passwordLifeCycleRule.copy(action = PasswordLifeCycleAction.ACCOUNT_LOCK))
+        uut.store(resetRule)
+        uut.store(lockRule)
 
-        uut.updateLastEvaluationDate(passwordLifeCycleRule, lastEvaluationDate)
+        uut.updateLastEvaluationDate(resetRule, lastEvaluationDate)
 
-        retrieve(EMAIL).let { rules ->
-            assertEquals(lastEvaluationDate, rules.first { it.action == PasswordLifeCycleAction.PASSWORD_RESET }.lastEvaluationDate)
-            assertNull(rules.first { it.action == PasswordLifeCycleAction.ACCOUNT_LOCK }.lastEvaluationDate)
-        }
+        assertEquals(
+            listOf(lockRule, resetRule.copy(lastEvaluationDate = lastEvaluationDate)),
+            uut.findRulesFor(EMAIL)
+        )
     }
 
     @Test
-    fun `when passwords lifecycle policy for a user is deleted retrieved`() {
-        uut.store(passwordLifeCycleRule)
-        uut.store(passwordLifeCycleRule.copy(action = PasswordLifeCycleAction.ACCOUNT_LOCK))
+    fun `when a single rule of an account is deleted`() {
+        uut.store(resetRule)
+        uut.store(lockRule)
 
-        uut.findAllRules(0, 10).let { rules ->
-            assertEquals(2, rules.size)
-            assertTrue(rules.any { it.action == PasswordLifeCycleAction.PASSWORD_RESET })
-            assertTrue(rules.any { it.action == PasswordLifeCycleAction.ACCOUNT_LOCK })
-        }
+        uut.delete(EMAIL, ACCOUNT_LOCK)
 
-        uut.delete(EMAIL)
-
-        retrieve(EMAIL).let { rules ->
-            assertEquals(0, rules.size)
-        }
-
+        assertEquals(listOf(resetRule), uut.findRulesFor(EMAIL))
     }
 
-    private fun retrieve(userName: String): List<PasswordLifeCycleRule> =
-        jdbcTemplate.query("SELECT * FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ?", arrayOf(userName)) { rs, _ ->
-            PasswordLifeCycleRule(
-                userName = rs.getString("user_name"),
-                ttl = Duration.ofSeconds(rs.getLong("ttl")),
-                creationDate = rs.getObject("created_at", java.time.LocalDateTime::class.java),
-                lastEvaluationDate = rs.getObject("last_evaluation_date", java.time.LocalDateTime::class.java),
-                action = PasswordLifeCycleAction.valueOf(rs.getString("action"))
-            )
-        }
+    @Test
+    fun `when all rules are read with keyset pagination`() {
+        val rules = listOf("a@email.com", "b@email.com", "c@email.com")
+            .flatMap { listOf(resetRule.copy(userName = it), lockRule.copy(userName = it)) }
+        rules.shuffled().forEach { uut.store(it) }
+
+        val firstPage = uut.findAllRulesAfter(after = null, size = 4)
+        val secondPage = uut.findAllRulesAfter(after = firstPage.last(), size = 4)
+        val thirdPage = uut.findAllRulesAfter(after = secondPage.last(), size = 4)
+
+        assertEquals(4, firstPage.size)
+        assertEquals(2, secondPage.size)
+        assertEquals(emptyList<Any>(), thirdPage)
+        assertEquals(rules.sortedWith(compareBy({ it.userName }, { it.action.name })), firstPage + secondPage)
+    }
+
+    @Test
+    fun `when a rule already read is deleted the next page does not skip any rule`() {
+        val rules = listOf("a@email.com", "b@email.com", "c@email.com").map { lockRule.copy(userName = it) }
+        rules.forEach { uut.store(it) }
+
+        val firstPage = uut.findAllRulesAfter(after = null, size = 1)
+        uut.delete(firstPage.last().userName, ACCOUNT_LOCK)
+        val secondPage = uut.findAllRulesAfter(after = firstPage.last(), size = 1)
+
+        assertEquals(listOf(rules[1]), secondPage)
+    }
 }

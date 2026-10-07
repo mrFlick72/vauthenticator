@@ -245,6 +245,11 @@ data class Secret(val content: String)
 data class ClientAppId(val content: String) {
     companion object {
         fun empty(): ClientAppId = ClientAppId("")
+
+        /**
+         * The System Client: the identity server-initiated actions (for example scheduled jobs) are attributed to.
+         */
+        fun system(): ClientAppId = ClientAppId("vauthenticator-system")
     }
 }
 

@@ -1,11 +1,12 @@
 package com.vauthenticator.server.password.api
 
+import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutor
+import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
-import com.vauthenticator.server.support.MfaFixture.account
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
 import com.vauthenticator.server.support.passwordLifeCycleRule
 import com.vauthenticator.server.web.ExceptionAdviceController
@@ -20,70 +21,164 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
-import tools.jackson.databind.ObjectMapper
+import java.time.Duration
+
+private const val RULES_PATH = "/api/admin/accounts/$EMAIL/password/lifecycle"
+private const val LOCK_RULE_PATH = "$RULES_PATH/ACCOUNT_LOCK"
 
 @ExtendWith(MockKExtension::class)
 class PasswordLifeCycleEndPointTest {
 
-    private val objectMapper = ObjectMapper()
-
     lateinit var mokMvc: MockMvc
+
     @MockK
-    lateinit var passwordLifeCycleExecutor: PasswordLifeCycleExecutor
+    lateinit var passwordLifeCycleRules: PasswordLifeCycleRules
 
     @MockK
     lateinit var clientApplicationRepository: ClientApplicationRepository
+
+    private val editor = m2mPrincipalFor("m2m", listOf("admin:password-lifecycle-editor"))
+    private val notAnEditor = m2mPrincipalFor("m2m", listOf("admin:whatever"))
 
     @BeforeEach
     fun setUp() {
         mokMvc = standaloneSetup(
             PasswordLifeCycleEndPoint(
                 PermissionValidator(clientApplicationRepository),
-                passwordLifeCycleExecutor
+                passwordLifeCycleRules
             )
         ).setControllerAdvice(ExceptionAdviceController())
             .build()
     }
 
     @Test
-    fun `when a new password policy is set`() {
-        val m2mPrincipal = m2mPrincipalFor("m2m", listOf("admin:password-lifecycle-editor"))
-        every { passwordLifeCycleExecutor.register(passwordLifeCycleRule) } just runs
+    fun `when a rule is registered`() {
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) } just runs
 
         mokMvc.perform(
-            put("/api/admin/accounts/password/lifecycle")
-                .principal(m2mPrincipal)
+            put(LOCK_RULE_PATH)
+                .principal(editor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    objectMapper.writeValueAsString(
-                        passwordLifeCycleRule
-                    )
-                )
-        )
-            .andExpect { status().isNoContent }
+                .content("""{"interval": "P90D"}""")
+        ).andExpect(status().isNoContent)
 
-        verify { passwordLifeCycleExecutor.register(passwordLifeCycleRule) }
+        verify { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) }
     }
 
     @Test
-    fun `when a new password policy fails for permission constraints`() {
-        val m2mPrincipal = m2mPrincipalFor("m2m", listOf("admin:whatever"))
+    fun `when a rule is registered for an unknown account`() {
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) } throws
+                AccountNotFoundException("missing")
 
         mokMvc.perform(
-            put("/api/admin/accounts/password/lifecycle")
-                .principal(m2mPrincipal)
+            put(LOCK_RULE_PATH)
+                .principal(editor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    objectMapper.writeValueAsString(
-                        passwordLifeCycleRule
-                    )
-                )
-        )
-            .andExpect { status().isForbidden }
+                .content("""{"interval": "P90D"}""")
+        ).andExpect(status().isNotFound)
+    }
 
-        verify(exactly = 0) { passwordLifeCycleExecutor.register(passwordLifeCycleRule) }
+    @Test
+    fun `when a rule is registered with a non positive interval`() {
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ZERO) } throws
+                InvalidPasswordLifeCycleIntervalException("not positive")
+
+        mokMvc.perform(
+            put(LOCK_RULE_PATH)
+                .principal(editor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"interval": "PT0S"}""")
+        ).andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `when a rule is registered with an interval that is not an ISO-8601 duration`() {
+        listOf("""{"interval": 7776000}""", """{"interval": "90 days"}""", """{}""").forEach { body ->
+            mokMvc.perform(
+                put(LOCK_RULE_PATH)
+                    .principal(editor)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+            ).andExpect(status().isBadRequest)
+        }
+
+        verify(exactly = 0) { passwordLifeCycleRules.register(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a rule is registered for an unknown action`() {
+        mokMvc.perform(
+            put("$RULES_PATH/WHATEVER")
+                .principal(editor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"interval": "P90D"}""")
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { passwordLifeCycleRules.register(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a rule is registered without the editor scope`() {
+        mokMvc.perform(
+            put(LOCK_RULE_PATH)
+                .principal(notAnEditor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"interval": "P90D"}""")
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { passwordLifeCycleRules.register(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the rules of an account are retrieved`() {
+        every { passwordLifeCycleRules.rulesFor(EMAIL) } returns listOf(passwordLifeCycleRule)
+
+        mokMvc.perform(get(RULES_PATH).principal(editor))
+            .andExpect(status().isOk)
+            .andExpect(
+                content().json(
+                    """
+                    [{
+                      "action": "PASSWORD_RESET",
+                      "interval": "PT1H",
+                      "creationDate": "2026-10-01T10:00",
+                      "lastEvaluationDate": null,
+                      "nextEvaluationDate": "2026-10-01T11:00"
+                    }]
+                    """
+                )
+            )
+    }
+
+    @Test
+    fun `when the rules of an account are retrieved without the editor scope`() {
+        mokMvc.perform(get(RULES_PATH).principal(notAnEditor))
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { passwordLifeCycleRules.rulesFor(any()) }
+    }
+
+    @Test
+    fun `when a rule is removed`() {
+        every { passwordLifeCycleRules.remove(EMAIL, ACCOUNT_LOCK) } just runs
+
+        mokMvc.perform(delete(LOCK_RULE_PATH).principal(editor))
+            .andExpect(status().isNoContent)
+
+        verify { passwordLifeCycleRules.remove(EMAIL, ACCOUNT_LOCK) }
+    }
+
+    @Test
+    fun `when a rule is removed without the editor scope`() {
+        mokMvc.perform(delete(LOCK_RULE_PATH).principal(notAnEditor))
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { passwordLifeCycleRules.remove(any(), any()) }
     }
 }

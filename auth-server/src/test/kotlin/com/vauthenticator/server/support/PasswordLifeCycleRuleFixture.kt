@@ -7,8 +7,8 @@ import java.time.LocalDateTime
 
 val passwordLifeCycleRule = PasswordLifeCycleRule(
     userName = EMAIL,
-    ttl = Duration.ofHours(1),
-    creationDate = LocalDateTime.now(),
+    interval = Duration.ofHours(1),
+    creationDate = LocalDateTime.of(2026, 10, 1, 10, 0, 0),
     lastEvaluationDate = null,
     action = PasswordLifeCycleAction.PASSWORD_RESET
 )

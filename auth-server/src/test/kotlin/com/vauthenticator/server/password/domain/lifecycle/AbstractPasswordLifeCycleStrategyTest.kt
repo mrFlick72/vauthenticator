@@ -1,32 +1,39 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
 import com.vauthenticator.server.account.domain.Account
-import com.vauthenticator.server.account.domain.AccountMandatoryAction
+import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.events.EventsDispatcher
+import com.vauthenticator.server.events.PasswordLifeCycleActionAppliedEvent
+import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
+import io.mockk.slot
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 
-private const val NOW = "2026-12-20T10:15:30Z"
+private val NOW: Instant = Instant.parse("2026-12-20T10:15:30Z")
 private val NOW_DATE_TIME = LocalDateTime.of(2026, 12, 20, 10, 15, 30)
 
 @ExtendWith(MockKExtension::class)
 abstract class AbstractPasswordLifeCycleStrategyTest {
 
-    val clock: Clock = Clock.fixed(NOW.toInstant(), java.time.ZoneOffset.UTC)
+    val clock: Clock = Clock.fixed(NOW, ZoneOffset.UTC)
 
     @MockK
     lateinit var accountRepository: AccountRepository
@@ -34,81 +41,100 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
     @MockK
     lateinit var passwordLifeCycleRepository: PasswordLifeCycleRepository
 
+    @MockK
+    lateinit var eventsDispatcher: EventsDispatcher
+
     lateinit var uut: PasswordLifeCycleStrategy
 
     @BeforeEach
     fun setUp() {
-        uut = initPasswordLifeCycleStrategy()
+        uut = BasePasswordLifeCycleStrategy(
+            clock,
+            accountRepository,
+            passwordLifeCycleRepository,
+            eventsDispatcher,
+            initImplementation()
+        )
+        every { passwordLifeCycleRepository.updateLastEvaluationDate(any(), any()) } just runs
+        every { passwordLifeCycleRepository.delete(any(), any()) } just runs
     }
 
-    abstract fun initPasswordLifeCycleStrategy() : PasswordLifeCycleStrategy
-    abstract fun newAccountFrom(account: Account): Account
-
+    abstract fun initImplementation(): PasswordLifeCycleStrategyImplementation
     abstract fun passwordLifeCycleRuleAction(): PasswordLifeCycleAction
+    abstract fun accountWithoutActionInEffect(): Account
+    abstract fun accountWithActionApplied(account: Account): Account
 
-    fun accountRepository(): AccountRepository {
-        return accountRepository
-    }
-
-    fun passwordLifeCycleRepository(): PasswordLifeCycleRepository {
-        return passwordLifeCycleRepository
-    }
+    private fun ruleCreatedAt(creationDate: LocalDateTime) = PasswordLifeCycleRule(
+        anAccount().username,
+        interval = Duration.ofDays(1),
+        creationDate = creationDate,
+        lastEvaluationDate = null,
+        action = passwordLifeCycleRuleAction()
+    )
 
     @Test
-    fun `when a password reset rule is executed`() {
-        val creationDate = "2026-12-14T10:15:30Z"
-
-        val anAccount = anAccount().copy(accountNonLocked = true)
-
-        val rule = PasswordLifeCycleRule(
-            anAccount.username,
-            ttl = Duration.ofDays(1),
-            creationDate = LocalDateTime.parse(creationDate, DateTimeFormatter.ISO_DATE_TIME),
-            lastEvaluationDate = null,
-            action = passwordLifeCycleRuleAction()
-        )
-        every { accountRepository.accountFor(anAccount.username) } returns anAccount
-        every { accountRepository.save(newAccountFrom(anAccount)) } just runs
-        every { passwordLifeCycleRepository.updateLastEvaluationDate(rule, NOW_DATE_TIME) } just runs
-
+    fun `when a due rule is executed the action is applied and an event is published`() {
+        val account = accountWithoutActionInEffect()
+        val rule = ruleCreatedAt(NOW_DATE_TIME.minusDays(6))
+        val event = slot<VAuthenticatorEvent>()
+        every { accountRepository.accountFor(account.username) } returns account
+        every { accountRepository.save(accountWithActionApplied(account)) } just runs
+        every { eventsDispatcher.dispatch(capture(event)) } just runs
 
         uut.execute(rule)
 
-
-        verify { accountRepository.accountFor(anAccount.username) }
-        verify { accountRepository.save(newAccountFrom(anAccount)) }
-        verify { passwordLifeCycleRepository.updateLastEvaluationDate(rule, NOW_DATE_TIME) }
-
+        verify { accountRepository.save(accountWithActionApplied(account)) }
+        assertTrue(event.captured is PasswordLifeCycleActionAppliedEvent)
+        assertEquals(account.username, event.captured.userName.content)
+        assertEquals(ClientAppId.system(), event.captured.clientAppId)
+        assertEquals(NOW, event.captured.timeStamp)
+        assertEquals(passwordLifeCycleRuleAction(), event.captured.payload)
+        verifyRuleAdvanced(rule)
         assertTrue(uut.canHandle(rule))
     }
 
     @Test
-    fun `when a password reset rule is not executed, ttl has not expired`() {
-        val creationDate = "2026-12-20T10:15:30Z"
-
-        val anAccount = anAccount().copy(accountNonLocked = true)
-
-        val rule = PasswordLifeCycleRule(
-            anAccount.username,
-            ttl = Duration.ofDays(1),
-            creationDate = LocalDateTime.parse(creationDate, DateTimeFormatter.ISO_DATE_TIME),
-            lastEvaluationDate = null,
-            action = passwordLifeCycleRuleAction()
-        )
-        every { accountRepository.accountFor(anAccount.username) } returns anAccount
-
+    fun `when a due rule finds the action already in effect nothing is saved or published but the rule advances`() {
+        val account = accountWithActionApplied(accountWithoutActionInEffect())
+        val rule = ruleCreatedAt(NOW_DATE_TIME.minusDays(6))
+        every { accountRepository.accountFor(account.username) } returns account
 
         uut.execute(rule)
 
+        verify(exactly = 0) { accountRepository.save(any()) }
+        verify(exactly = 0) { eventsDispatcher.dispatch(any()) }
+        verifyRuleAdvanced(rule)
+    }
 
-        verify { accountRepository.accountFor(anAccount.username) }
-        verify(exactly = 0) { accountRepository.save(newAccountFrom(anAccount)) }
+    @Test
+    fun `when a rule is not due nothing happens`() {
+        val account = accountWithoutActionInEffect()
+        val rule = ruleCreatedAt(NOW_DATE_TIME)
+        every { accountRepository.accountFor(account.username) } returns account
+
+        uut.execute(rule)
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+        verify(exactly = 0) { eventsDispatcher.dispatch(any()) }
         verify(exactly = 0) { passwordLifeCycleRepository.updateLastEvaluationDate(any(), any()) }
-
-        assertTrue(uut.canHandle(rule))
+        verify(exactly = 0) { passwordLifeCycleRepository.delete(any(), any()) }
     }
-}
 
-private fun String.toInstant(): Instant {
-    return Instant.parse(this)
+    @Test
+    fun `when the account of a rule does not exist`() {
+        val rule = ruleCreatedAt(NOW_DATE_TIME.minusDays(6))
+        every { accountRepository.accountFor(rule.userName) } returns null
+
+        assertThrows<AccountNotFoundException> { uut.execute(rule) }
+    }
+
+    private fun verifyRuleAdvanced(rule: PasswordLifeCycleRule) {
+        if (rule.action.oneShot) {
+            verify { passwordLifeCycleRepository.delete(rule.userName, rule.action) }
+            verify(exactly = 0) { passwordLifeCycleRepository.updateLastEvaluationDate(any(), any()) }
+        } else {
+            verify { passwordLifeCycleRepository.updateLastEvaluationDate(rule, NOW_DATE_TIME) }
+            verify(exactly = 0) { passwordLifeCycleRepository.delete(any(), any()) }
+        }
+    }
 }

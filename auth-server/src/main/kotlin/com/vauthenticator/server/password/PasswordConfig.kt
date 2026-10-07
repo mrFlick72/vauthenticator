@@ -21,6 +21,7 @@ import com.vauthenticator.server.password.domain.lifecycle.BasePasswordLifeCycle
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutor
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutorJob
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.password.domain.lifecycle.PasswordResetPasswordLifeCycleStrategyImplementation
 import com.vauthenticator.server.password.domain.resetpassword.ResetAccountPassword
 import com.vauthenticator.server.password.domain.resetpassword.ResetPasswordEventConsumer
@@ -190,24 +191,33 @@ class PasswordLifeCycleConfig {
         JdbcPasswordLifeCycleRepository(jdbcTemplate)
 
     @Bean
+    fun passwordLifeCycleRules(
+        clock: Clock,
+        accountRepository: AccountRepository,
+        passwordLifeCycleRepository: PasswordLifeCycleRepository,
+    ) = PasswordLifeCycleRules(clock, accountRepository, passwordLifeCycleRepository)
+
+    @Bean
     fun passwordLifeCycleExecutor(
         clock: Clock,
         accountRepository: AccountRepository,
         passwordLifeCycleRepository: PasswordLifeCycleRepository,
+        eventsDispatcher: VAuthenticatorEventsDispatcher,
     ) = PasswordLifeCycleExecutor(
-        passwordLifeCycleRepository,
         listOf(
             BasePasswordLifeCycleStrategy(
                 clock,
                 accountRepository,
                 passwordLifeCycleRepository,
-                PasswordResetPasswordLifeCycleStrategyImplementation(accountRepository)
+                eventsDispatcher,
+                PasswordResetPasswordLifeCycleStrategyImplementation()
             ),
             BasePasswordLifeCycleStrategy(
                 clock,
                 accountRepository,
                 passwordLifeCycleRepository,
-                AccountLockPasswordLifeCycleStrategyImplementation(accountRepository)
+                eventsDispatcher,
+                AccountLockPasswordLifeCycleStrategyImplementation()
             ),
         ),
     )

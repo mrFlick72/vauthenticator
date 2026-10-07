@@ -4,19 +4,18 @@ import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountMandatoryAction
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.account.domain.Email
+import com.vauthenticator.server.events.EventsDispatcher
+import com.vauthenticator.server.events.PasswordLifeCycleActionAppliedEvent
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.time.LocalDateTime
 
 
 class PasswordLifeCycleExecutor(
-    private val passwordLifeCycleRepository: PasswordLifeCycleRepository,
     private val strategies: List<PasswordLifeCycleStrategy>
 ) {
-    fun register(rule: PasswordLifeCycleRule) {
-        passwordLifeCycleRepository.store(rule)
-    }
-
     fun execute(rule: PasswordLifeCycleRule) {
         val strategy = strategies.find { it.canHandle(rule) }
         strategy?.execute(rule) ?: throw NoopPasswordLifeCycleStrategyException(rule)
@@ -32,7 +31,10 @@ class NoopPasswordLifeCycleStrategyException(rule: PasswordLifeCycleRule) :
     RuntimeException("No strategy found for rule: $rule")
 
 interface PasswordLifeCycleStrategyImplementation {
-    fun execute(account: Account)
+    /**
+     * Returns the account with the action applied, or null when the action is already in effect.
+     */
+    fun apply(account: Account): Account?
     fun canHandle(rule: PasswordLifeCycleRule): Boolean
 }
 
@@ -40,26 +42,39 @@ class BasePasswordLifeCycleStrategy(
     private val clock: Clock,
     private val accountRepository: AccountRepository,
     private val passwordLifeCycleRepository: PasswordLifeCycleRepository,
+    private val eventsDispatcher: EventsDispatcher,
     private val implementation: PasswordLifeCycleStrategyImplementation
 ) : PasswordLifeCycleStrategy {
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
     override fun execute(rule: PasswordLifeCycleRule) {
-        accountRepository.accountFor(rule.userName)?.let { account ->
+        val account = accountRepository.accountFor(rule.userName)
+            ?: throw AccountNotFoundException("Account not found for user: ${rule.userName}")
 
-            // last evaluation date is null so we need to evaluate if the ttl has expired upon the creation date of the rule
-            val lastEvaluationDate = rule.lastEvaluationDate ?: rule.creationDate
-            val expirationDate = lastEvaluationDate.plus(rule.ttl)
-            val now = LocalDateTime.now(clock)
-            if (now.isAfter(expirationDate)) {
-                implementation.execute(account)
-                passwordLifeCycleRepository.updateLastEvaluationDate(rule, now)
-            } else {
-                logger.info("Password lifecycle rule ${rule.action} not expired yet for user: ${rule.userName}")
-            }
+        val now = LocalDateTime.now(clock)
+        if (!rule.isDue(now)) {
+            logger.info("Password lifecycle rule ${rule.action} not expired yet for user: ${rule.userName}")
+            return
+        }
 
-        } ?: throw AccountNotFoundException("Account not found for user: ${rule.userName}")
+        implementation.apply(account)?.let { updatedAccount ->
+            accountRepository.save(updatedAccount)
+            eventsDispatcher.dispatch(
+                PasswordLifeCycleActionAppliedEvent(
+                    Email(rule.userName),
+                    ClientAppId.system(),
+                    clock.instant(),
+                    rule.action
+                )
+            )
+        }
+
+        if (rule.action.oneShot) {
+            passwordLifeCycleRepository.delete(rule.userName, rule.action)
+        } else {
+            passwordLifeCycleRepository.updateLastEvaluationDate(rule, now)
+        }
     }
 
     override fun canHandle(rule: PasswordLifeCycleRule): Boolean {
@@ -67,29 +82,26 @@ class BasePasswordLifeCycleStrategy(
     }
 }
 
-class PasswordResetPasswordLifeCycleStrategyImplementation(
-    private val accountRepository: AccountRepository,
-
-    ) : PasswordLifeCycleStrategyImplementation {
-    override fun execute(account: Account) {
-        accountRepository.save(account.copy(mandatoryAction = AccountMandatoryAction.RESET_PASSWORD))
-    }
+class PasswordResetPasswordLifeCycleStrategyImplementation : PasswordLifeCycleStrategyImplementation {
+    override fun apply(account: Account): Account? =
+        if (account.mandatoryAction == AccountMandatoryAction.RESET_PASSWORD) {
+            null
+        } else {
+            account.copy(mandatoryAction = AccountMandatoryAction.RESET_PASSWORD)
+        }
 
     override fun canHandle(rule: PasswordLifeCycleRule): Boolean {
         return rule.action == PasswordLifeCycleAction.PASSWORD_RESET
     }
 }
 
-class AccountLockPasswordLifeCycleStrategyImplementation
-    (
-    private val accountRepository: AccountRepository
-) : PasswordLifeCycleStrategyImplementation {
-
-    override fun execute(account: Account) {
-        accountRepository.save(
+class AccountLockPasswordLifeCycleStrategyImplementation : PasswordLifeCycleStrategyImplementation {
+    override fun apply(account: Account): Account? =
+        if (account.accountNonLocked) {
             account.copy(accountNonLocked = false)
-        )
-    }
+        } else {
+            null
+        }
 
     override fun canHandle(rule: PasswordLifeCycleRule): Boolean {
         return rule.action == PasswordLifeCycleAction.ACCOUNT_LOCK

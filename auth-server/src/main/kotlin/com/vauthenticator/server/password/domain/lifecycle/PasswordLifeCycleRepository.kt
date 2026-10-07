@@ -6,10 +6,16 @@ interface PasswordLifeCycleRepository {
 
     fun store(rule: PasswordLifeCycleRule)
 
-    fun delete(userName: String)
+    fun delete(userName: String, action: PasswordLifeCycleAction)
 
     fun updateLastEvaluationDate(rule: PasswordLifeCycleRule, lastEvaluationDate: LocalDateTime)
 
-    fun findAllRules(page: Int, size: Int): List<PasswordLifeCycleRule>
+    fun findRulesFor(userName: String): List<PasswordLifeCycleRule>
+
+    /**
+     * Keyset pagination ordered by (userName, action): returns up to [size] rules that come strictly after [after],
+     * or the first page when [after] is null.
+     */
+    fun findAllRulesAfter(after: PasswordLifeCycleRule?, size: Int): List<PasswordLifeCycleRule>
 
 }

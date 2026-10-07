@@ -144,9 +144,13 @@ Documented MFA endpoints:
 - `POST /api/mfa/enrollment`
 - `POST /api/mfa/associate`
 
-Documented password lifecycle endpoint (`database` profile only, see `docs/password-lifecycle.md`):
+Documented password lifecycle endpoints (`database` profile only, scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):
 
-- `PUT /api/admin/accounts/password/lifecycle` (scope `admin:password-lifecycle-editor`)
+- `PUT /api/admin/accounts/{userName}/password/lifecycle/{action}`
+- `GET /api/admin/accounts/{userName}/password/lifecycle`
+- `DELETE /api/admin/accounts/{userName}/password/lifecycle/{action}`
+
+The password lifecycle domain vocabulary is defined in `CONTEXT.md`.
 
 Lambda-based token customization is supported when `vauthenticator.lambda.aws.enabled=true`. The documented default lambda name is `vauthenticator-token-enhancer`.
 
