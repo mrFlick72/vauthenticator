@@ -101,6 +101,17 @@ abstract class AbstractAccountRepositoryTest {
     }
 
     @Test
+    fun `when an account is saved the authorities of the other accounts are preserved`() {
+        val anotherAccount = account.copy(username = "another@email.com", email = "another@email.com")
+        uut.save(account)
+        uut.save(anotherAccount)
+
+        uut.save(account.copy(firstName = "A_NEW_FIRSTNAME"))
+
+        assertEquals(anotherAccount, uut.accountFor(anotherAccount.username))
+    }
+
+    @Test
     internal fun `when a new account is created`() {
         uut.create(account)
 

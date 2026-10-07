@@ -79,7 +79,7 @@ private const val FIND_ACCOUNT_ROLE_QUERY: String = """
      FROM ACCOUNT_ROLE
      WHERE account_username=?
     """
-private const val DELETE_ACCOUNT_ROLE_QUERY = "DELETE FROM ACCOUNT_ROLE WHERE role_name=?"
+private const val DELETE_ACCOUNT_ROLE_QUERY = "DELETE FROM ACCOUNT_ROLE WHERE account_username=?"
 private const val INSERT_ACCOUNT_ROLE_QUERY = "INSERT INTO ACCOUNT_ROLE (account_username, role_name) VALUES (?,?)"
 
 private const val FIND_ACCOUNT_GROUP_QUERY: String = """
@@ -87,7 +87,7 @@ private const val FIND_ACCOUNT_GROUP_QUERY: String = """
      FROM ACCOUNT_GROUP
      WHERE account_username=?
     """
-private const val DELETE_ACCOUNT_GROUP_QUERY = "DELETE FROM ACCOUNT_GROUP WHERE group_name=?"
+private const val DELETE_ACCOUNT_GROUP_QUERY = "DELETE FROM ACCOUNT_GROUP WHERE account_username=?"
 private const val INSERT_ACCOUNT_GROUP_QUERY = "INSERT INTO ACCOUNT_GROUP (account_username, group_name) VALUES (?,?)"
 
 @Transactional
@@ -203,18 +203,14 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
     }
 
     private fun saveRoleFor(userName: String, roles: Set<String>) {
-        val userRoles: Set<String> = getUserRoleFor(userName)
-
-        userRoles.forEach { jdbcTemplate.update(DELETE_ACCOUNT_ROLE_QUERY, it) }
+        jdbcTemplate.update(DELETE_ACCOUNT_ROLE_QUERY, userName)
         roles.forEach {
             jdbcTemplate.update(INSERT_ACCOUNT_ROLE_QUERY, userName, it)
         }
     }
 
     private fun saveGroupFor(userName: String, groups: Set<String>) {
-        val userGroups: Set<String> = getUserGroupFor(userName)
-
-        userGroups.forEach { jdbcTemplate.update(DELETE_ACCOUNT_GROUP_QUERY, it) }
+        jdbcTemplate.update(DELETE_ACCOUNT_GROUP_QUERY, userName)
         groups.forEach {
             jdbcTemplate.update(INSERT_ACCOUNT_GROUP_QUERY, userName, it)
         }
