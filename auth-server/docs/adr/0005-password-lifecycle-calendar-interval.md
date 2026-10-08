@@ -17,6 +17,8 @@ independent of the password flows, and it is what the feature is meant to do: "a
   forced to reset on day 10. If the user ignores a forced reset for a few days, the next forced reset comes that
   much sooner after they finally do it.
 - `ACCOUNT_LOCK` is the exception to the recurring cadence. It fires once, and the rule is then deleted.
+- The interval itself is calendar based too: it is an ISO-8601 duration where months and years are calendar months and
+  years (`P3M` means three calendar months, not 90 days), stored as the text the admin registered.
 - Re-registering a rule (`PUT`) restarts its interval from the moment of registration.
 - A rule fires on the first job run after its interval has elapsed, so the effective precision is the
   `password.password-life-cycle.cron` period.

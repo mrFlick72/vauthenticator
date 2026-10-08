@@ -4,6 +4,7 @@ import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleInterval
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.EMAIL
@@ -27,7 +28,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
-import java.time.Duration
 
 private const val RULES_PATH = "/api/admin/accounts/$EMAIL/password/lifecycle"
 private const val LOCK_RULE_PATH = "$RULES_PATH/ACCOUNT_LOCK"
@@ -59,47 +59,47 @@ class PasswordLifeCycleEndPointTest {
 
     @Test
     fun `when a rule is registered`() {
-        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) } just runs
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, PasswordLifeCycleInterval.parse("P3M")) } just runs
 
         mokMvc.perform(
             put(LOCK_RULE_PATH)
                 .principal(editor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"interval": "P90D"}""")
+                .content("""{"interval": "P3M"}""")
         ).andExpect(status().isNoContent)
 
-        verify { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) }
+        verify { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, PasswordLifeCycleInterval.parse("P3M")) }
     }
 
     @Test
     fun `when a rule is registered for an unknown account`() {
-        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) } throws
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, PasswordLifeCycleInterval.parse("P3M")) } throws
                 AccountNotFoundException("missing")
 
         mokMvc.perform(
             put(LOCK_RULE_PATH)
                 .principal(editor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"interval": "P90D"}""")
+                .content("""{"interval": "P3M"}""")
         ).andExpect(status().isNotFound)
     }
 
     @Test
-    fun `when a rule is registered with a non positive interval`() {
-        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ZERO) } throws
-                InvalidPasswordLifeCycleIntervalException("not positive")
+    fun `when a rule is registered with an interval beyond the supported date range`() {
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, PasswordLifeCycleInterval.parse("P999999999Y")) } throws
+                InvalidPasswordLifeCycleIntervalException("out of range")
 
         mokMvc.perform(
             put(LOCK_RULE_PATH)
                 .principal(editor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"interval": "PT0S"}""")
+                .content("""{"interval": "P999999999Y"}""")
         ).andExpect(status().isBadRequest)
     }
 
     @Test
     fun `when a rule is registered with an interval that is not an ISO-8601 duration`() {
-        listOf("""{"interval": 7776000}""", """{"interval": "90 days"}""", """{}""").forEach { body ->
+        listOf("""{"interval": 7776000}""", """{"interval": "90 days"}""", """{"interval": "PT0S"}""", """{"interval": "-P1M"}""", """{}""").forEach { body ->
             mokMvc.perform(
                 put(LOCK_RULE_PATH)
                     .principal(editor)
@@ -117,7 +117,7 @@ class PasswordLifeCycleEndPointTest {
             put("$RULES_PATH/WHATEVER")
                 .principal(editor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"interval": "P90D"}""")
+                .content("""{"interval": "P3M"}""")
         ).andExpect(status().isBadRequest)
 
         verify(exactly = 0) { passwordLifeCycleRules.register(any(), any(), any()) }
@@ -129,7 +129,7 @@ class PasswordLifeCycleEndPointTest {
             put(LOCK_RULE_PATH)
                 .principal(notAnEditor)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"interval": "P90D"}""")
+                .content("""{"interval": "P3M"}""")
         ).andExpect(status().isForbidden)
 
         verify(exactly = 0) { passwordLifeCycleRules.register(any(), any(), any()) }

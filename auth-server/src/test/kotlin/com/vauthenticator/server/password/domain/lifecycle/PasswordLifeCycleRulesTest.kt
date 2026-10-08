@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Clock
-import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -45,13 +44,13 @@ class PasswordLifeCycleRulesTest {
         every { accountRepository.accountFor(account.username) } returns account
         every { passwordLifeCycleRepository.store(any()) } just runs
 
-        uut.register(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK, Duration.ofDays(90))
+        uut.register(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK, PasswordLifeCycleInterval.parse("P3M"))
 
         verify {
             passwordLifeCycleRepository.store(
                 PasswordLifeCycleRule(
                     userName = account.username,
-                    interval = Duration.ofDays(90),
+                    interval = PasswordLifeCycleInterval.parse("P3M"),
                     creationDate = LocalDateTime.of(2026, 10, 7, 10, 0, 0),
                     lastEvaluationDate = null,
                     action = PasswordLifeCycleAction.ACCOUNT_LOCK
@@ -65,18 +64,17 @@ class PasswordLifeCycleRulesTest {
         every { accountRepository.accountFor("unknown@email.com") } returns null
 
         assertThrows<AccountNotFoundException> {
-            uut.register("unknown@email.com", PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(1))
+            uut.register("unknown@email.com", PasswordLifeCycleAction.PASSWORD_RESET, PasswordLifeCycleInterval.parse("P1D"))
         }
         verify(exactly = 0) { passwordLifeCycleRepository.store(any()) }
     }
 
     @Test
-    fun `when a rule is registered with a non positive interval`() {
+    fun `when a rule is registered with an interval beyond the supported date range`() {
+        every { accountRepository.accountFor(account.username) } returns account
+
         assertThrows<InvalidPasswordLifeCycleIntervalException> {
-            uut.register(account.username, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ZERO)
-        }
-        assertThrows<InvalidPasswordLifeCycleIntervalException> {
-            uut.register(account.username, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(-1))
+            uut.register(account.username, PasswordLifeCycleAction.PASSWORD_RESET, PasswordLifeCycleInterval.parse("P999999999Y"))
         }
         verify(exactly = 0) { passwordLifeCycleRepository.store(any()) }
     }

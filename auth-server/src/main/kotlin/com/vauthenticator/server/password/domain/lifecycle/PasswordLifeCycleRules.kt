@@ -3,7 +3,7 @@ package com.vauthenticator.server.password.domain.lifecycle
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import java.time.Clock
-import java.time.Duration
+import java.time.DateTimeException
 import java.time.LocalDateTime
 
 class PasswordLifeCycleRules(
@@ -12,22 +12,25 @@ class PasswordLifeCycleRules(
     private val passwordLifeCycleRepository: PasswordLifeCycleRepository
 ) {
 
-    fun register(userName: String, action: PasswordLifeCycleAction, interval: Duration) {
-        if (interval.isZero || interval.isNegative) {
-            throw InvalidPasswordLifeCycleIntervalException("The interval must be positive: $interval")
-        }
+    fun register(userName: String, action: PasswordLifeCycleAction, interval: PasswordLifeCycleInterval) {
         accountRepository.accountFor(userName)
             ?: throw AccountNotFoundException("Account not found for user: $userName")
 
-        passwordLifeCycleRepository.store(
-            PasswordLifeCycleRule(
-                userName = userName,
-                interval = interval,
-                creationDate = LocalDateTime.now(clock),
-                lastEvaluationDate = null,
-                action = action
-            )
+        val rule = PasswordLifeCycleRule(
+            userName = userName,
+            interval = interval,
+            creationDate = LocalDateTime.now(clock),
+            lastEvaluationDate = null,
+            action = action
         )
+        try {
+            rule.nextEvaluationDate()
+        } catch (e: DateTimeException) {
+            throw InvalidPasswordLifeCycleIntervalException("The interval is out of the supported date range: $interval")
+        } catch (e: ArithmeticException) {
+            throw InvalidPasswordLifeCycleIntervalException("The interval is out of the supported date range: $interval")
+        }
+        passwordLifeCycleRepository.store(rule)
     }
 
     fun rulesFor(userName: String): List<PasswordLifeCycleRule> =

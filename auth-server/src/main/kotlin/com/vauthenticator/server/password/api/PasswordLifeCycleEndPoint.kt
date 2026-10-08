@@ -5,6 +5,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleInterval
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -12,8 +13,6 @@ import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
-import java.time.Duration
-import java.time.format.DateTimeParseException
 
 private const val ACCOUNT_RULES_PATH = "/api/admin/accounts/{userName}/password/lifecycle"
 private const val ACCOUNT_RULE_PATH = "$ACCOUNT_RULES_PATH/{action}"
@@ -67,12 +66,10 @@ class PasswordLifeCycleEndPoint(
     fun invalidIntervalExceptionHandler(ex: InvalidPasswordLifeCycleIntervalException) =
         ResponseEntity.badRequest().body(ex.message)
 
-    private fun parseInterval(interval: String?): Duration =
-        try {
-            Duration.parse(interval ?: throw InvalidPasswordLifeCycleIntervalException("The interval is mandatory"))
-        } catch (e: DateTimeParseException) {
-            throw InvalidPasswordLifeCycleIntervalException("The interval must be an ISO-8601 duration: $interval")
-        }
+    private fun parseInterval(interval: String?): PasswordLifeCycleInterval =
+        PasswordLifeCycleInterval.parse(
+            interval ?: throw InvalidPasswordLifeCycleIntervalException("The interval is mandatory")
+        )
 }
 
 data class PasswordLifeCycleRuleRequest(val interval: String?)

@@ -36,12 +36,15 @@ All the endpoints require the scope ```admin:password-lifecycle-editor```.
 
 ```json
 {
-  "interval": "P90D"
+  "interval": "P3M"
 }
 ```
 
-- `interval`: a positive ISO-8601 duration in the `PnDTnHnMnS` form (for example `P90D` or `PT12H`). Numbers, zero or
-  negative durations, and month or year based durations (`P1M`, `P1Y`) are rejected with `400 Bad Request`.
+- `interval`: a positive ISO-8601 duration in the `PnYnMnWnDTnHnMnS` form, with any combination of designators,
+  for example `P3M`, `P1Y`, `P1Y6M`, `P2W`, `P90D`, `PT12H` or `P1MT12H`. Years, months, weeks and days are calendar
+  based: `P3M` registered on 7 October is due on 7 January, and a month added to 31 January ends on the last day of
+  February. Hours, minutes and seconds are exact. Numbers, zero, negative parts, and intervals that go beyond the
+  supported date range are rejected with `400 Bad Request`.
 - The server sets the rule's creation date to now and clears its last evaluation. Registering a rule again for the same
   account and action replaces it and restarts its interval.
 
@@ -61,15 +64,15 @@ All the endpoints require the scope ```admin:password-lifecycle-editor```.
 [
   {
     "action": "PASSWORD_RESET",
-    "interval": "PT2160H",
+    "interval": "P3M",
     "creationDate": "2026-10-07T10:00",
     "lastEvaluationDate": null,
-    "nextEvaluationDate": "2027-01-05T10:00"
+    "nextEvaluationDate": "2027-01-07T10:00"
   }
 ]
 ```
 
-`interval` is returned as an ISO-8601 duration normalised to hours. An account with no rules returns `[]`.
+`interval` is returned exactly as it was registered. An account with no rules returns `[]`.
 
 ### Remove a rule
 
@@ -102,7 +105,9 @@ password:
 ```
 
 A rule fires on the first job run after its interval has elapsed, so the effective precision of an interval is the
-cron period.
+cron period. The next interval is counted from the actual firing, so the schedule drifts by up to one cron period at
+each firing, and a monthly rule that once lands on a shorter month keeps the earlier day of the month (31 January,
+28 February, 28 March, ...).
 
 ### Known limitations
 

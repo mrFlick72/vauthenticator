@@ -1,17 +1,17 @@
 package com.vauthenticator.server.password.adapter.jdbc
 
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleInterval
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
-import java.time.Duration
 import java.time.LocalDateTime
 
 private const val UPSERT_RULE_QUERY = """
-    INSERT INTO PASSWORD_LIFECYCLE_RULES (user_name, ttl, created_at, last_evaluation_date, action) VALUES (?,?,?,?,?)
+    INSERT INTO PASSWORD_LIFECYCLE_RULES (user_name, evaluation_interval, created_at, last_evaluation_date, action) VALUES (?,?,?,?,?)
     ON CONFLICT (user_name, action) DO UPDATE
-    SET ttl = EXCLUDED.ttl, created_at = EXCLUDED.created_at, last_evaluation_date = EXCLUDED.last_evaluation_date
+    SET evaluation_interval = EXCLUDED.evaluation_interval, created_at = EXCLUDED.created_at, last_evaluation_date = EXCLUDED.last_evaluation_date
     """
 private const val DELETE_RULE_QUERY = "DELETE FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ? AND action = ?"
 private const val UPDATE_LAST_EVALUATION_DATE_QUERY =
@@ -28,7 +28,7 @@ class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : 
     private val ruleMapper = RowMapper { rs, _ ->
         PasswordLifeCycleRule(
             userName = rs.getString("user_name"),
-            interval = Duration.ofSeconds(rs.getLong("ttl")),
+            interval = PasswordLifeCycleInterval.parse(rs.getString("evaluation_interval")),
             creationDate = rs.getObject("created_at", LocalDateTime::class.java),
             lastEvaluationDate = rs.getObject("last_evaluation_date", LocalDateTime::class.java),
             action = PasswordLifeCycleAction.valueOf(rs.getString("action"))
@@ -38,7 +38,7 @@ class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : 
     override fun store(rule: PasswordLifeCycleRule) {
         jdbcTemplate.update(
             UPSERT_RULE_QUERY,
-            rule.userName, rule.interval.toSeconds(), rule.creationDate, rule.lastEvaluationDate, rule.action.name
+            rule.userName, rule.interval.toString(), rule.creationDate, rule.lastEvaluationDate, rule.action.name
         )
     }
 

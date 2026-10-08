@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.adapter.jdbc
 
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleInterval
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.PASSWORD_RESET
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
@@ -10,7 +11,6 @@ import com.vauthenticator.server.support.passwordLifeCycleRule
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.time.Duration
 import java.time.LocalDateTime
 
 class JdbcPasswordLifeCycleRepositoryTest {
@@ -40,7 +40,7 @@ class JdbcPasswordLifeCycleRepositoryTest {
         uut.updateLastEvaluationDate(resetRule, LocalDateTime.of(2026, 10, 2, 10, 0, 0))
 
         val replacement = resetRule.copy(
-            interval = Duration.ofDays(30),
+            interval = PasswordLifeCycleInterval.parse("P3M"),
             creationDate = LocalDateTime.of(2026, 10, 7, 10, 0, 0),
             lastEvaluationDate = null
         )

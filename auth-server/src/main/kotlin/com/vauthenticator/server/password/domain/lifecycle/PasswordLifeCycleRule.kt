@@ -1,16 +1,15 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
-import java.time.Duration
 import java.time.LocalDateTime
 
 data class PasswordLifeCycleRule(
     val userName: String,
-    val interval: Duration,
+    val interval: PasswordLifeCycleInterval,
     val creationDate: LocalDateTime,
     val lastEvaluationDate: LocalDateTime?,
     val action: PasswordLifeCycleAction
 ) {
-    fun nextEvaluationDate(): LocalDateTime = (lastEvaluationDate ?: creationDate).plus(interval)
+    fun nextEvaluationDate(): LocalDateTime = interval.addTo(lastEvaluationDate ?: creationDate)
 
     fun isDue(now: LocalDateTime): Boolean = now.isAfter(nextEvaluationDate())
 }

@@ -1,7 +1,7 @@
 CREATE TABLE PASSWORD_LIFECYCLE_RULES
 (
     user_name            varchar(255) not null,
-    ttl                  bigint       not null,
+    evaluation_interval  varchar(64)  not null,
     created_at           TIMESTAMP    not null,
     last_evaluation_date TIMESTAMP,
     action               varchar(255) not null,
