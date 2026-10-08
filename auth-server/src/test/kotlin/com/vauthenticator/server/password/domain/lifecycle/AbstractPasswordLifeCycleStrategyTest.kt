@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import java.time.Duration
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDateTime
@@ -65,7 +66,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
 
     private fun ruleCreatedAt(creationDate: LocalDateTime) = PasswordLifeCycleRule(
         anAccount().username,
-        interval = PasswordLifeCycleInterval.parse("P1D"),
+        interval = Duration.ofDays(1),
         creationDate = creationDate,
         lastEvaluationDate = null,
         action = passwordLifeCycleRuleAction()

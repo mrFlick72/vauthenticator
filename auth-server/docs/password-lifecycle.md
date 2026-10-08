@@ -19,7 +19,7 @@ The feature is available only with the `database` profile (PostgreSQL). Rules ar
 
 The interval is a recurring timer: it is counted from the rule's registration for the first firing, and from the last
 firing afterwards. It is **not** the password's age. A password change, voluntary or forced by the rule itself, does
-not restart it. For example, with a `PASSWORD_RESET` rule of `P10D` registered on day 0, a user who changes the
+not restart it. For example, with a `PASSWORD_RESET` rule of 10 days (`864000` seconds) registered on day 0, a user who changes the
 password on day 9 is still forced to reset it on day 10. See [ADR 0005](adr/0005-password-lifecycle-calendar-interval.md).
 
 ## How to
@@ -36,15 +36,14 @@ All the endpoints require the scope ```admin:password-lifecycle-editor```.
 
 ```json
 {
-  "interval": "P3M"
+  "intervalSeconds": 7776000
 }
 ```
 
-- `interval`: a positive ISO-8601 duration in the `PnYnMnWnDTnHnMnS` form, with any combination of designators,
-  for example `P3M`, `P1Y`, `P1Y6M`, `P2W`, `P90D`, `PT12H` or `P1MT12H`. Years, months, weeks and days are calendar
-  based: `P3M` registered on 7 October is due on 7 January, and a month added to 31 January ends on the last day of
-  February. Hours, minutes and seconds are exact. Numbers, zero, negative parts, and intervals that go beyond the
-  supported date range are rejected with `400 Bad Request`.
+- `intervalSeconds`: the evaluation interval as a positive number of seconds (for example `7776000` for 90 days, or
+  `43200` for 12 hours). Missing, non-numeric, zero or negative values, and intervals that go beyond the supported date
+  range, are rejected with `400 Bad Request`. The interval has a fixed length: to express "about three months" use the
+  number of seconds in 90 days.
 - The server sets the rule's creation date to now and clears its last evaluation. Registering a rule again for the same
   account and action replaces it and restarts its interval.
 
@@ -64,15 +63,15 @@ All the endpoints require the scope ```admin:password-lifecycle-editor```.
 [
   {
     "action": "PASSWORD_RESET",
-    "interval": "P3M",
+    "intervalSeconds": 7776000,
     "creationDate": "2026-10-07T10:00",
     "lastEvaluationDate": null,
-    "nextEvaluationDate": "2027-01-07T10:00"
+    "nextEvaluationDate": "2027-01-05T10:00"
   }
 ]
 ```
 
-`interval` is returned exactly as it was registered. An account with no rules returns `[]`.
+An account with no rules returns `[]`.
 
 ### Remove a rule
 
@@ -106,8 +105,7 @@ password:
 
 A rule fires on the first job run after its interval has elapsed, so the effective precision of an interval is the
 cron period. The next interval is counted from the actual firing, so the schedule drifts by up to one cron period at
-each firing, and a monthly rule that once lands on a shorter month keeps the earlier day of the month (31 January,
-28 February, 28 March, ...).
+each firing.
 
 ### Known limitations
 

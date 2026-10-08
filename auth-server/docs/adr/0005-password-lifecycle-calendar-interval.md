@@ -13,12 +13,12 @@ independent of the password flows, and it is what the feature is meant to do: "a
   decision is recorded here.
 
 **Consequences:**
-- With a `PASSWORD_RESET` rule of `P10D` registered on day 0, a user who changes their password on day 9 is still
+- With a `PASSWORD_RESET` rule of 10 days (`864000` seconds) registered on day 0, a user who changes their password on day 9 is still
   forced to reset on day 10. If the user ignores a forced reset for a few days, the next forced reset comes that
   much sooner after they finally do it.
 - `ACCOUNT_LOCK` is the exception to the recurring cadence. It fires once, and the rule is then deleted.
-- The interval itself is calendar based too: it is an ISO-8601 duration where months and years are calendar months and
-  years (`P3M` means three calendar months, not 90 days), stored as the text the admin registered.
+- The interval itself has a fixed length, expressed in seconds. "Calendar" here means wall-clock time rather than
+  password age: there are no calendar months, so "three months" is registered as 90 days of seconds.
 - Re-registering a rule (`PUT`) restarts its interval from the moment of registration.
 - A rule fires on the first job run after its interval has elapsed, so the effective precision is the
   `password.password-life-cycle.cron` period.

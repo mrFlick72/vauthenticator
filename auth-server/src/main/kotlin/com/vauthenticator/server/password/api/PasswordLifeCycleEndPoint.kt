@@ -5,7 +5,6 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleInterval
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -13,6 +12,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
+import java.time.Duration
 
 private const val ACCOUNT_RULES_PATH = "/api/admin/accounts/{userName}/password/lifecycle"
 private const val ACCOUNT_RULE_PATH = "$ACCOUNT_RULES_PATH/{action}"
@@ -33,7 +33,7 @@ class PasswordLifeCycleEndPoint(
     ): ResponseEntity<Unit> {
         permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
-        passwordLifeCycleRules.register(userName, action, parseInterval(request.interval))
+        passwordLifeCycleRules.register(userName, action, intervalOf(request))
         return ResponseEntity.noContent().build()
     }
 
@@ -66,17 +66,18 @@ class PasswordLifeCycleEndPoint(
     fun invalidIntervalExceptionHandler(ex: InvalidPasswordLifeCycleIntervalException) =
         ResponseEntity.badRequest().body(ex.message)
 
-    private fun parseInterval(interval: String?): PasswordLifeCycleInterval =
-        PasswordLifeCycleInterval.parse(
-            interval ?: throw InvalidPasswordLifeCycleIntervalException("The interval is mandatory")
+    private fun intervalOf(request: PasswordLifeCycleRuleRequest): Duration =
+        Duration.ofSeconds(
+            request.intervalSeconds
+                ?: throw InvalidPasswordLifeCycleIntervalException("The interval in seconds is mandatory")
         )
 }
 
-data class PasswordLifeCycleRuleRequest(val interval: String?)
+data class PasswordLifeCycleRuleRequest(val intervalSeconds: Long?)
 
 data class PasswordLifeCycleRuleRepresentation(
     val action: String,
-    val interval: String,
+    val intervalSeconds: Long,
     val creationDate: String,
     val lastEvaluationDate: String?,
     val nextEvaluationDate: String
@@ -84,7 +85,7 @@ data class PasswordLifeCycleRuleRepresentation(
 
 private fun PasswordLifeCycleRule.toRepresentation() = PasswordLifeCycleRuleRepresentation(
     action = action.name,
-    interval = interval.toString(),
+    intervalSeconds = interval.seconds,
     creationDate = creationDate.toString(),
     lastEvaluationDate = lastEvaluationDate?.toString(),
     nextEvaluationDate = nextEvaluationDate().toString()

@@ -17,7 +17,7 @@ An admin-assigned timer on an account that applies a **Lifecycle Action** when i
 _Avoid_: password expiry, password policy
 
 **Evaluation Interval**:
-The period between two consecutive firings of a **Password Lifecycle Rule**, counted from the rule's registration (or re-registration) for the first firing and from its **Last Evaluation** afterwards. It is expressed in calendar terms (years, months, weeks, days) and/or exact time, and is not tied to the password's age.
+The period between two consecutive firings of a **Password Lifecycle Rule**, counted from the rule's registration (or re-registration) for the first firing and from its **Last Evaluation** afterwards. It has a fixed length, expressed in seconds, and is not tied to the password's age.
 _Avoid_: password age, expiry
 
 **Last Evaluation**:
