@@ -13,7 +13,7 @@ to the account:
 An account has at most one rule per action. The domain vocabulary is defined in [CONTEXT.md](../CONTEXT.md).
 
 The feature is available only with the `database` profile (PostgreSQL). Rules are stored in the
-`PASSWORD_LIFECYCLE_RULES` table, which has a unique constraint on `(user_name, action)`.
+`PASSWORD_LIFECYCLE_RULES` table, whose primary key is `(user_name, action)`.
 
 ### The interval is calendar based
 
