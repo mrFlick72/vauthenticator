@@ -4,7 +4,6 @@ import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.account.domain.AccountRepository
 import java.time.Clock
-import java.time.DateTimeException
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -56,9 +55,7 @@ class PasswordLifeCycleRules(
         if (interval.isZero || interval.isNegative) {
             throw InvalidPasswordLifeCycleIntervalException("The interval must be a positive number of seconds: ${interval.seconds}")
         }
-        try {
-            now.plus(interval)
-        } catch (e: DateTimeException) {
+        if (!this.runCatching { now.plus(interval) }.isSuccess) {
             throw InvalidPasswordLifeCycleIntervalException("The interval is out of the supported date range: ${interval.seconds} seconds")
         }
     }
