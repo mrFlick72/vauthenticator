@@ -23,5 +23,9 @@ _Avoid_: password age, expiry
 **Last Evaluation**:
 The moment a **Password Lifecycle Rule** last fired and applied its **Lifecycle Action**; it anchors the next **Evaluation Interval**.
 
+**Account Pattern**:
+A case-insensitive username pattern that selects accounts, where `*` matches any run of characters and everything else is literal; `*` alone selects every account. Registering a rule for an **Account Pattern** gives each account matching at that moment its own **Password Lifecycle Rule**, replacing any rule the account already has for that action; accounts created later are not covered.
+_Avoid_: wildcard rule, group rule
+
 **Lifecycle Action**:
 What a **Password Lifecycle Rule** does to the account when it fires: force a password reset (recurring — fires every interval), or lock the account (one-shot — fires once, then the rule is spent).

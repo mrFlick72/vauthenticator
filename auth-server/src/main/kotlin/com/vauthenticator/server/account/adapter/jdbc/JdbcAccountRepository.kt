@@ -90,6 +90,15 @@ private const val FIND_ACCOUNT_GROUP_QUERY: String = """
 private const val DELETE_ACCOUNT_GROUP_QUERY = "DELETE FROM ACCOUNT_GROUP WHERE account_username=?"
 private const val INSERT_ACCOUNT_GROUP_QUERY = "INSERT INTO ACCOUNT_GROUP (account_username, group_name) VALUES (?,?)"
 
+private const val FIND_FIRST_USERNAMES_MATCHING_QUERY = """
+    SELECT username FROM ACCOUNT WHERE username ILIKE ? ESCAPE '\'
+    ORDER BY username COLLATE "C" LIMIT ?
+    """
+private const val FIND_USERNAMES_MATCHING_AFTER_QUERY = """
+    SELECT username FROM ACCOUNT WHERE username ILIKE ? ESCAPE '\' AND username COLLATE "C" > ?
+    ORDER BY username COLLATE "C" LIMIT ?
+    """
+
 @Transactional
 class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRepository {
 
@@ -201,6 +210,19 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
             throw AccountRegistrationException(e.message ?: "", e)
         }
     }
+
+    override fun findUserNamesMatching(pattern: AccountPattern, after: String?, size: Int): List<String> =
+        after?.let {
+            jdbcTemplate.query(
+                FIND_USERNAMES_MATCHING_AFTER_QUERY,
+                { rs, _ -> rs.getString("username") },
+                pattern.toSqlLikePattern(), it, size
+            )
+        } ?: jdbcTemplate.query(
+            FIND_FIRST_USERNAMES_MATCHING_QUERY,
+            { rs, _ -> rs.getString("username") },
+            pattern.toSqlLikePattern(), size
+        )
 
     private fun saveRoleFor(userName: String, roles: Set<String>) {
         jdbcTemplate.update(DELETE_ACCOUNT_ROLE_QUERY, userName)

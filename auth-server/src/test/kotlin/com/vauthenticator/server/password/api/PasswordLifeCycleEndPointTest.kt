@@ -1,10 +1,11 @@
 package com.vauthenticator.server.password.api
 
-import java.time.Duration
 import com.vauthenticator.server.account.domain.AccountNotFoundException
+import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.PASSWORD_RESET
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.EMAIL
@@ -24,13 +25,16 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
+import java.time.Duration
 
 private const val RULES_PATH = "/api/admin/accounts/$EMAIL/password/lifecycle"
 private const val LOCK_RULE_PATH = "$RULES_PATH/ACCOUNT_LOCK"
+private const val BULK_RESET_PATH = "/api/admin/accounts/password/lifecycle/PASSWORD_RESET/bulk"
 
 @ExtendWith(MockKExtension::class)
 class PasswordLifeCycleEndPointTest {
@@ -193,5 +197,77 @@ class PasswordLifeCycleEndPointTest {
             .andExpect(status().isForbidden)
 
         verify(exactly = 0) { passwordLifeCycleRules.remove(any(), any()) }
+    }
+
+    @Test
+    fun `when a rule is registered for every account matching a pattern`() {
+        every { passwordLifeCycleRules.registerAll(AccountPattern("*@gmail.com"), PASSWORD_RESET, Duration.ofDays(90)) } returns 1342
+
+        mokMvc.perform(
+            post(BULK_RESET_PATH)
+                .principal(editor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"accountPattern": "*@gmail.com", "intervalSeconds": 7776000}""")
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().json("""{"matchedAccounts": 1342}"""))
+    }
+
+    @Test
+    fun `when a rule is registered for a pattern with an invalid body`() {
+        listOf(
+            """{"intervalSeconds": 7776000}""",
+            """{"accountPattern": "  ", "intervalSeconds": 7776000}""",
+            """{"accountPattern": "*@gmail.com"}""",
+        ).forEach { body ->
+            mokMvc.perform(
+                post(BULK_RESET_PATH)
+                    .principal(editor)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body)
+            ).andExpect(status().isBadRequest)
+        }
+
+        verify(exactly = 0) { passwordLifeCycleRules.registerAll(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a rule is registered for a pattern without the editor scope`() {
+        mokMvc.perform(
+            post(BULK_RESET_PATH)
+                .principal(notAnEditor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"accountPattern": "*", "intervalSeconds": 7776000}""")
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { passwordLifeCycleRules.registerAll(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the rules of every account matching a pattern are removed`() {
+        every { passwordLifeCycleRules.removeAll(AccountPattern("*@gmail.com"), PASSWORD_RESET) } returns 12
+
+        mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", "*@gmail.com").principal(editor))
+            .andExpect(status().isOk)
+            .andExpect(content().json("""{"matchedAccounts": 12}"""))
+    }
+
+    @Test
+    fun `when the rules matching a pattern are removed without a pattern`() {
+        mokMvc.perform(delete(BULK_RESET_PATH).principal(editor))
+            .andExpect(status().isBadRequest)
+
+        mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", " ").principal(editor))
+            .andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { passwordLifeCycleRules.removeAll(any(), any()) }
+    }
+
+    @Test
+    fun `when the rules matching a pattern are removed without the editor scope`() {
+        mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", "*").principal(notAnEditor))
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { passwordLifeCycleRules.removeAll(any(), any()) }
     }
 }

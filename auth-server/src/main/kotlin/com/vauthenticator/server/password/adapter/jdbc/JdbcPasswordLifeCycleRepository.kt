@@ -1,5 +1,7 @@
 package com.vauthenticator.server.password.adapter.jdbc
 
+import com.vauthenticator.server.account.adapter.jdbc.toSqlLikePattern
+import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
@@ -14,6 +16,8 @@ private const val UPSERT_RULE_QUERY = """
     SET evaluation_interval_seconds = EXCLUDED.evaluation_interval_seconds, created_at = EXCLUDED.created_at, last_evaluation_date = EXCLUDED.last_evaluation_date
     """
 private const val DELETE_RULE_QUERY = "DELETE FROM PASSWORD_LIFECYCLE_RULES WHERE user_name = ? AND action = ?"
+private const val DELETE_MATCHING_RULES_QUERY =
+    "DELETE FROM PASSWORD_LIFECYCLE_RULES WHERE user_name ILIKE ? ESCAPE '\\' AND action = ?"
 private const val UPDATE_LAST_EVALUATION_DATE_QUERY =
     "UPDATE PASSWORD_LIFECYCLE_RULES SET last_evaluation_date = ? WHERE user_name = ? AND action = ?"
 private const val FIND_RULES_FOR_USER_QUERY =
@@ -45,6 +49,9 @@ class JdbcPasswordLifeCycleRepository(private val jdbcTemplate: JdbcTemplate) : 
     override fun delete(userName: String, action: PasswordLifeCycleAction) {
         jdbcTemplate.update(DELETE_RULE_QUERY, userName, action.name)
     }
+
+    override fun deleteMatching(pattern: AccountPattern, action: PasswordLifeCycleAction): Int =
+        jdbcTemplate.update(DELETE_MATCHING_RULES_QUERY, pattern.toSqlLikePattern(), action.name)
 
     override fun updateLastEvaluationDate(rule: PasswordLifeCycleRule, lastEvaluationDate: LocalDateTime) {
         jdbcTemplate.update(UPDATE_LAST_EVALUATION_DATE_QUERY, lastEvaluationDate, rule.userName, rule.action.name)

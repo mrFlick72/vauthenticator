@@ -149,6 +149,8 @@ Documented password lifecycle endpoints (`database` profile only, scope `admin:p
 - `PUT /api/admin/accounts/{userName}/password/lifecycle/{action}`
 - `GET /api/admin/accounts/{userName}/password/lifecycle`
 - `DELETE /api/admin/accounts/{userName}/password/lifecycle/{action}`
+- `POST /api/admin/accounts/password/lifecycle/{action}/bulk` (account pattern, e.g. `*@gmail.com`)
+- `DELETE /api/admin/accounts/password/lifecycle/{action}/bulk?accountPattern=...`
 
 The password lifecycle domain vocabulary is defined in `CONTEXT.md`.
 

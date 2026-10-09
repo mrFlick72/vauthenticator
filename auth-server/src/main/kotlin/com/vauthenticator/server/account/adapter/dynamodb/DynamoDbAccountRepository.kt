@@ -4,6 +4,8 @@ import com.vauthenticator.server.account.adapter.dynamodb.DynamoAccountConverter
 import com.vauthenticator.server.account.adapter.dynamodb.DynamoAccountQueryFactory.findAccountQueryForUserName
 import com.vauthenticator.server.account.adapter.dynamodb.DynamoAccountQueryFactory.storeAccountQueryFor
 import com.vauthenticator.server.account.domain.Account
+import com.vauthenticator.server.account.domain.AccountPattern
+import com.vauthenticator.server.account.domain.AccountPatternSearchNotSupportedException
 import com.vauthenticator.server.account.domain.AccountRegistrationException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.extentions.filterEmptyMetadata
@@ -23,6 +25,11 @@ class DynamoDbAccountRepository(
             ?.let(::fromDynamoToDomain)
             ?.let(::stealRoleCleanUpFor)
 
+
+    override fun findUserNamesMatching(pattern: AccountPattern, after: String?, size: Int): List<String> =
+        throw AccountPatternSearchNotSupportedException(
+            "Searching accounts by pattern is not available with the dynamo profile"
+        )
 
     private fun stealRoleCleanUpFor(account: Account): Account {
         val roles = roleRepository.findAll()

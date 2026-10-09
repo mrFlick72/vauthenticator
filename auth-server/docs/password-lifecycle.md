@@ -79,6 +79,46 @@ An account with no rules returns `[]`.
 
 *Response Status:* ```204 No Content```, whether the rule existed or not
 
+### Register a rule for many accounts
+
+*URI:* ```POST /api/admin/accounts/password/lifecycle/{action}/bulk```
+
+*Request Body:*
+
+```json
+{
+  "accountPattern": "*@gmail.com",
+  "intervalSeconds": 7776000
+}
+```
+
+- `accountPattern`: an account pattern. `*` matches any run of characters and every other character is literal
+  (including `_` and `%`). Matching is case-insensitive. `*` alone selects every account, and a plain username selects
+  just that account.
+- The pattern is expanded once, when the call is made: every account matching at that moment gets its own rule,
+  exactly as if the per-account `PUT` had been called for it. Any rule an account already has for that action is
+  replaced and its interval restarts. Accounts created later are not covered.
+- Accounts are processed in pages, without a single transaction. If the call fails part way, repeating it is safe:
+  accounts already processed are simply registered again.
+
+*Response Body:*
+
+```json
+{
+  "matchedAccounts": 1342
+}
+```
+
+A pattern that matches nothing returns `200` with `"matchedAccounts": 0`. A missing or blank pattern, or an invalid
+interval, returns `400 Bad Request`.
+
+### Remove a rule from many accounts
+
+*URI:* ```DELETE /api/admin/accounts/password/lifecycle/{action}/bulk?accountPattern=*%40gmail.com```
+
+Deletes the rules for that action whose username matches the pattern, including rules left behind by accounts that no
+longer exist. The response body is the same as for the bulk registration, with the number of rules removed.
+
 ### Evaluation
 
 `PasswordLifeCycleExecutorJob` reads all the rules in pages of 100 and runs the strategy that matches each rule's

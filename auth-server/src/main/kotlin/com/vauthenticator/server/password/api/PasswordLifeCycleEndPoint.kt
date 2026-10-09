@@ -1,6 +1,8 @@
 package com.vauthenticator.server.password.api
 
 import com.vauthenticator.server.account.domain.AccountNotFoundException
+import com.vauthenticator.server.account.domain.AccountPattern
+import com.vauthenticator.server.account.domain.InvalidAccountPatternException
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
@@ -16,6 +18,7 @@ import java.time.Duration
 
 private const val ACCOUNT_RULES_PATH = "/api/admin/accounts/{userName}/password/lifecycle"
 private const val ACCOUNT_RULE_PATH = "$ACCOUNT_RULES_PATH/{action}"
+private const val BULK_RULES_PATH = "/api/admin/accounts/password/lifecycle/{action}/bulk"
 
 @Profile("database")
 @RestController
@@ -33,7 +36,7 @@ class PasswordLifeCycleEndPoint(
     ): ResponseEntity<Unit> {
         permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
-        passwordLifeCycleRules.register(userName, action, intervalOf(request))
+        passwordLifeCycleRules.register(userName, action, intervalOf(request.intervalSeconds))
         return ResponseEntity.noContent().build()
     }
 
@@ -59,21 +62,55 @@ class PasswordLifeCycleEndPoint(
         return ResponseEntity.noContent().build()
     }
 
+    @PostMapping(BULK_RULES_PATH)
+    fun registerRuleForAccountPattern(
+        @PathVariable action: PasswordLifeCycleAction,
+        @RequestBody request: PasswordLifeCycleBulkRuleRequest,
+        principal: JwtAuthenticationToken
+    ): ResponseEntity<PasswordLifeCycleBulkResult> {
+        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+
+        val matchedAccounts = passwordLifeCycleRules.registerAll(
+            accountPatternOf(request.accountPattern),
+            action,
+            intervalOf(request.intervalSeconds)
+        )
+        return ResponseEntity.ok(PasswordLifeCycleBulkResult(matchedAccounts))
+    }
+
+    @DeleteMapping(BULK_RULES_PATH)
+    fun removeRuleForAccountPattern(
+        @PathVariable action: PasswordLifeCycleAction,
+        @RequestParam accountPattern: String,
+        principal: JwtAuthenticationToken
+    ): ResponseEntity<PasswordLifeCycleBulkResult> {
+        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+
+        val matchedAccounts = passwordLifeCycleRules.removeAll(accountPatternOf(accountPattern), action)
+        return ResponseEntity.ok(PasswordLifeCycleBulkResult(matchedAccounts))
+    }
+
     @ExceptionHandler(AccountNotFoundException::class)
     fun accountNotFoundExceptionHandler() = ResponseEntity.notFound().build<Unit>()
 
-    @ExceptionHandler(InvalidPasswordLifeCycleIntervalException::class)
-    fun invalidIntervalExceptionHandler(ex: InvalidPasswordLifeCycleIntervalException) =
+    @ExceptionHandler(InvalidPasswordLifeCycleIntervalException::class, InvalidAccountPatternException::class)
+    fun invalidRequestExceptionHandler(ex: RuntimeException) =
         ResponseEntity.badRequest().body(ex.message)
 
-    private fun intervalOf(request: PasswordLifeCycleRuleRequest): Duration =
+    private fun intervalOf(intervalSeconds: Long?): Duration =
         Duration.ofSeconds(
-            request.intervalSeconds
-                ?: throw InvalidPasswordLifeCycleIntervalException("The interval in seconds is mandatory")
+            intervalSeconds ?: throw InvalidPasswordLifeCycleIntervalException("The interval in seconds is mandatory")
         )
+
+    private fun accountPatternOf(accountPattern: String?): AccountPattern =
+        AccountPattern(accountPattern ?: throw InvalidAccountPatternException("The account pattern is mandatory"))
 }
 
 data class PasswordLifeCycleRuleRequest(val intervalSeconds: Long?)
+
+data class PasswordLifeCycleBulkRuleRequest(val accountPattern: String?, val intervalSeconds: Long?)
+
+data class PasswordLifeCycleBulkResult(val matchedAccounts: Int)
 
 data class PasswordLifeCycleRuleRepresentation(
     val action: String,

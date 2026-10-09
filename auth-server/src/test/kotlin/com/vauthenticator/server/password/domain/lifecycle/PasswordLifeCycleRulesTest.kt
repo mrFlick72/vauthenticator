@@ -1,6 +1,7 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
 import com.vauthenticator.server.account.domain.AccountNotFoundException
+import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.passwordLifeCycleRule
@@ -104,5 +105,61 @@ class PasswordLifeCycleRulesTest {
         uut.remove(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK)
 
         verify { passwordLifeCycleRepository.delete(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK) }
+    }
+
+    @Test
+    fun `when a rule is registered for every account matching a pattern`() {
+        val pattern = AccountPattern("*@gmail.com")
+        val firstPage = (1..100).map { "user$it@gmail.com" }
+        val secondPage = listOf("zed@gmail.com")
+        every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns firstPage
+        every { accountRepository.findUserNamesMatching(pattern, firstPage.last(), 100) } returns secondPage
+        every { accountRepository.findUserNamesMatching(pattern, "zed@gmail.com", 100) } returns emptyList()
+        every { passwordLifeCycleRepository.store(any()) } just runs
+
+        val matched = uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90))
+
+        assertEquals(101, matched)
+        (firstPage + secondPage).forEach { userName ->
+            verify {
+                passwordLifeCycleRepository.store(
+                    PasswordLifeCycleRule(
+                        userName = userName,
+                        interval = Duration.ofDays(90),
+                        creationDate = LocalDateTime.of(2026, 10, 7, 10, 0, 0),
+                        lastEvaluationDate = null,
+                        action = PasswordLifeCycleAction.PASSWORD_RESET
+                    )
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `when a rule is registered for a pattern that matches no account`() {
+        val pattern = AccountPattern("*@gmial.com")
+        every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns emptyList()
+
+        assertEquals(0, uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90)))
+        verify(exactly = 0) { passwordLifeCycleRepository.store(any()) }
+    }
+
+    @Test
+    fun `when a rule is registered for a pattern with an invalid interval no account is searched`() {
+        listOf(Duration.ZERO, Duration.ofSeconds(Long.MAX_VALUE)).forEach { interval ->
+            assertThrows<InvalidPasswordLifeCycleIntervalException> {
+                uut.registerAll(AccountPattern("*"), PasswordLifeCycleAction.ACCOUNT_LOCK, interval)
+            }
+        }
+        verify(exactly = 0) { accountRepository.findUserNamesMatching(any(), any(), any()) }
+        verify(exactly = 0) { passwordLifeCycleRepository.store(any()) }
+    }
+
+    @Test
+    fun `when the rules of every account matching a pattern are removed`() {
+        val pattern = AccountPattern("*@gmail.com")
+        every { passwordLifeCycleRepository.deleteMatching(pattern, PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 7
+
+        assertEquals(7, uut.removeAll(pattern, PasswordLifeCycleAction.ACCOUNT_LOCK))
     }
 }

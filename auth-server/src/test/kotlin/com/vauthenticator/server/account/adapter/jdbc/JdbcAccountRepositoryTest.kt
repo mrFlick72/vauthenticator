@@ -1,5 +1,6 @@
 package com.vauthenticator.server.account.adapter.jdbc
 
+import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.adapter.AbstractAccountRepositoryTest
 import com.vauthenticator.server.role.adapter.jdbc.JdbcRoleRepository
@@ -34,6 +35,37 @@ class JdbcAccountRepositoryTest : AbstractAccountRepositoryTest() {
         uut.save(account.copy(firstName = "A_NEW_FIRSTNAME"))
 
         assertEquals(anotherAccount, uut.accountFor(anotherAccount.username))
+    }
+
+    @Test
+    fun `usernames matching an account pattern are found`() {
+        val userNames = listOf(
+            "alice@gmail.com", "Bob@Gmail.COM", "carol@example.com", "a_b@example.com", "axb@example.com", "a%b@example.com"
+        )
+        val uut = JdbcAccountRepository(jdbcTemplate)
+        userNames.forEach { uut.create(anAccount().copy(username = it, email = it)) }
+        fun allMatching(pattern: String) = uut.findUserNamesMatching(AccountPattern(pattern), after = null, size = 100)
+
+        assertEquals(userNames.sorted(), allMatching("*"))
+        assertEquals(listOf("Bob@Gmail.COM", "alice@gmail.com"), allMatching("*@gmail.com"))
+        assertEquals(listOf("carol@example.com"), allMatching("carol@example.com"))
+        assertEquals(listOf("a_b@example.com"), allMatching("a_b@*"))
+        assertEquals(listOf("a%b@example.com"), allMatching("a%b@*"))
+        assertEquals(emptyList<String>(), allMatching("*@gmial.com"))
+    }
+
+    @Test
+    fun `usernames matching an account pattern are read with keyset pagination`() {
+        val userNames = listOf("a@x.com", "b@x.com", "c@x.com", "d@x.com", "e@x.com")
+        val uut = JdbcAccountRepository(jdbcTemplate)
+        userNames.forEach { uut.create(anAccount().copy(username = it, email = it)) }
+
+        val firstPage = uut.findUserNamesMatching(AccountPattern("*"), after = null, size = 3)
+        val secondPage = uut.findUserNamesMatching(AccountPattern("*"), after = firstPage.last(), size = 3)
+        val thirdPage = uut.findUserNamesMatching(AccountPattern("*"), after = secondPage.last(), size = 3)
+
+        assertEquals(userNames, firstPage + secondPage)
+        assertEquals(emptyList<String>(), thirdPage)
     }
 
 }
