@@ -1,5 +1,7 @@
 package com.vauthenticator.server.account.adapter.dynamodb
 
+import com.vauthenticator.server.account.domain.AccountPattern
+import com.vauthenticator.server.account.domain.AccountPatternSearchNotSupportedException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.adapter.AbstractAccountRepositoryTest
 import com.vauthenticator.server.role.adapter.dynamodb.DynamoDbRoleRepository
@@ -9,6 +11,8 @@ import com.vauthenticator.server.support.DynamoDbUtils.dynamoDbClient
 import com.vauthenticator.server.support.DynamoDbUtils.dynamoRoleTableName
 import com.vauthenticator.server.support.DynamoDbUtils.resetDynamoDb
 import com.vauthenticator.server.support.protectedRoleNames
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 
 internal class DynamoDbAbstractAccountRepositoryTest : AbstractAccountRepositoryTest() {
@@ -31,6 +35,15 @@ internal class DynamoDbAbstractAccountRepositoryTest : AbstractAccountRepository
 
     override fun resetDatabase() {
         resetDynamoDb()
+    }
+
+    @Test
+    fun `searching accounts by pattern is not available`() {
+        val uut = DynamoDbAccountRepository(dynamoDbClient, dynamoAccountTableName, initRoleRepository())
+
+        assertThrows<AccountPatternSearchNotSupportedException> {
+            uut.findUserNamesMatching(AccountPattern("*"), after = null, size = 100)
+        }
     }
 
 }

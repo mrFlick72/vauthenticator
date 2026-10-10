@@ -32,6 +32,9 @@ data:
         minSpecialSymbol: {{ .Values.application.password.policy.minSpecialSymbol }}
         enablePasswordReusePrevention: {{ .Values.application.password.policy.enablePasswordReusePrevention }}
 
+      password-life-cycle:
+        cron: {{ .Values.application.password.lifeCycle.cron | quote }}
+
     key:
       master-key:
         id: {{ .Values.application.masterKey }}

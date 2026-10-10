@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useNavigate, useParams} from "react-router";
+import {Link, useNavigate, useParams} from "react-router";
 import FormInputTextField from "../../components/FormInputTextField";
 import AdminTemplate from "../../components/AdminTemplate";
 import Separator from "../../components/Separator";
@@ -71,6 +71,10 @@ const AccountManagementPage : React.FC = () => {
             <Typography variant="h3" component="h3">
                 <PeopleAlt fontSize="large"/> Account email: {accountEMail}
             </Typography>
+
+            <Link to={`/password-lifecycle?account=${encodeURIComponent(accountEMail ?? "")}`}>
+                Password lifecycle rules
+            </Link>
 
             <Card>
                 <CardHeader title="Account definition" color="textSecondary"/>

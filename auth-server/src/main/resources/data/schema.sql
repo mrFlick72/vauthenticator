@@ -1,3 +1,13 @@
+CREATE TABLE PASSWORD_LIFECYCLE_RULES
+(
+    user_name            varchar(255) not null,
+    evaluation_interval_seconds bigint not null,
+    created_at           TIMESTAMP    not null,
+    last_evaluation_date TIMESTAMP,
+    action               varchar(255) not null,
+    primary key (user_name, action)
+);
+
 CREATE TABLE ROLE
 (
     name        varchar(64)  not null PRIMARY KEY,
@@ -13,13 +23,13 @@ CREATE TABLE GROUPS
 
 CREATE TABLE GROUPS_ROLE
 (
-    group_name        varchar(64)  not null,
-    role_name         varchar(64)  not null,
+    group_name varchar(64) not null,
+    role_name  varchar(64) not null,
 
     FOREIGN KEY (group_name) REFERENCES GROUPS (name) on delete cascade,
     FOREIGN KEY (role_name) REFERENCES ROLE (name) on delete cascade,
 
-    primary key(group_name, role_name)
+    primary key (group_name, role_name)
 );
 
 CREATE TABLE ACCOUNT
@@ -131,39 +141,40 @@ CREATE TABLE CLIENT_APPLICATION
 );
 
 
-CREATE TABLE oauth2_authorization (
-    id varchar(100) NOT NULL,
-    registered_client_id varchar(100) NOT NULL,
-    principal_name varchar(200) NOT NULL,
-    authorization_grant_type varchar(100) NOT NULL,
-    authorized_scopes varchar(1000) DEFAULT NULL,
-    attributes text DEFAULT NULL,
-    state varchar(500) DEFAULT NULL,
-    authorization_code_value text DEFAULT NULL,
-    authorization_code_issued_at timestamptz DEFAULT NULL,
-    authorization_code_expires_at timestamptz DEFAULT NULL,
-    authorization_code_metadata text DEFAULT NULL,
-    access_token_value text DEFAULT NULL,
-    access_token_issued_at timestamptz DEFAULT NULL,
-    access_token_expires_at timestamptz DEFAULT NULL,
-    access_token_metadata text DEFAULT NULL,
-    access_token_type varchar(100) DEFAULT NULL,
-    access_token_scopes varchar(1000) DEFAULT NULL,
-    oidc_id_token_value text DEFAULT NULL,
-    oidc_id_token_issued_at timestamptz DEFAULT NULL,
-    oidc_id_token_expires_at timestamptz DEFAULT NULL,
-    oidc_id_token_metadata text DEFAULT NULL,
-    refresh_token_value text DEFAULT NULL,
-    refresh_token_issued_at timestamptz DEFAULT NULL,
-    refresh_token_expires_at timestamptz DEFAULT NULL,
-    refresh_token_metadata text DEFAULT NULL,
-    user_code_value text DEFAULT NULL,
-    user_code_issued_at timestamptz DEFAULT NULL,
-    user_code_expires_at timestamptz DEFAULT NULL,
-    user_code_metadata text DEFAULT NULL,
-    device_code_value text DEFAULT NULL,
-    device_code_issued_at timestamptz DEFAULT NULL,
-    device_code_expires_at timestamptz DEFAULT NULL,
-    device_code_metadata text DEFAULT NULL,
+CREATE TABLE oauth2_authorization
+(
+    id                            varchar(100) NOT NULL,
+    registered_client_id          varchar(100) NOT NULL,
+    principal_name                varchar(200) NOT NULL,
+    authorization_grant_type      varchar(100) NOT NULL,
+    authorized_scopes             varchar(1000) DEFAULT NULL,
+    attributes                    text          DEFAULT NULL,
+    state                         varchar(500)  DEFAULT NULL,
+    authorization_code_value      text          DEFAULT NULL,
+    authorization_code_issued_at  timestamptz   DEFAULT NULL,
+    authorization_code_expires_at timestamptz   DEFAULT NULL,
+    authorization_code_metadata   text          DEFAULT NULL,
+    access_token_value            text          DEFAULT NULL,
+    access_token_issued_at        timestamptz   DEFAULT NULL,
+    access_token_expires_at       timestamptz   DEFAULT NULL,
+    access_token_metadata         text          DEFAULT NULL,
+    access_token_type             varchar(100)  DEFAULT NULL,
+    access_token_scopes           varchar(1000) DEFAULT NULL,
+    oidc_id_token_value           text          DEFAULT NULL,
+    oidc_id_token_issued_at       timestamptz   DEFAULT NULL,
+    oidc_id_token_expires_at      timestamptz   DEFAULT NULL,
+    oidc_id_token_metadata        text          DEFAULT NULL,
+    refresh_token_value           text          DEFAULT NULL,
+    refresh_token_issued_at       timestamptz   DEFAULT NULL,
+    refresh_token_expires_at      timestamptz   DEFAULT NULL,
+    refresh_token_metadata        text          DEFAULT NULL,
+    user_code_value               text          DEFAULT NULL,
+    user_code_issued_at           timestamptz   DEFAULT NULL,
+    user_code_expires_at          timestamptz   DEFAULT NULL,
+    user_code_metadata            text          DEFAULT NULL,
+    device_code_value             text          DEFAULT NULL,
+    device_code_issued_at         timestamptz   DEFAULT NULL,
+    device_code_expires_at        timestamptz   DEFAULT NULL,
+    device_code_metadata          text          DEFAULT NULL,
     PRIMARY KEY (id)
 );

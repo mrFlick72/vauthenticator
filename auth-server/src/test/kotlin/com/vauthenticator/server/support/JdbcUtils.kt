@@ -36,6 +36,7 @@ object JdbcUtils {
 
     fun resetDb() {
         try {
+            jdbcTemplate.execute("DROP TABLE IF EXISTS PASSWORD_LIFECYCLE_RULES;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS CLIENT_APPLICATION;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS ROLE CASCADE;")
             jdbcTemplate.execute("DROP TABLE IF EXISTS GROUPS CASCADE;")

@@ -10,12 +10,19 @@ import com.vauthenticator.server.communication.domain.EMailSenderService
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.communication.domain.SimpleEMailMessageFactory
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
-import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.adapter.dynamodb.DynamoPasswordHistoryRepository
 import com.vauthenticator.server.password.adapter.jdbc.JdbcPasswordHistoryRepository
+import com.vauthenticator.server.password.adapter.jdbc.JdbcPasswordLifeCycleRepository
 import com.vauthenticator.server.password.domain.*
 import com.vauthenticator.server.password.domain.changepassword.ChangePassword
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordEventConsumer
+import com.vauthenticator.server.password.domain.lifecycle.AccountLockPasswordLifeCycleStrategyImplementation
+import com.vauthenticator.server.password.domain.lifecycle.BasePasswordLifeCycleStrategy
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutor
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutorJob
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
+import com.vauthenticator.server.password.domain.lifecycle.PasswordResetPasswordLifeCycleStrategyImplementation
 import com.vauthenticator.server.password.domain.resetpassword.ResetAccountPassword
 import com.vauthenticator.server.password.domain.resetpassword.ResetPasswordEventConsumer
 import com.vauthenticator.server.password.domain.resetpassword.SendResetPasswordMailChallenge
@@ -29,6 +36,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import java.time.Clock
 
@@ -127,7 +136,6 @@ class ResetPasswordConfig {
     @Bean
     fun sendResetPasswordMailChallenge(
         accountRepository: AccountRepository,
-        clientApplicationRepository: ClientApplicationRepository,
         ticketCreator: TicketCreator,
         resetPasswordMailSender: EMailSenderService,
         @Value("\${vauthenticator.host}") frontChannelBaseUrl: String
@@ -172,4 +180,66 @@ class ResetPasswordConfig {
             )
         )
 
+}
+
+@Profile("database")
+@Configuration(proxyBeanMethods = false)
+class PasswordLifeCycleConfig {
+
+    @Bean
+    fun passwordLifeCycleRepository(jdbcTemplate: JdbcTemplate): PasswordLifeCycleRepository =
+        JdbcPasswordLifeCycleRepository(jdbcTemplate)
+
+    @Bean
+    fun passwordLifeCycleRules(
+        clock: Clock,
+        accountRepository: AccountRepository,
+        passwordLifeCycleRepository: PasswordLifeCycleRepository,
+    ) = PasswordLifeCycleRules(clock, accountRepository, passwordLifeCycleRepository)
+
+    @Bean
+    fun passwordLifeCycleExecutor(
+        clock: Clock,
+        accountRepository: AccountRepository,
+        passwordLifeCycleRepository: PasswordLifeCycleRepository,
+        eventsDispatcher: VAuthenticatorEventsDispatcher,
+    ) = PasswordLifeCycleExecutor(
+        listOf(
+            BasePasswordLifeCycleStrategy(
+                clock,
+                accountRepository,
+                passwordLifeCycleRepository,
+                eventsDispatcher,
+                PasswordResetPasswordLifeCycleStrategyImplementation()
+            ),
+            BasePasswordLifeCycleStrategy(
+                clock,
+                accountRepository,
+                passwordLifeCycleRepository,
+                eventsDispatcher,
+                AccountLockPasswordLifeCycleStrategyImplementation()
+            ),
+        ),
+    )
+
+    @Bean
+    fun passwordLifeCycleExecutorJob(
+        passwordLifeCycleRepository: PasswordLifeCycleRepository,
+        passwordLifeCycleExecutor: PasswordLifeCycleExecutor,
+    ) = PasswordLifeCycleExecutorJob(
+        passwordLifeCycleRepository,
+        passwordLifeCycleExecutor,
+    )
+}
+
+@Service
+@Profile("database")
+class PasswordLifeCycleExecutorJobTaskConfig(
+    private val passwordLifeCycleExecutorJob: PasswordLifeCycleExecutorJob
+) {
+
+    @Scheduled(cron = "\${password.password-life-cycle.cron:0 0 * * * *}")
+    fun run() {
+        passwordLifeCycleExecutorJob.execute()
+    }
 }

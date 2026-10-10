@@ -3,6 +3,7 @@ package com.vauthenticator.server.events
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import java.time.Instant
@@ -73,6 +74,23 @@ class ChangePasswordEvent(
     timeStamp: Instant,
     password : Password
 ) : VAuthenticatorEvent(userName, clientAppId, timeStamp, password) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
+}
+
+class PasswordLifeCycleActionAppliedEvent(
+    userName: Email,
+    clientAppId: ClientAppId,
+    timeStamp: Instant,
+    action: PasswordLifeCycleAction
+) : VAuthenticatorEvent(userName, clientAppId, timeStamp, action) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
