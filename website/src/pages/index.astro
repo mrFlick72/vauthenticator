@@ -3,10 +3,11 @@ import SiteLayout from '../layouts/SiteLayout.astro';
 import { features, sitePath } from '../data/navigation';
 ---
 <SiteLayout title="Authentication for your applications" description="Explore VAuthenticator: an OAuth2 and OpenID Connect authorization server with account lifecycle, MFA, a management UI, and Helm deployment assets.">
+  <div class="hero-stage">
   <section class="shell hero">
     <div class="hero-copy">
-      <p class="eyebrow"><span class="status-dot"></span> Meet VAuthenticator</p>
-      <h1>Give your applications<br /><em>a place to sign in.</em></h1>
+      <p class="eyebrow"><span class="status-dot"></span> VAuthenticator · Identity infrastructure</p>
+      <h1>Identity at the core.<br /><em>Your applications,<br />connected.</em></h1>
       <p class="hero-description">An OAuth2 and OpenID Connect authorization server, with account lifecycle, multi-factor authentication, and a dedicated management UI.</p>
       <div class="actions">
         <a class="button primary" href={sitePath('install/local/')}>Get started <span aria-hidden="true">→</span></a>
@@ -25,6 +26,7 @@ import { features, sitePath } from '../data/navigation';
       <a href={sitePath('architecture/')} class="diagram-link">Understand the architecture <span aria-hidden="true">→</span></a>
     </div>
   </section>
+  </div>
   <section class="foundation-strip">
     <div class="shell foundation-inner"><p>Three projects. One ecosystem.</p><span>Authorization server</span><span>Management UI</span><span>Helm charts</span></div>
   </section>
