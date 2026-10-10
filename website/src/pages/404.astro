@@ -1,0 +1,7 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { sitePath } from '../data/navigation';
+---
+<SiteLayout title="Page not found" description="This page could not be found. Return to the VAuthenticator overview.">
+  <section class="shell section not-found"><p class="eyebrow">404</p><h1>Page not found.</h1><p>Return to the overview to explore VAuthenticator.</p><a class="button primary" href={sitePath()}>Back to home</a></section>
+</SiteLayout>

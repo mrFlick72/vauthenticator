@@ -1,0 +1,34 @@
+---
+import SiteLayout from './SiteLayout.astro';
+import { features, guideLinks, sitePath } from '../data/navigation';
+
+const { frontmatter } = Astro.props;
+const { title, description, section = 'Explore VAuthenticator', draft = false } = frontmatter;
+const currentPath = Astro.url.pathname;
+---
+<SiteLayout title={title} description={description}>
+  <div class="shell docs-grid">
+    <aside class="docs-sidebar">
+      <nav aria-label="Documentation navigation">
+        <p class="nav-heading">Features</p>
+        {features.map((item) => (
+          <a href={item.href} aria-current={currentPath === item.href ? 'page' : undefined}>{item.title}</a>
+        ))}
+        <p class="nav-heading">Guides</p>
+        {guideLinks.map((item) => (
+          <a href={item.href} aria-current={currentPath === item.href ? 'page' : undefined}>{item.title}</a>
+        ))}
+      </nav>
+    </aside>
+    <article class="docs-content">
+      <p class="eyebrow">{section}</p>
+      <h1>{title}</h1>
+      <p class="page-description">{description}</p>
+      {draft && (
+        <div class="notice"><strong>First draft.</strong> This page introduces the setup path and links to the existing instructions. A complete, verified walkthrough will follow.</div>
+      )}
+      <div class="prose"><slot /></div>
+      <a class="text-link back-link" href={sitePath()}>← Back to the overview</a>
+    </article>
+  </div>
+</SiteLayout>

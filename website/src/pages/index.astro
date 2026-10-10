@@ -1,0 +1,45 @@
+---
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { features, sitePath } from '../data/navigation';
+---
+<SiteLayout title="Authentication for your applications" description="Explore VAuthenticator: an OAuth2 and OpenID Connect authorization server with account lifecycle, MFA, a management UI, and Helm deployment assets.">
+  <section class="shell hero">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="status-dot"></span> Meet VAuthenticator</p>
+      <h1>Give your applications<br /><em>a place to sign in.</em></h1>
+      <p class="hero-description">An OAuth2 and OpenID Connect authorization server, with account lifecycle, multi-factor authentication, and a dedicated management UI.</p>
+      <div class="actions">
+        <a class="button primary" href={sitePath('install/local/')}>Get started <span aria-hidden="true">→</span></a>
+        <a class="button secondary" href="#features">Explore the features</a>
+      </div>
+      <div class="hero-tags"><span>OAuth2 / OIDC</span><span>Kotlin + Spring Boot</span><span>Helm deployment</span></div>
+    </div>
+    <div class="architecture-card" aria-label="Applications connect to the authorization server. The management UI administers it, and storage and infrastructure support it.">
+      <div class="diagram-caption"><span class="status-dot"></span> The ecosystem at a glance</div>
+      <div class="diagram-node applications"><span class="node-icon" aria-hidden="true">↗</span><div><strong>Your applications</strong><small>Web · mobile · APIs</small></div></div>
+      <div class="diagram-connector" aria-hidden="true">↓ <span>OAuth2 & OpenID Connect</span></div>
+      <div class="diagram-node server"><span class="node-icon" aria-hidden="true">V</span><div><strong>Authorization server</strong><small>Sign-in · tokens · account lifecycle</small></div></div>
+      <div class="diagram-connector" aria-hidden="true">↑ <span>Administration</span></div>
+      <div class="diagram-node"><span class="node-icon" aria-hidden="true">☷</span><div><strong>Management UI</strong><small>Clients · accounts · roles · keys</small></div></div>
+      <div class="diagram-foundation"><span>Persistence</span><span>Redis</span><span>Key management</span></div>
+      <a href={sitePath('architecture/')} class="diagram-link">Understand the architecture <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+  <section class="foundation-strip">
+    <div class="shell foundation-inner"><p>Three projects. One ecosystem.</p><span>Authorization server</span><span>Management UI</span><span>Helm charts</span></div>
+  </section>
+  <section class="shell section" id="features">
+    <div class="section-heading"><p class="eyebrow">Explore the capabilities</p><h2>More than the sign-in screen.</h2><p>Discover the protocols, account flows, and administration tools that come with VAuthenticator.</p></div>
+    <div class="feature-grid">
+      {features.map((feature) => (
+        <a class="feature-card" href={feature.href}><span class="card-label">{feature.label}</span><h3>{feature.title}</h3><p>{feature.description}</p><span class="text-link">Learn more <span aria-hidden="true">→</span></span></a>
+      ))}
+      <div class="feature-card getting-started-card"><span class="card-label">Start exploring</span><h3>Try it in your environment.</h3><p>Begin locally, then explore the Helm charts for Kubernetes deployment.</p><a class="text-link" href={sitePath('install/local/')}>View installation guides <span aria-hidden="true">→</span></a></div>
+    </div>
+  </section>
+  <section class="shell section environment-section">
+    <div><p class="eyebrow">Choose your setup</p><h2>Infrastructure options<br />for your environment.</h2><p>Use PostgreSQL or DynamoDB for persistence, and plain Java or AWS KMS for key management. Redis supports sessions, caching, and authorization code storage.</p><a class="text-link" href={sitePath('features/customization/')}>Explore the options <span aria-hidden="true">→</span></a></div>
+    <div class="option-list"><div><span>Persistence</span><strong>PostgreSQL / DynamoDB</strong></div><div><span>Key management</span><strong>Java crypto / AWS KMS</strong></div><div><span>Documents & assets</span><strong>Filesystem / Amazon S3</strong></div><div><span>Deployment guides</span><strong>Local setup / Kubernetes</strong></div></div>
+  </section>
+  <section class="shell start-section"><div><p class="eyebrow">Your next step</p><h2>See how VAuthenticator fits.</h2><p>Explore the architecture or follow the current local setup documentation.</p></div><a class="button primary" href={sitePath('install/local/')}>Get started <span aria-hidden="true">→</span></a></section>
+</SiteLayout>
