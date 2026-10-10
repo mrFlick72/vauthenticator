@@ -7,7 +7,7 @@ VAuthenticator is an OpenID Connect and OAuth2 authorization server ecosystem. T
 | Project | Purpose |
 | --- | --- |
 | `auth-server` | Kotlin/Spring Boot authorization server with OAuth2, OIDC, MFA, account lifecycle, roles, keys, templates, and management APIs. |
-| `management-ui` | Standalone React/TypeScript admin UI for managing clients, accounts, roles, keys, and email templates. |
+| `management-ui` | Standalone React/TypeScript admin UI for managing clients, accounts, roles, keys, email templates, and password lifecycle rules. |
 | `helm-charts` | Helm chart and chart repository docs for Kubernetes deployment. |
 
 ## Architecture
@@ -24,7 +24,7 @@ Backend capabilities include:
 - Signup, welcome email, email verification, password reset, and password change flows
 - MFA with email, SMS, and OTP support
 - Post-login workflows, including forced password reset
-- Password lifecycle rules that force a password reset or lock an account after a TTL (PostgreSQL profile)
+- Password lifecycle rules (PostgreSQL profile): force a password reset every N seconds (recurring) or lock an account once N seconds have passed (one-shot), for a single account or in bulk for every account matching a pattern such as `*@gmail.com` (see [auth-server/docs/password-lifecycle.md](auth-server/docs/password-lifecycle.md))
 - RP-initiated logout and OIDC Session Management
 - Custom actuator management endpoints for setup and cleanup
 
@@ -53,7 +53,7 @@ Build and serve the management UI locally:
 ```bash
 cd management-ui
 bash build.sh
-docker compose -f local/docker-compose.yml up
+docker compose -f local/docker-compose.yml up --build
 ```
 
 The local UI is served from:

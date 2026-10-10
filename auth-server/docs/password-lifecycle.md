@@ -22,6 +22,12 @@ firing afterwards. It is **not** the password's age. A password change, voluntar
 not restart it. For example, with a `PASSWORD_RESET` rule of 10 days (`864000` seconds) registered on day 0, a user who changes the
 password on day 9 is still forced to reset it on day 10. See [ADR 0005](adr/0005-password-lifecycle-calendar-interval.md).
 
+## Management UI
+
+The rules can also be managed from the management UI, in the Password Lifecycle section (`/secure/admin/password-lifecycle`).
+It lists, adds, replaces and removes the rules of a single account, and applies or removes a rule in bulk by account
+pattern, asking for confirmation first. The account page links to it with the account preselected.
+
 ## How to
 
 All the endpoints require the scope ```admin:password-lifecycle-editor```.
