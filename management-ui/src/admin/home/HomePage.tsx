@@ -10,6 +10,7 @@ const HomePage = () => {
                 <HomePageMenuItem content={homeMenuContent.clientApplications} />
                 <HomePageMenuItem content={homeMenuContent.roles} />
                 <HomePageMenuItem content={homeMenuContent.accounts} />
+                <HomePageMenuItem content={homeMenuContent.passwordLifeCycle} />
                 <HomePageMenuItem content={homeMenuContent.keys} />
                 <HomePageMenuItem content={homeMenuContent.mails} />
             </MenuCardContainer>

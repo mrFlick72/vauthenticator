@@ -46,6 +46,7 @@ The admin app uses `BrowserRouter` with `basename="/secure/admin"`. Current top-
 - accounts list/edit
 - keys
 - email templates
+- password lifecycle (`/password-lifecycle`, optional `?account=<email>` preloads an account)
 
 The home screen is a card-based navigation page that links into those feature areas.
 
@@ -133,7 +134,7 @@ Notes:
 
 ## Conventions For Changes
 
-- Keep feature logic inside the existing admin domains such as `account`, `clientapp`, `communication`, `key`, and `roles`.
+- Keep feature logic inside the existing admin domains such as `account`, `clientapp`, `communication`, `key`, `passwordlifecycle`, and `roles`.
 - Reuse shared components from `src/components` before introducing new one-off widgets.
 - Preserve the existing routing style with `BrowserRouter` (basename `/secure/admin`) unless a broader routing migration is explicitly requested. Internal navigation must go through `react-router`'s `Link`/`useNavigate` (which respect the basename automatically) rather than raw `<a href>` tags, which bypass it.
 - Keep runtime values in the `/config.json` response and `src/config/ConfigLoader.ts`; do not hardcode backend hosts or client IDs into feature components.

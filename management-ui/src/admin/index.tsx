@@ -9,6 +9,7 @@ const AccountManagementPage = lazy(() => import("./account/AccountManagementPage
 const AccountListPage = lazy(() => import("./account/AccountListPage"));
 const KeyManagementPage = lazy(() => import("./key/KeyManagementPage"));
 const MailTemplatePage = lazy(() => import("./communication/MailTemplatePage"));
+const PasswordLifeCyclePage = lazy(() => import("./passwordlifecycle/PasswordLifeCyclePage"));
 const ClientAppListPage = lazy(() => import("./clientapp/pages/clientAppList/ClientAppListPage"));
 const ClientAppManagementPage = lazy(() => import('./clientapp/pages/clientAppManagement/ClientAppManagementPage'));
 
@@ -34,6 +35,7 @@ const VAuthenticatorAdminApp = () =>
 
                 <Route path="/keys" element={<KeyManagementPage/>}/>
                 <Route path="/email-templates" element={<MailTemplatePage/>}/>
+                <Route path="/password-lifecycle" element={<PasswordLifeCyclePage/>}/>
 
                 <Route path="*" element={<Navigate to="/index" replace/>}/>
             </Routes>

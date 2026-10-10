@@ -1,7 +1,7 @@
 import React, {ReactNode} from 'react';
 import MenuCard from "../../components/MenuCard";
 import LocalPostOfficeIcon from '@mui/icons-material/LocalPostOffice';
-import {Apps, AssignmentInd, Key, PeopleAlt} from "@mui/icons-material";
+import {Apps, AssignmentInd, Key, LockClock, PeopleAlt} from "@mui/icons-material";
 
 const FONT_SIZE: number = 150
 
@@ -54,6 +54,13 @@ export const homeMenuContent = {
         body: "In this section you can manage Accounts in VAuthenticator from OpenIdConnect prospective. Your will able to " +
             " disable accounts, invalidate and force password reset",
         link: "/accounts"
+    },
+    passwordLifeCycle: {
+        titleText: "Password Lifecycle Section",
+        titleIcon: <LockClock style={{fontSize: FONT_SIZE}}/>,
+        body: "In this section you can manage password lifecycle rules: force a periodic password reset or schedule " +
+            "an account lock, for a single account or for all the accounts matching a pattern",
+        link: "/password-lifecycle"
     },
     keys: {
         titleText: "Key Management Section",
