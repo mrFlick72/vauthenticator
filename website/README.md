@@ -27,8 +27,8 @@ The build generates static files in `dist/`, and the link check verifies that in
 
 - `src/pages/index.astro`: product homepage.
 - `src/pages/features/`: Markdown feature summaries.
-- `src/pages/install/`: draft installation pages linking to existing project documentation.
+- `src/pages/install/`: installation overviews linking to project setup and configuration documentation.
 - `src/layouts/`: shared website and documentation layouts.
 - `src/styles/global.css`: responsive styling.
 
-Installation pages are intentionally incomplete in this first draft. A verified Docker image quick-start remains a future increment.
+Installation pages describe the setup path and link to detailed instructions for the authorization server, management UI, and Helm charts.

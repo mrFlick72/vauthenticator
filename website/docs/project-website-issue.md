@@ -2,7 +2,7 @@
 
 ## Goal
 
-Give prospective adopters a public website that explains VAuthenticator, helps them evaluate its capabilities, and provides a path to installation. Ship a basic first draft and improve it incrementally.
+Give prospective adopters a public website that explains VAuthenticator, helps them evaluate its capabilities, and provides a path to installation. Ship a first version and improve it incrementally.
 
 ## Decisions from the grill-with-docs session
 
@@ -17,13 +17,13 @@ Give prospective adopters a public website that explains VAuthenticator, helps t
 - Local setup finish line: a working authorization server, management UI, and provisioned local tenant.
 - Desired eventual quick-start: released Docker images rather than source builds; a new verified Compose example is needed.
 - Hosting: reuse https://mrflick72.github.io/vauthenticator/ and preserve the Helm chart repository index and downloads at that URL.
-- All website code must be developed on a dedicated branch before integration. First draft branch: `feat/project-website`.
+- All website code must be developed on a dedicated branch before integration. Website branch: `feat/project-website`.
 
-## Increment 1: basic website draft
+## Increment 1: first website version
 
 - [ ] Product homepage, architecture overview, and responsive navigation.
 - [ ] Five feature pages with concise, accurate summaries.
-- [ ] Local and Kubernetes installation landing pages that link to existing instructions and clearly indicate their draft status.
+- [ ] Local and Kubernetes installation overviews that describe the setup path and link to detailed instructions.
 - [ ] Independent Astro build and local development instructions.
 - [ ] GitHub Actions build validation and publishing to the existing `gh-pages` branch without deleting Helm artifacts.
 - [ ] Verify production build, internal links/assets under `/vauthenticator/`, and desktop/mobile layouts.
@@ -38,4 +38,4 @@ English and a responsive light theme are initial implementation defaults. Increm
 
 ## Acceptance criteria
 
-The first draft can be served as a static site under `/vauthenticator/`, provides useful introductory content, and has no dead internal navigation. Publishing preserves existing Helm repository functionality. No runtime code changes to `auth-server`, `management-ui`, or Helm templates are required for this increment.
+The first version can be served as a static site under `/vauthenticator/`, provides useful introductory content, and has no dead internal navigation. Publishing preserves existing Helm repository functionality. No runtime code changes to `auth-server`, `management-ui`, or Helm templates are required for this increment.

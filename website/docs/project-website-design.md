@@ -1,6 +1,6 @@
 # Project website design
 
-This document captures decisions from the grill-with-docs session. The user requested an incremental first draft rather than more design discussion.
+This document captures decisions from the grill-with-docs session and the first version of the website.
 
 ## Agreed scope
 
@@ -31,7 +31,7 @@ This document captures decisions from the grill-with-docs session. The user requ
 - Deliver a small, usable Astro site: product homepage, architecture overview, five feature summaries, and local/Kubernetes installation landing pages.
 - Use English initially, matching the existing project documentation.
 - Use a midnight and electric-blue hero, with light content sections and a consistent light documentation layout. Keep the existing page structure, use restrained hover transitions, and respect reduced-motion preferences.
-- Clearly label installation pages as draft guides and link to existing project documentation. Do not claim that the planned image-based quick-start is already available.
+- Present installation pages as setup overviews linking to detailed project documentation. Describe the supported setup accurately without draft labels or promises of future walkthroughs.
 - Build and check the site on pull requests. Publish website changes merged to `main`, with a manual publishing trigger as well.
 - Keep the existing `gh-pages` publishing source and update only website-owned paths. Preserve Helm's `index.yaml` and packaged charts.
 - Keep server, management UI, and chart implementations outside this increment.

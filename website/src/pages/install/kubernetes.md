@@ -3,7 +3,6 @@ layout: ../../layouts/DocsLayout.astro
 title: Kubernetes & Helm
 description: Explore the separate Helm charts for the authorization server and management UI.
 section: Get started · Kubernetes
-draft: true
 ---
 
 ## Two application charts
@@ -26,4 +25,4 @@ This lists the available charts. A working deployment also needs server infrastr
 - [Authorization server chart configuration](https://github.com/mrFlick72/vauthenticator/blob/main/helm-charts/charts/README.md).
 - [Management UI chart configuration](https://github.com/mrFlick72/vauthenticator/blob/main/helm-charts/charts/management-ui/README.md).
 
-A complete end-to-end Kubernetes walkthrough will follow in a later increment. Begin with the [local setup](/vauthenticator/install/local/) if you are evaluating the project for the first time.
+Begin with the [local setup](/vauthenticator/install/local/) if you are evaluating the project for the first time.

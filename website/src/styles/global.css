@@ -102,7 +102,6 @@ a.feature-card:hover { border-color: #8ba7fa; background: #ffffff; transform: tr
 .docs-content { max-width: 760px; }
 .docs-content h1 { font-size: clamp(2.2rem, 3.8vw, 3.25rem); margin-bottom: 18px; }
 .page-description { color: var(--muted); font-size: 1.15rem; margin-bottom: 32px; }
-.notice { background: #f5f0dd; color: #67572c; border-left: 3px solid #b89c48; border-radius: 4px; padding: 16px 20px; font-size: .88rem; margin-bottom: 35px; }
 .prose h2 { font-size: 1.55rem; margin: 35px 0 16px; letter-spacing: -.025em; }
 .prose p, .prose li { color: #46546b; }
 .prose a { color: var(--accent); text-underline-offset: 3px; }

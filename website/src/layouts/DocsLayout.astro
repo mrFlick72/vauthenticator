@@ -3,7 +3,7 @@ import SiteLayout from './SiteLayout.astro';
 import { features, guideLinks, sitePath } from '../data/navigation';
 
 const { frontmatter } = Astro.props;
-const { title, description, section = 'Explore VAuthenticator', draft = false } = frontmatter;
+const { title, description, section = 'Explore VAuthenticator' } = frontmatter;
 const currentPath = Astro.url.pathname;
 ---
 <SiteLayout title={title} description={description}>
@@ -24,9 +24,6 @@ const currentPath = Astro.url.pathname;
       <p class="eyebrow">{section}</p>
       <h1>{title}</h1>
       <p class="page-description">{description}</p>
-      {draft && (
-        <div class="notice"><strong>First draft.</strong> This page introduces the setup path and links to the existing instructions. A complete, verified walkthrough will follow.</div>
-      )}
       <div class="prose"><slot /></div>
       <a class="text-link back-link" href={sitePath()}>← Back to the overview</a>
     </article>
