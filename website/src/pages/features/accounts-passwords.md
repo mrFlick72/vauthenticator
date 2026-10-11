@@ -1,4 +1,4 @@
-ok---
+---
 layout: ../../layouts/DocsLayout.astro
 title: Accounts & passwords
 description: Support an account from signup through verification, recovery, and password lifecycle management.
