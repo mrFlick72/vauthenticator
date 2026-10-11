@@ -1,0 +1,56 @@
+---
+import '../styles/global.css';
+import { repository, sitePath } from '../data/navigation';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const year = new Date().getFullYear();
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0b1020" />
+    <meta property="og:title" content={`${title} | VAuthenticator`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={sitePath('favicon.svg')} />
+    <title>{title} | VAuthenticator</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="brand" href={sitePath()} aria-label="VAuthenticator home">
+          <span class="brand-mark" aria-hidden="true">V</span>
+          <span>VAuthenticator</span>
+        </a>
+        <nav class="top-nav" aria-label="Main navigation">
+          <a href={sitePath('#features')}>Features</a>
+          <a href={sitePath('architecture/')}>Architecture</a>
+          <a href={sitePath('install/local/')}>Get started</a>
+          <a href={repository}>GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
+    </header>
+    <main id="main-content"><slot /></main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <div><strong>VAuthenticator</strong><p>Authentication, authorization, and the tools around them.</p></div>
+        <div class="footer-links">
+          <a href={repository}>Source code</a>
+          <a href={sitePath('install/local/')}>Installation</a>
+          <span>© {year} VAuthenticator project</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
