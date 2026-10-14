@@ -89,6 +89,46 @@ class PermissionValidatorTest {
         }
     }
 
+    @Test
+    fun `when there is no authentication a jwt authentication is required`() {
+        assertThrows(JwtAuthenticationRequiredException::class.java) {
+            uut.validate(authentication = null, scopes = scopes)
+        }
+    }
+
+    @Test
+    fun `when the authentication is a session user a jwt authentication is required`() {
+        val sessionUser = SecurityFixture.principalFor(EMAIL, listOf(Role.adminRole().name))
+
+        assertThrows(JwtAuthenticationRequiredException::class.java) {
+            uut.validate(authentication = sessionUser, scopes = scopes)
+        }
+    }
+
+    @Test
+    fun `when scopes are validate on jwt authentication scopes`() {
+        val principal = SecurityFixture.principalFor(
+            clientAppId = clientAppId.content,
+            email = EMAIL,
+            scopes = scopesValues
+        )
+
+        uut.validate(authentication = principal, scopes = scopes)
+    }
+
+    @Test
+    fun `when scopes are not validate on jwt authentication scopes`() {
+        val principal = SecurityFixture.principalFor(
+            clientAppId = clientAppId.content,
+            email = EMAIL,
+            scopes = emptyList()
+        )
+
+        assertThrows(InsufficientClientApplicationScopeException::class.java) {
+            uut.validate(authentication = principal, scopes = scopes)
+        }
+    }
+
     private fun httpSessionWithClientApp(): DefaultSavedRequest =
         DefaultSavedRequest.Builder()
             .setRequestURI("http://localhost")
