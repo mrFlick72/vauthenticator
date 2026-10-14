@@ -8,6 +8,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.EMAIL
+import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
 import com.vauthenticator.server.support.SecurityFixture.principalFor
 import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.web.ExceptionAdviceController
@@ -20,9 +21,11 @@ import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup
 
@@ -129,5 +132,63 @@ class WelcomeEMailEndPointTest {
             .andExpect(status().isForbidden)
 
         verify(exactly = 0) { sayWelcome.welcome(any()) }
+    }
+
+    @Test
+    fun `when there is no principal`() {
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+        )
+            .andExpect(status().isUnauthorized)
+            .andExpect(header().string(HttpHeaders.WWW_AUTHENTICATE, "Bearer"))
+
+        verify(exactly = 0) { sayWelcome.welcome(any()) }
+    }
+
+    @Test
+    fun `when the principal is a session user, even an admin`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+                .principal(sessionUser)
+        )
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { sayWelcome.welcome(any()) }
+    }
+
+    @Test
+    fun `when welcome mail is sent with admin full access scope`() {
+        every { sayWelcome.welcome(EMAIL) } just runs
+
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+                .principal(m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content)))
+        )
+            .andExpect(status().isNoContent)
+
+        verify { sayWelcome.welcome(EMAIL) }
+    }
+
+    @Test
+    fun `when welcome mail is sent with admin role`() {
+        every { sayWelcome.welcome(EMAIL) } just runs
+
+        mockMvc.perform(
+            put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+                .principal(principalFor(A_CLIENT_APP_ID, EMAIL, listOf(VAUTHENTICATOR_ADMIN), emptyList()))
+        )
+            .andExpect(status().isNoContent)
+
+        verify { sayWelcome.welcome(EMAIL) }
     }
 }
