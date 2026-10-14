@@ -99,12 +99,6 @@ class WebSecurityConfig {
                     .requestMatchers(*WHITE_LIST).permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/accounts").permitAll()
 
-                    .requestMatchers(HttpMethod.PUT, "/api/sign-up/welcome")
-                    .hasAnyAuthority(Scope.WELCOME.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
-
-                    .requestMatchers(HttpMethod.PUT, "/api/verify-challenge")
-                    .hasAnyAuthority(Scope.MAIL_VERIFY.content, Scope.ADMIN_FULL_ACCESS.content, Role.adminRole().name)
-
                     .requestMatchers(HttpMethod.PUT, "/api/accounts/password")
                     .hasAnyAuthority(
                         Scope.CHANGE_PASSWORD.content,
