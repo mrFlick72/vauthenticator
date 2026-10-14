@@ -4,10 +4,9 @@ import com.vauthenticator.server.account.domain.emailverification.SendVerifyEMai
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
-import jakarta.servlet.http.HttpSession
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.noContent
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -19,10 +18,9 @@ class EMailVerificationEndPoint(
     @PutMapping("/api/verify-challenge")
     fun sendVerifyMail(
         @RequestBody request: EMailVerificationRequest,
-        httpSession: HttpSession,
-        principal: JwtAuthenticationToken
+        authentication: Authentication?
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, httpSession, Scopes.from(Scope.MAIL_VERIFY))
+        permissionValidator.validate(authentication, Scopes.from(Scope.MAIL_VERIFY))
         sendVerifyEMailChallenge.sendVerifyMail(request.email)
         return noContent().build()
     }

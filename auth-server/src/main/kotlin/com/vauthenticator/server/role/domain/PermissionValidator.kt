@@ -11,6 +11,7 @@ import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
 import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 
 //todo to add scope validation for the admin:full-access scope
@@ -30,11 +31,12 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
         } ?: clientAppScopesValidation(session, scopes)
     }
 
-    //todo to be tested
     fun validate(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         scopes: Scopes
     ) {
+        val principal = authentication as? JwtAuthenticationToken
+            ?: throw JwtAuthenticationRequiredException("a bearer JWT is required for this use case")
         principalScopesValidation(principal, scopes)
     }
 
