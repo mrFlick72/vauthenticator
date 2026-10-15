@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.*
 import org.springframework.security.core.Authentication
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -38,12 +37,12 @@ class MfaEnrolmentAssociationEndPoint(
 
     @PutMapping("/api/mfa/device")
     fun setDefaultEnrolledMfaMethods(
-        authentication: JwtAuthenticationToken,
+        authentication: Authentication?,
         @RequestBody defaultMethod: SetDefaultMfaDeviceRequest
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
         mfaAccountMethodsRepository.setAsDefault(
-            authentication.name,
+            principal.name,
             MfaDeviceId(defaultMethod.mfaDeviceId)
         )
         return noContent().build()
@@ -52,15 +51,15 @@ class MfaEnrolmentAssociationEndPoint(
 
     @PostMapping("/api/mfa/enrollment")
     fun enrollMfa(
-        authentication: JwtAuthenticationToken,
+        authentication: Authentication?,
         @RequestBody enrolling: MfaEnrollmentRequest
     ): ResponseEntity<MfaEnrollmentResponse> {
-        permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
         val ticketId = mfaMethodsEnrollment.enroll(
-            authentication.name,
+            principal.name,
             enrolling.mfaMethod,
             enrolling.mfaChannel,
-            authentication.clientAppId(),
+            principal.clientAppId(),
             true
         )
         return status(HttpStatus.CREATED).body(MfaEnrollmentResponse(ticketId.content))
@@ -68,7 +67,7 @@ class MfaEnrolmentAssociationEndPoint(
 
     @PostMapping("/api/mfa/associate")
     fun associateMfaEnrollment(
-        authentication: JwtAuthenticationToken,
+        authentication: Authentication?,
         @RequestBody associationRequest: MfaEnrollmentAssociationRequest,
     ): ResponseEntity<Unit> {
         permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))

@@ -4,7 +4,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.*
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.web.ValidationResults
 import org.springframework.http.ResponseEntity
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -17,11 +17,11 @@ class ClientApplicationEndPoint(
 
     @PutMapping("/api/client-applications/{clientAppId}")
     fun storeClientApplication(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         @PathVariable("clientAppId") clientAppId: String,
         @RequestBody clientAppRepresentation: ClientAppRepresentation
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.SAVE_CLIENT_APPLICATION))
+        permissionValidator.validate(authentication, Scopes.from(Scope.SAVE_CLIENT_APPLICATION))
 
         val aClientApp = ClientAppRepresentation.fromRepresentationToDomain(clientAppId, clientAppRepresentation)
         val storeWithPassword = clientAppRepresentation.storePassword
@@ -31,11 +31,11 @@ class ClientApplicationEndPoint(
 
     @PatchMapping("/api/client-applications/{clientAppId}/client-secret")
     fun resetPasswordForClientApplicationV2(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         @PathVariable("clientAppId") clientAppId: String,
         @RequestBody body: ClientAppSecretRepresentation
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.SAVE_CLIENT_APPLICATION))
+        permissionValidator.validate(authentication, Scopes.from(Scope.SAVE_CLIENT_APPLICATION))
 
         storeClientApplication.resetPassword(ClientAppId(clientAppId), Secret(body.secret))
         return ResponseEntity.noContent().build()
@@ -43,9 +43,9 @@ class ClientApplicationEndPoint(
 
     @GetMapping("/api/client-applications")
     fun viewAllClientApplications(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
     ): ResponseEntity<List<ClientAppInListRepresentation>> {
-        permissionValidator.validate(principal, Scopes.from(Scope.READ_CLIENT_APPLICATION))
+        permissionValidator.validate(authentication, Scopes.from(Scope.READ_CLIENT_APPLICATION))
         return readClientApplication.findAll()
             .map { ClientAppInListRepresentation.fromDomainToRepresentation(it) }
             .let {
@@ -56,10 +56,10 @@ class ClientApplicationEndPoint(
 
     @GetMapping("/api/client-applications/{clientAppId}")
     fun viewAClientApplication(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         @PathVariable("clientAppId") clientAppId: String
     ): ResponseEntity<ClientAppRepresentation> {
-        permissionValidator.validate(principal, Scopes.from(Scope.READ_CLIENT_APPLICATION))
+        permissionValidator.validate(authentication, Scopes.from(Scope.READ_CLIENT_APPLICATION))
         return readClientApplication.findOne(ClientAppId(clientAppId))
             ?.let { ClientAppRepresentation.fromDomainToRepresentation(it) }
             ?.let {
@@ -69,10 +69,10 @@ class ClientApplicationEndPoint(
 
     @DeleteMapping("/api/client-applications/{clientAppId}")
     fun deleteAClientApplication(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         @PathVariable("clientAppId") clientAppId: String
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.DELETE_CLIENT_APPLICATION))
+        permissionValidator.validate(authentication, Scopes.from(Scope.DELETE_CLIENT_APPLICATION))
 
         clientApplicationRepository.delete(ClientAppId(clientAppId))
         return ResponseEntity.noContent().build()

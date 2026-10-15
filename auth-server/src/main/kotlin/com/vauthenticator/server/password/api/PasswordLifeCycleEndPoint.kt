@@ -12,7 +12,7 @@ import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.role.domain.PermissionValidator
 import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.time.Duration
 
@@ -32,9 +32,9 @@ class PasswordLifeCycleEndPoint(
         @PathVariable userName: String,
         @PathVariable action: PasswordLifeCycleAction,
         @RequestBody request: PasswordLifeCycleRuleRequest,
-        principal: JwtAuthenticationToken
+        authentication: Authentication?
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
         passwordLifeCycleRules.register(userName, action, intervalOf(request.intervalSeconds))
         return ResponseEntity.noContent().build()
@@ -43,9 +43,9 @@ class PasswordLifeCycleEndPoint(
     @GetMapping(ACCOUNT_RULES_PATH)
     fun rulesFor(
         @PathVariable userName: String,
-        principal: JwtAuthenticationToken
+        authentication: Authentication?
     ): ResponseEntity<List<PasswordLifeCycleRuleRepresentation>> {
-        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
         return ResponseEntity.ok(passwordLifeCycleRules.rulesFor(userName).map { it.toRepresentation() })
     }
@@ -54,9 +54,9 @@ class PasswordLifeCycleEndPoint(
     fun removeRule(
         @PathVariable userName: String,
         @PathVariable action: PasswordLifeCycleAction,
-        principal: JwtAuthenticationToken
+        authentication: Authentication?
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
         passwordLifeCycleRules.remove(userName, action)
         return ResponseEntity.noContent().build()
@@ -66,9 +66,9 @@ class PasswordLifeCycleEndPoint(
     fun registerRuleForAccountPattern(
         @PathVariable action: PasswordLifeCycleAction,
         @RequestBody request: PasswordLifeCycleBulkRuleRequest,
-        principal: JwtAuthenticationToken
+        authentication: Authentication?
     ): ResponseEntity<PasswordLifeCycleBulkResult> {
-        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
         val matchedAccounts = passwordLifeCycleRules.registerAll(
             accountPatternOf(request.accountPattern),
@@ -82,9 +82,9 @@ class PasswordLifeCycleEndPoint(
     fun removeRuleForAccountPattern(
         @PathVariable action: PasswordLifeCycleAction,
         @RequestParam accountPattern: String,
-        principal: JwtAuthenticationToken
+        authentication: Authentication?
     ): ResponseEntity<PasswordLifeCycleBulkResult> {
-        permissionValidator.validate(principal, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
         val matchedAccounts = passwordLifeCycleRules.removeAll(accountPatternOf(accountPattern), action)
         return ResponseEntity.ok(PasswordLifeCycleBulkResult(matchedAccounts))

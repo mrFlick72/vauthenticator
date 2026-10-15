@@ -10,6 +10,8 @@ import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.support.passwordLifeCycleRule
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
@@ -267,6 +269,59 @@ class PasswordLifeCycleEndPointTest {
     fun `when the rules matching a pattern are removed without the editor scope`() {
         mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", "*").principal(notAnEditor))
             .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { passwordLifeCycleRules.removeAll(any(), any()) }
+    }
+
+    @Test
+    fun `when a rule is registered is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        mokMvc.perform(
+            put(LOCK_RULE_PATH)
+                .principal(sessionUser)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"intervalSeconds": 7776000}""")
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { passwordLifeCycleRules.register(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the rules of an account are retrieved is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        mokMvc.perform(get(RULES_PATH).principal(sessionUser))
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { passwordLifeCycleRules.rulesFor(any()) }
+    }
+
+    @Test
+    fun `when a rule is removed is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        mokMvc.perform(delete(LOCK_RULE_PATH).principal(sessionUser))
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { passwordLifeCycleRules.remove(any(), any()) }
+    }
+
+    @Test
+    fun `when a rule is registered for a pattern is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        mokMvc.perform(
+            post(BULK_RESET_PATH)
+                .principal(sessionUser)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"accountPattern": "*", "intervalSeconds": 7776000}""")
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { passwordLifeCycleRules.registerAll(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the rules matching a pattern are removed is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", "*").principal(sessionUser))
+            .andExpect(status().isUnauthorized)
 
         verify(exactly = 0) { passwordLifeCycleRules.removeAll(any(), any()) }
     }

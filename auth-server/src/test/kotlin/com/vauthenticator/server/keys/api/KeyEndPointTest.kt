@@ -5,10 +5,13 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationReposi
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.KeysUtils.aKid
 import com.vauthenticator.server.support.KeysUtils.aMasterKey
 import com.vauthenticator.server.support.KeysUtils.anotherKid
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -277,5 +280,55 @@ class KeyEndPointTest {
                 .content(mapper.writeValueAsString(rotationPayload))
         )
             .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `loading all keys is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(get(API_PATH).principal(sessionUser))
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { keyRepository.signatureKeys() }
+    }
+
+    @Test
+    fun `creating a new key is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(post(API_PATH).principal(sessionUser))
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { keyRepository.createKeyFrom(aMasterKey) }
+    }
+
+    @Test
+    fun `deleting a key is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            delete(API_PATH)
+                .principal(sessionUser)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(deletePayload))
+        )
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { keyRepository.deleteKeyFor(aKid, KeyPurpose.SIGNATURE) }
+    }
+
+    @Test
+    fun `rotating a signature key is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            post("/api/keys/rotate")
+                .principal(sessionUser)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(rotationPayload))
+        )
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { signatureKeyRotation.rotate(aMasterKey, aKid, Duration.ofSeconds(100)) }
     }
 }

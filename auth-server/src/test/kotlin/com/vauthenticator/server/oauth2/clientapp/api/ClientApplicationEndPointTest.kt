@@ -6,7 +6,10 @@ import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.ClientAppFixture.aClientApp
 import com.vauthenticator.server.support.ClientAppFixture.aClientAppId
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -304,5 +307,79 @@ class ClientApplicationEndPointTest {
                 .principal(jwtAuthenticationToken)
         )
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `store a new client app is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val clientAppId = aClientAppId()
+        val clientApplication = aClientApp(clientAppId)
+        val representation = ClientAppRepresentation.fromDomainToRepresentation(clientApplication, storePassword = true)
+
+        mockMvc.perform(
+            put("/api/client-applications/${clientAppId.content}").content(
+                objectMapper.writeValueAsString(
+                    representation
+                )
+            ).principal(sessionUser)
+                .contentType(MediaType.APPLICATION_JSON)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { storeClientApplication.store(clientApplication, true) }
+    }
+
+    @Test
+    fun `reset password for a client app is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val clientAppId = aClientAppId()
+
+        every { storeClientApplication.resetPassword(clientAppId, Secret("secret")) } just runs
+
+        mockMvc.perform(
+            patch("/api/client-applications/${clientAppId.content}/client-secret").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ClientAppSecretRepresentation("secret")))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+    }
+
+    @Test
+    fun `view all client app is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val clientApplication = aClientApp(ClientAppId("clientApp"))
+
+        every { readClientApplication.findAll() } returns listOf(
+            clientApplication, clientApplication, clientApplication
+        )
+
+        mockMvc.perform(
+            get("/api/client-applications")
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `view a specific client app is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        every { readClientApplication.findOne(ClientAppId("clientApp")) } returns aClientApp(ClientAppId("clientApp"))
+
+        mockMvc.perform(
+            get("/api/client-applications/clientApp")
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `delete a specific client app is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        every { clientApplicationRepository.delete(ClientAppId("clientApp")) } just runs
+
+        mockMvc.perform(
+            delete("/api/client-applications/clientApp")
+                .principal(sessionUser)
+        )
+            .andExpect(status().isUnauthorized)
     }
 }

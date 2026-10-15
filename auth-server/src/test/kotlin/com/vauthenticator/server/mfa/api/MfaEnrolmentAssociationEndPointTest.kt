@@ -9,8 +9,10 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.AccountTestFixture
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.MfaFixture.mfaDeviceId
 import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.ticket.domain.TicketId
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
@@ -18,6 +20,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -235,5 +238,47 @@ class MfaEnrolmentAssociationEndPointTest {
                 .content(objectMapper.writeValueAsString(SetDefaultMfaDeviceRequest("A_DEVICE_ID")))
                 .principal(authentication)
         ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `when a new mfa channel is enrolled is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            post("/api/mfa/enrollment")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(MfaEnrollmentRequest(EMAIL, EMAIL_MFA_METHOD)))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { mfaMethodsEnrollment.enroll(any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a new enrolled mfa is associated is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            post("/api/mfa/associate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(MfaEnrollmentAssociationRequest("A_TICKET", "A_CODE")))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { mfaMethodsEnrolmentAssociation.associate(any<String>(), any<String>()) }
+    }
+
+    @Test
+    fun `when an enrolled mfa is set as default is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            put("/api/mfa/device")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(SetDefaultMfaDeviceRequest("A_DEVICE_ID")))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.setAsDefault(any(), any()) }
     }
 }

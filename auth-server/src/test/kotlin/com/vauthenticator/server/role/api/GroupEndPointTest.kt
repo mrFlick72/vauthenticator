@@ -7,7 +7,10 @@ import com.vauthenticator.server.role.domain.Group
 import com.vauthenticator.server.role.domain.GroupRepository
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -203,4 +206,62 @@ class GroupEndPointTest {
 
     }
 
+    @Test
+    fun `find al groups is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            get("/api/groups")
+                .accept(MediaType.APPLICATION_JSON)
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { groupRepository.findAll() }
+    }
+
+    @Test
+    fun `save a new group is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val group = Group("A_GROUP", "A_GROUP_DESCRIPTION")
+
+        mokMvc.perform(
+            put("/api/groups")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(group))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { groupRepository.save(group) }
+    }
+
+    @Test
+    fun `delete a new group is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            delete("/api/groups/a_group_1")
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { groupRepository.delete("a_group_1") }
+    }
+
+    @Test
+    fun `associate some roles to a group is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val roleToGroupAssociationRepresentation = RoleToGroupAssociationRepresentation(
+            toBeAssociated = listOf("a_role_1", "a_role_2", "a_role_3"),
+            toBeDeAssociated = listOf("a_role_4", "a_role_5")
+        )
+
+        mokMvc.perform(
+            put("/api/groups/a_group_1/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(roleToGroupAssociationRepresentation))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { groupRepository.roleAssociation("a_group_1", "a_role_1", "a_role_2", "a_role_3") }
+        verify(exactly = 0) { groupRepository.roleDeAssociation("a_group_1", "a_role_4", "a_role_5") }
+    }
 }
