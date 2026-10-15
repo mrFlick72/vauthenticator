@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.status
+import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.*
 
@@ -32,29 +33,30 @@ class AccountEndPoint(
     @PostMapping("/api/accounts")
     fun signup(
         session: HttpSession,
-        principal: JwtAuthenticationToken?,
+        authentication: Authentication?,
         @RequestBody representation: AccountRepresentation
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, session, Scopes.from(Scope.SIGN_UP))
+        permissionValidator.validate(authentication, session, Scopes.from(Scope.SIGN_UP))
         val account = fromRepresentationToSignedUpAccount(representation)
         signUpUse.execute(
-            clientAppIdFrom(principal, session) ?: throw IllegalStateException("client app id not found"),
+            clientAppIdFrom(authentication, session) ?: throw IllegalStateException("client app id not found"),
             account
         )
         return status(HttpStatus.CREATED).build()
     }
 
     private fun clientAppIdFrom(
-        principal: JwtAuthenticationToken?,
+        authentication: Authentication?,
         session: HttpSession
     ): ClientAppId? =
-        principal?.clientAppId() ?: session.oauth2ClientId()
+        (authentication as? JwtAuthenticationToken)?.clientAppId() ?: session.oauth2ClientId()
 
     @PutMapping("/api/accounts")
     fun save(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         @RequestBody representation: AccountRepresentation
     ): ResponseEntity<Unit> {
+        val principal = permissionValidator.jwtAuthenticationOf(authentication)
         logWarningForNotEmptyUserNameInRequestBodyFor(representation)
         val incompleteAccount = fromRepresentationToSignedUpAccount(representation)
         return saveAccount.execute(principal, incompleteAccount)
