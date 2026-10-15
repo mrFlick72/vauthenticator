@@ -22,11 +22,11 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
     }
 
     fun validate(
-        principal: JwtAuthenticationToken?,
+        authentication: Authentication?,
         session: HttpSession,
         scopes: Scopes
     ) {
-        principal?.let {
+        (authentication as? JwtAuthenticationToken)?.let {
             principalScopesValidation(it, scopes)
         } ?: clientAppScopesValidation(session, scopes)
     }
@@ -34,11 +34,15 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
     fun validate(
         authentication: Authentication?,
         scopes: Scopes
-    ) {
-        val principal = authentication as? JwtAuthenticationToken
-            ?: throw JwtAuthenticationRequiredException("a bearer JWT is required for this use case")
+    ): JwtAuthenticationToken {
+        val principal = jwtAuthenticationOf(authentication)
         principalScopesValidation(principal, scopes)
+        return principal
     }
+
+    fun jwtAuthenticationOf(authentication: Authentication?): JwtAuthenticationToken =
+        authentication as? JwtAuthenticationToken
+            ?: throw JwtAuthenticationRequiredException("a bearer JWT is required for this use case")
 
     private fun clientAppScopesValidation(
         session: HttpSession,
