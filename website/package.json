@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "production-build": "astro build",
     "check:links": "node scripts/check-links.mjs",
     "preview": "astro preview"
   },
