@@ -4,7 +4,7 @@ This document captures decisions from the grill-with-docs session and the first 
 
 ## Agreed scope
 
-- Publish an informational VAuthenticator website through GitHub Pages.
+- Publish an informational VAuthenticator website at https://vauthenticator.com (S3 + CloudFront).
 - Focus the first version on prospective adopters. Discuss contributor sections later.
 - Help visitors understand whether VAuthenticator fits their needs, then provide a clear path to getting started.
 - Include a general introduction, dedicated feature pages, and installation guides.
@@ -14,8 +14,8 @@ This document captures decisions from the grill-with-docs session and the first 
 - Installation guides provide the complete steps needed to reach the documented working setup.
 - Use a product-style homepage with a project introduction, architecture overview, feature highlights, and a prominent Get started action.
 - Use documentation-style navigation on feature and installation pages.
-- Publish the website at the existing GitHub Pages address, `https://mrflick72.github.io/vauthenticator`.
-- Preserve the existing Helm chart repository index and chart downloads at that address so existing Helm repository commands continue to work.
+- Publish the website at `https://vauthenticator.com`, served from S3 through CloudFront.
+- Keep the Helm chart repository at the existing GitHub Pages address, `https://mrflick72.github.io/vauthenticator`; the website is not published there.
 - Organize feature pages into OAuth2 and OpenID Connect; accounts and password lifecycle; multi-factor authentication; administration through the management UI; and token customization and infrastructure options.
 - Keep architecture and installation as separate site sections.
 - Build the website with Astro in a dedicated root-level `website/` directory.

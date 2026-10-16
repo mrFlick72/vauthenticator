@@ -1,8 +1,7 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://mrflick72.github.io',
-  base: '/vauthenticator',
+  site: 'https://vauthenticator.com',
   output: 'static',
   trailingSlash: 'always',
 });

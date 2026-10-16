@@ -20,4 +20,4 @@ Use the existing guides for the required toolchain, hostnames, server configurat
 3. [Authorization server development guide](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/AGENTS.md#local-development).
 4. [Management UI local configuration](https://github.com/mrFlick72/vauthenticator/blob/main/management-ui/AGENTS.md#environment-and-local-runtime).
 
-For Kubernetes packaging, see the [Helm installation overview](/vauthenticator/install/kubernetes/).
+For Kubernetes packaging, see the [Helm installation overview](../kubernetes/).

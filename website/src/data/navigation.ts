@@ -1,8 +1,6 @@
 export const repository = 'https://github.com/mrFlick72/vauthenticator';
-export const siteBase = '/vauthenticator/';
-
 export function sitePath(path = '') {
-  return `${siteBase}${path.replace(/^\//, '')}`;
+  return `/${path.replace(/^\//, '')}`;
 }
 
 export const features = [
