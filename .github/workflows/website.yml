@@ -35,3 +35,49 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run check:links
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        with:
+          name: website-dist
+          path: website/dist
+          include-hidden-files: true
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # chart-releaser in release.yml also pushes index.yaml to gh-pages
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: website/scripts
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+      - uses: actions/download-artifact@v4
+        with:
+          name: website-dist
+          path: dist
+      - name: Publish website to gh-pages, keeping Helm repository files
+        run: |
+          website/scripts/sync-gh-pages.sh dist gh-pages
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Website unchanged."
+            exit 0
+          fi
+          git commit -m "website: publish ${GITHUB_SHA}"
+          for attempt in 1 2 3; do
+            git push origin HEAD:gh-pages && exit 0
+            git pull --rebase origin gh-pages
+          done
+          exit 1

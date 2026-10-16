@@ -25,7 +25,7 @@ Give prospective adopters a public website that explains VAuthenticator, helps t
 - [ ] Five feature pages with concise, accurate summaries.
 - [ ] Local and Kubernetes installation overviews that describe the setup path and link to detailed instructions.
 - [ ] Independent Astro build and local development instructions.
-- [ ] GitHub Actions build validation and publishing to the existing `gh-pages` branch without deleting Helm artifacts.
+- [x] GitHub Actions build validation and publishing to the existing `gh-pages` branch without deleting Helm artifacts.
 - [ ] Verify production build, internal links/assets under `/vauthenticator/`, and desktop/mobile layouts.
 
 English and a responsive light theme are initial implementation defaults. Increment 1 does not claim to supply a completed Docker quick-start or exhaustive feature documentation.
