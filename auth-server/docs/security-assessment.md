@@ -233,12 +233,19 @@ refresh-token rotation, especially for public PKCE clients.
 - [ ] Fixed
 - [ ] Tests added
 
-**Where:** `role/domain/PermissionValidator.kt:48` —
+**Where:** `role/domain/PermissionValidator.kt:55` (`clientAppScopesValidation`) —
 `clientApplicationRepository.findOne(clientAppId)?.let { if (!hasEnoughScopes) throw }`. If the client
 doesn't resolve, the `?.let` is skipped and **no exception is thrown**, so authorization passes.
-(Also note the `//todo to add scope validation for the admin:full-access scope` at `:16`.)
+(Also note the `//todo to add scope validation for the admin:full-access scope` at `:17`.)
 
 **Fix:** fail closed — throw when the client cannot be loaded.
+
+**2026-10-16 — more callers reach this path (#386, ADR 0007):** `POST /api/accounts` (signup) and
+`PUT /api/reset-password-challenge` now treat any non-JWT authentication, including a logged-in
+session user, as "no bearer token" and authorize it through the session's client application.
+Before #386 a logged-in session user got a `500` on these endpoints; now they go through this
+fail-open code. `PUT /api/mfa/challenge` already did this for session callers. The fix above is
+unchanged, but it now covers more traffic.
 
 ---
 
@@ -397,6 +404,12 @@ doesn't do what a reader would assume from the config alone.
 `PUT /api/accounts` now falls through to the catch-all `.requestMatchers("/api/**").authenticated()`,
 making the requirement explicit instead of implicit. Found and fixed alongside #364.
 
+**2026-10-16 update (#386, ADR 0007):** the non-nullable `JwtAuthenticationToken` binding described
+above is gone. `PUT /api/accounts` now binds `Authentication?` and calls
+`PermissionValidator.jwtAuthenticationOf(...)`, so a caller without a bearer JWT, including a
+logged-in session user, gets an explicit `401` instead of failing at argument binding (which gave
+session callers a `500`).
+
 ---
 
 ## Suggested remediation order
@@ -436,3 +449,6 @@ making the requirement explicit instead of implicit. Found and fixed alongside #
   `KeyEndPoint`/`EMailEndPoint`/`AdminApiAccountEndPoint`. See issue
   [#374](https://github.com/mrFlick72/vauthenticator/issues/374) / PR
   [#373](https://github.com/mrFlick72/vauthenticator/pull/373).
+  *Later update:* the "fail-closed via the non-null binding" reasoning no longer applies. ADR 0006
+  (#370) moved this endpoint to an explicit `401` for non-JWT callers, and ADR 0007 (#386) did the
+  same for every JWT-only `/api/**` handler.

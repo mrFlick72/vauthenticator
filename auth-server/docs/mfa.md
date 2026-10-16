@@ -10,6 +10,8 @@ In order to increase account security VAuthenticator allows registering MFA via 
 During the account registration a step to validate the main mail, that is the user_name too, the main mail became a valid MFA channel.
 It is possible to register multiple email via api.
 
+*Authentication:* Enrollment, Association and Set Default Device require a bearer JWT. A call without one, including from a logged-in browser session, gets ```401 Unauthorized``` with ```WWW-Authenticate: Bearer```. A JWT without the required scope gets ```403 Forbidden```. List Enrolled Devices and Challenge also accept the browser session used by the MFA pages (see ADR ```docs/adr/0007-jwt-only-api-authentication-per-controller.md```).
+
 ### Enrollment
 
 
