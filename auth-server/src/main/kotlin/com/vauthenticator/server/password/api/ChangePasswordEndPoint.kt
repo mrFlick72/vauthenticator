@@ -1,6 +1,8 @@
 package com.vauthenticator.server.password.api
 
 import com.vauthenticator.server.account.domain.AccountNotFoundException
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope
+import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.password.domain.PasswordPolicyViolation
 import com.vauthenticator.server.password.domain.changepassword.ChangePassword
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordRequest
@@ -25,7 +27,7 @@ class ChangePasswordEndPoint(
         @RequestBody request: ChangePasswordRequestRepresentation,
         authentication: Authentication?
     ): ResponseEntity<Unit> {
-        val principal = permissionValidator.jwtAuthenticationOf(authentication)
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD))
         changePassword.resetPasswordFor(principal, ChangePasswordRequest(request.pwd))
         return noContent().build()
     }

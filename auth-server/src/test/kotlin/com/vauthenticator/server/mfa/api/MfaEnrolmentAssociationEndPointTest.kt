@@ -6,9 +6,12 @@ import com.vauthenticator.server.mfa.domain.MfaMethod.EMAIL_MFA_METHOD
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
+import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.AccountTestFixture
+import com.vauthenticator.server.support.ClientAppFixture.aClientApp
+import com.vauthenticator.server.support.ClientAppFixture.aClientAppId
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.MfaFixture.mfaDeviceId
 import com.vauthenticator.server.support.SecurityFixture.principalFor
@@ -65,14 +68,17 @@ class MfaEnrolmentAssociationEndPointTest {
 
 
     @Test
-    fun `when all enrolment are retrieved`() {
+    fun `when all enrolment are retrieved by a session user`() {
         val account = AccountTestFixture.anAccount()
         val email = account.email
+        val clientAppId = aClientAppId()
 
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(clientAppId).copy(scopes = Scopes.from(Scope.MFA_ENROLLMENT))
         every {  mfaMethodsEnrollment.getEnrollmentsFor(email, true) } returns listOf(MfaDevice(email, EMAIL_MFA_METHOD, email, mfaDeviceId, true))
 
         mokMvc.perform(
             get("/api/mfa/enrollment")
+                .sessionAttr("clientId", clientAppId.content)
                 .principal(principalFor(email))
         )
             .andExpect(status().isOk)
@@ -85,6 +91,47 @@ class MfaEnrolmentAssociationEndPointTest {
                     )
                 )
             )
+    }
+
+    @Test
+    fun `when all enrolment retrieval by a session user fails for insufficient client app scope`() {
+        val clientAppId = aClientAppId()
+
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(clientAppId).copy(scopes = Scopes.from(Scope.MFA_ALWAYS))
+
+        mokMvc.perform(
+            get("/api/mfa/enrollment")
+                .sessionAttr("clientId", clientAppId.content)
+                .principal(principalFor(EMAIL))
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any()) }
+    }
+
+    @Test
+    fun `when all enrolment are retrieved with a bearer JWT`() {
+        val principal = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+
+        every { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, true) } returns listOf(MfaDevice(EMAIL, EMAIL_MFA_METHOD, EMAIL, mfaDeviceId, true))
+
+        mokMvc.perform(
+            get("/api/mfa/enrollment")
+                .principal(principal)
+        ).andExpect(status().isOk)
+
+        verify { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, true) }
+    }
+
+    @Test
+    fun `when all enrolment retrieval with a bearer JWT fails for insufficient scope`() {
+        val principal = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ALWAYS.content))
+
+        mokMvc.perform(
+            get("/api/mfa/enrollment")
+                .principal(principal)
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any()) }
     }
 
     @Test

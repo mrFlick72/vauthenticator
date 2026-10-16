@@ -5,6 +5,7 @@ import com.vauthenticator.server.mfa.domain.*
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
+import jakarta.servlet.http.HttpSession
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.*
@@ -21,8 +22,13 @@ class MfaEnrolmentAssociationEndPoint(
 
 
     @GetMapping("/api/mfa/enrollment")
-    fun findAllAssociatedEnrolledMfaMethods(authentication: Authentication) =
-        ok(mfaMethodsEnrollment.getEnrollmentsFor(authentication.name, true)
+    fun findAllAssociatedEnrolledMfaMethods(
+        authentication: Authentication,
+        httpSession: HttpSession
+    ): ResponseEntity<List<MfaDeviceRepresentation>> {
+        permissionValidator.validate(authentication, httpSession, Scopes.from(Scope.MFA_ENROLLMENT))
+
+        return ok(mfaMethodsEnrollment.getEnrollmentsFor(authentication.name, true)
             .map {
                 MfaDeviceRepresentation(
                     it.userName,
@@ -32,8 +38,8 @@ class MfaEnrolmentAssociationEndPoint(
                     it.default
                 )
             }
-
         )
+    }
 
     @PutMapping("/api/mfa/device")
     fun setDefaultEnrolledMfaMethods(

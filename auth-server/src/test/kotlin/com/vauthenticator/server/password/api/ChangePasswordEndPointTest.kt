@@ -59,8 +59,7 @@ class ChangePasswordEndPointTest {
         val principal = principalFor(
             A_CLIENT_APP_ID,
             EMAIL,
-            listOf(VAUTHENTICATOR_ADMIN),
-            listOf(Scope.RESET_PASSWORD.content)
+            scopes = listOf(Scope.CHANGE_PASSWORD.content)
         )
         every { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) } just runs
 
@@ -128,6 +127,45 @@ class ChangePasswordEndPointTest {
 
         verify { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) }
 
+    }
+
+    @Test
+    fun `when a change password attempt is executed with admin full access scope`() {
+        val principal = principalFor(
+            A_CLIENT_APP_ID,
+            EMAIL,
+            scopes = listOf(Scope.ADMIN_FULL_ACCESS.content)
+        )
+        every { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) } just runs
+
+        mokMvc.perform(
+            put("/api/accounts/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("pwd" to "it is a new password")))
+                .principal(principal)
+        )
+            .andExpect(status().isNoContent)
+
+        verify { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) }
+    }
+
+    @Test
+    fun `when a change password attempt fails for insufficient scope`() {
+        val principal = principalFor(
+            A_CLIENT_APP_ID,
+            EMAIL,
+            scopes = listOf(Scope.RESET_PASSWORD.content)
+        )
+
+        mokMvc.perform(
+            put("/api/accounts/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("pwd" to "it is a new password")))
+                .principal(principal)
+        )
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { changePassword.resetPasswordFor(any(), any()) }
     }
 
     @Test
