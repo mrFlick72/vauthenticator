@@ -1,5 +1,5 @@
 export const repository = 'https://github.com/mrFlick72/vauthenticator';
-export const siteBase = '/vauthenticator/';
+export const siteBase = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 export function sitePath(path = '') {
   return `${siteBase}${path.replace(/^\//, '')}`;

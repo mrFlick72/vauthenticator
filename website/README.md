@@ -21,7 +21,39 @@ npm run check:links
 npm run preview
 ```
 
-The build generates static files in `dist/`, and the link check verifies that internal URLs work under the `/vauthenticator/` GitHub Pages base path. The repository workflow publishes successful builds while preserving the Helm repository files already hosted on `gh-pages`.
+The build generates static files in `dist/`, and the link check verifies that internal URLs resolve under the configured base path.
+
+### Base path
+
+The build targets `https://vauthenticator.com/` by default. To host it elsewhere, override `SITE_URL` and `SITE_BASE`, using the same `SITE_BASE` for build and link check:
+
+```sh
+SITE_URL=https://example.com SITE_BASE=/docs/ npm run build
+SITE_BASE=/docs/ npm run check:links
+```
+
+In Astro components, build internal URLs with `sitePath` from `src/data/navigation.ts`. In Markdown pages, use relative links such as `../install/local/`.
+
+## Hosting
+
+The site is deployed to S3 + CloudFront by a separate pipeline outside this repository. Whatever deploys it must upload the contents of `dist/` to the bucket root.
+
+CloudFront requirements:
+
+- S3 REST origin (not the website endpoint) with Origin Access Control, and a bucket policy granting `s3:GetObject` to `cloudfront.amazonaws.com` for this distribution.
+- Default root object `index.html`.
+- A viewer-request CloudFront Function, so directory URLs such as `/features/mfa/` serve their `index.html`:
+
+  ```js
+  function handler(event) {
+    var request = event.request;
+    if (request.uri.endsWith('/')) request.uri += 'index.html';
+    else if (!request.uri.includes('.')) request.uri += '/index.html';
+    return request;
+  }
+  ```
+
+- Optionally, map 403/404 errors to `/404.html`.
 
 ## Content
 

@@ -19,6 +19,6 @@ Persistence can use PostgreSQL or DynamoDB. Redis supports authorization code st
 
 ## Deployment
 
-The repository contains separate Helm charts for the server and management UI. Begin with the [local installation overview](/vauthenticator/install/local/), then explore the [Kubernetes guide](/vauthenticator/install/kubernetes/).
+The repository contains separate Helm charts for the server and management UI. Begin with the [local installation overview](../install/local/), then explore the [Kubernetes guide](../install/kubernetes/).
 
 [View the source repository and architecture documentation](https://github.com/mrFlick72/vauthenticator).

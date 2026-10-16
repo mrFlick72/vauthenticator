@@ -1,8 +1,9 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { resolve, join, relative, sep } from 'node:path';
+import { normalizeBase } from './site-base.mjs';
 
 const output = resolve('dist');
-const base = '/vauthenticator/';
+const base = normalizeBase(process.env.SITE_BASE ?? '/');
 const files = [];
 async function walk(directory) {
   for (const item of await readdir(directory, { withFileTypes: true })) {
@@ -16,14 +17,16 @@ const errors = [];
 let count = 0;
 for (const file of files) {
   const html = await readFile(file, 'utf8');
+  const page = new URL(`${base}${relative(output, file).split(sep).join('/').replace(/index\.html$/, '')}`, 'http://site');
   for (const [, attribute, value] of html.matchAll(/\b(href|src)="([^"]+)"/g)) {
     if (/^(https?:|mailto:|data:|#)/.test(value)) continue;
     count++;
-    if (!value.startsWith(base)) {
-      errors.push(`${file}: ${attribute}="${value}" does not use ${base}`);
+    const resolved = new URL(value, page).pathname;
+    if (!resolved.startsWith(base)) {
+      errors.push(`${file}: ${attribute}="${value}" resolves outside ${base}`);
       continue;
     }
-    const pathname = decodeURIComponent(value.split(/[?#]/)[0].slice(base.length));
+    const pathname = decodeURIComponent(resolved.slice(base.length));
     const target = join(output, pathname);
     try {
       const entry = await stat(target);

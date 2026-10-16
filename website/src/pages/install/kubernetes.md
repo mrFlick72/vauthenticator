@@ -25,4 +25,4 @@ This lists the available charts. A working deployment also needs server infrastr
 - [Authorization server chart configuration](https://github.com/mrFlick72/vauthenticator/blob/main/helm-charts/charts/README.md).
 - [Management UI chart configuration](https://github.com/mrFlick72/vauthenticator/blob/main/helm-charts/charts/management-ui/README.md).
 
-Begin with the [local setup](/vauthenticator/install/local/) if you are evaluating the project for the first time.
+Begin with the [local setup](../local/) if you are evaluating the project for the first time.

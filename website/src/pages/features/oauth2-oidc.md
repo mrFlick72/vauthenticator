@@ -19,4 +19,4 @@ Use it when your applications need a central authorization server for sign-in an
 
 The project's management UI uses the authorization code flow with PKCE to sign in through VAuthenticator, then uses an access token to call administration APIs.
 
-[Explore the management UI](/vauthenticator/features/management/) or [review the project documentation](https://github.com/mrFlick72/vauthenticator#documentation).
+[Explore the management UI](../management/) or [review the project documentation](https://github.com/mrFlick72/vauthenticator#documentation).

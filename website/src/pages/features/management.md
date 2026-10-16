@@ -19,4 +19,4 @@ An administrator can register a client application, manage an account's roles, o
 
 The management UI runs separately from the authorization server and receives its server and client settings through runtime configuration.
 
-[Explore local installation](/vauthenticator/install/local/) or [read the management UI project guide](https://github.com/mrFlick72/vauthenticator/blob/main/management-ui/AGENTS.md).
+[Explore local installation](../../install/local/) or [read the management UI project guide](https://github.com/mrFlick72/vauthenticator/blob/main/management-ui/AGENTS.md).
