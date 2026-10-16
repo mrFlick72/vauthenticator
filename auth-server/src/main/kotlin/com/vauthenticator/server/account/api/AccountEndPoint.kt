@@ -56,6 +56,7 @@ class AccountEndPoint(
         authentication: Authentication?,
         @RequestBody representation: AccountRepresentation
     ): ResponseEntity<Unit> {
+        //todo check if it can be optimized
         val principal = permissionValidator.jwtAuthenticationOf(authentication)
         logWarningForNotEmptyUserNameInRequestBodyFor(representation)
         val incompleteAccount = fromRepresentationToSignedUpAccount(representation)

@@ -35,7 +35,7 @@ class EMailEndPoint(
         permissionValidator.validate(authentication, Scopes.from(Scope.MAIL_TEMPLATE_WRITER))
 
         documentRepository.saveDocument(
-            DocumentType.EMAIL.content, //todo MAIL should be EMAIL
+            DocumentType.EMAIL.content,
             Document(
                 MediaType.TEXT_HTML_VALUE,
                 request.emailType.path,
