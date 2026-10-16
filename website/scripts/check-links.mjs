@@ -1,9 +1,8 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { resolve, join, relative, sep } from 'node:path';
-import { normalizeBase } from './site-base.mjs';
 
 const output = resolve('dist');
-const base = normalizeBase(process.env.SITE_BASE ?? '/');
+const base = '/';
 const files = [];
 async function walk(directory) {
   for (const item of await readdir(directory, { withFileTypes: true })) {

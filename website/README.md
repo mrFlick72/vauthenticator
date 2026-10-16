@@ -21,18 +21,7 @@ npm run check:links
 npm run preview
 ```
 
-The build generates static files in `dist/`, and the link check verifies that internal URLs resolve under the configured base path.
-
-### Base path
-
-The build targets `https://vauthenticator.com/` by default. To host it elsewhere, override `SITE_URL` and `SITE_BASE`, using the same `SITE_BASE` for build and link check:
-
-```sh
-SITE_URL=https://example.com SITE_BASE=/docs/ npm run build
-SITE_BASE=/docs/ npm run check:links
-```
-
-In Astro components, build internal URLs with `sitePath` from `src/data/navigation.ts`. In Markdown pages, use relative links such as `../install/local/`.
+The build generates static files in `dist/`, and the link check verifies that internal URLs resolve from the site root.
 
 ## Hosting
 
