@@ -18,6 +18,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -110,4 +111,19 @@ class ResetPasswordEndPointTest {
             .andExpect(status().isNoContent)
     }
 
+    @Test
+    fun `when a password reset challenge is sent from ui by an already logged in session user`() {
+        every { sendResetPasswordMailChallenge.sendResetPasswordMailFor(EMAIL) } just runs
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(ClientAppId(A_CLIENT_APP_ID))
+
+        mokMvc.perform(
+            put("/api/reset-password-challenge")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+                .sessionAttr("clientId", A_CLIENT_APP_ID)
+                .principal(principalFor(EMAIL))
+        ).andExpect(status().isNoContent)
+
+        verify { sendResetPasswordMailChallenge.sendResetPasswordMailFor(EMAIL) }
+    }
 }

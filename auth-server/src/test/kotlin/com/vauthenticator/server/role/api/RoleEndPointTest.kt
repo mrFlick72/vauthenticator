@@ -7,7 +7,10 @@ import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.role.domain.RoleRepository
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -136,6 +139,47 @@ internal class RoleEndPointTest {
             delete("/api/roles/a_role")
                 .principal(jwtAuthenticationToken)
         ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { roleRepository.delete(role) }
+    }
+
+    @Test
+    fun `find al roles is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            get("/api/roles")
+                .accept(MediaType.APPLICATION_JSON)
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { roleRepository.findAll() }
+    }
+
+    @Test
+    fun `save a new role is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val role = Role("a_role", A_ROLE_DESCRIPTION)
+
+        mokMvc.perform(
+            put("/api/roles")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(role))
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { roleRepository.save(role) }
+    }
+
+    @Test
+    fun `delete a new role is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val role = "a_role"
+
+        mokMvc.perform(
+            delete("/api/roles/a_role")
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
 
         verify(exactly = 0) { roleRepository.delete(role) }
     }

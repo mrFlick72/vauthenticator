@@ -9,7 +9,7 @@ import com.vauthenticator.server.ticket.domain.TicketId
 import jakarta.servlet.http.HttpSession
 import org.springframework.http.ResponseEntity
 import org.springframework.http.ResponseEntity.noContent
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -24,9 +24,9 @@ class ResetPasswordEndPoint(
     fun sendVerifyMail(
         @RequestBody request: ResetPasswordSendVerifyMailRequest,
         session: HttpSession,
-        principal: JwtAuthenticationToken?
+        authentication: Authentication?
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, session, Scopes.from(Scope.RESET_PASSWORD))
+        permissionValidator.validate(authentication, session, Scopes.from(Scope.RESET_PASSWORD))
         sendResetPasswordMailChallenge.sendResetPasswordMailFor(request.email)
         return noContent().build()
     }

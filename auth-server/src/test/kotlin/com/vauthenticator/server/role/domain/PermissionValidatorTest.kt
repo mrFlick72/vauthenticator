@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import jakarta.servlet.http.HttpSession
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -68,7 +69,7 @@ class PermissionValidatorTest {
             email = EMAIL,
             scopes = scopesValues
         )
-        uut.validate(principal = principal, session = session, scopes = scopes)
+        uut.validate(authentication = principal, session = session, scopes = scopes)
     }
 
     @Test
@@ -82,7 +83,7 @@ class PermissionValidatorTest {
         )
         assertThrows(InsufficientClientApplicationScopeException::class.java) {
             uut.validate(
-                principal = principal,
+                authentication = principal,
                 session = session,
                 scopes = scopes
             )
@@ -126,6 +127,63 @@ class PermissionValidatorTest {
 
         assertThrows(InsufficientClientApplicationScopeException::class.java) {
             uut.validate(authentication = principal, scopes = scopes)
+        }
+    }
+
+    @Test
+    fun `when the jwt authentication is returned once scopes are validated`() {
+        val principal = SecurityFixture.principalFor(
+            clientAppId = clientAppId.content,
+            email = EMAIL,
+            scopes = scopesValues
+        )
+
+        assertSame(principal, uut.validate(authentication = principal, scopes = scopes))
+    }
+
+    @Test
+    fun `when a jwt authentication is required and there is no authentication`() {
+        assertThrows(JwtAuthenticationRequiredException::class.java) {
+            uut.jwtAuthenticationOf(null)
+        }
+    }
+
+    @Test
+    fun `when a jwt authentication is required and the authentication is a session user`() {
+        val sessionUser = SecurityFixture.principalFor(EMAIL, listOf(Role.adminRole().name))
+
+        assertThrows(JwtAuthenticationRequiredException::class.java) {
+            uut.jwtAuthenticationOf(sessionUser)
+        }
+    }
+
+    @Test
+    fun `when a jwt authentication is required and the authentication is a jwt`() {
+        val principal = SecurityFixture.principalFor(clientAppId = clientAppId.content, email = EMAIL)
+
+        assertSame(principal, uut.jwtAuthenticationOf(principal))
+    }
+
+    @Test
+    fun `when scopes are validate on client app scopes for a session user`() {
+        every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns httpSessionWithClientApp()
+        every { clientApplicationRepository.findOne(clientAppId) } returns
+                aClientApp(clientAppId).copy(
+                    scopes = scopes
+                )
+        val sessionUser = SecurityFixture.principalFor(EMAIL)
+
+        uut.validate(authentication = sessionUser, session = session, scopes = scopes)
+    }
+
+    @Test
+    fun `when scopes are not validate on client app scopes for a session user`() {
+        every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns httpSessionWithClientApp()
+        every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(clientAppId)
+        val sessionUser = SecurityFixture.principalFor(EMAIL, listOf(Role.adminRole().name))
+
+        assertThrows(InsufficientClientApplicationScopeException::class.java) {
+            uut.validate(authentication = sessionUser, session = session, scopes = scopes)
         }
     }
 

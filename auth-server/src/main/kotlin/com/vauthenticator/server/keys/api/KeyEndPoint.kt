@@ -8,7 +8,7 @@ import com.vauthenticator.server.role.domain.PermissionValidator
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import java.time.Duration
 
@@ -21,8 +21,8 @@ class KeyEndPoint(
 ) {
 
     @GetMapping("/api/keys")
-    fun loadAllKeys(principal: JwtAuthenticationToken): ResponseEntity<List<Map<String, Any>>> {
-        permissionValidator.validate(principal, Scopes.from(Scope.KEY_READER))
+    fun loadAllKeys(authentication: Authentication?): ResponseEntity<List<Map<String, Any>>> {
+        permissionValidator.validate(authentication, Scopes.from(Scope.KEY_READER))
 
         return keyRepository.signatureKeys()
             .keys.map { mapOf("masterKey" to it.masterKid.content(), "kid" to it.kid.content(), "ttl" to it.expirationDateTimestamp) }
@@ -31,24 +31,24 @@ class KeyEndPoint(
 
 
     @PostMapping("/api/keys")
-    fun createKey(principal: JwtAuthenticationToken): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.KEY_EDITOR))
+    fun createKey(authentication: Authentication?): ResponseEntity<Unit> {
+        permissionValidator.validate(authentication, Scopes.from(Scope.KEY_EDITOR))
 
         return keyRepository.createKeyFrom(MasterKid(masterKey))
             .let { ResponseEntity.status(HttpStatus.CREATED).build<Unit>() }
     }
 
     @PostMapping("/api/keys/rotate")
-    fun rotateKey(principal: JwtAuthenticationToken, @RequestBody body: RotateKeyRequest): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.KEY_EDITOR))
+    fun rotateKey(authentication: Authentication?, @RequestBody body: RotateKeyRequest): ResponseEntity<Unit> {
+        permissionValidator.validate(authentication, Scopes.from(Scope.KEY_EDITOR))
 
         return signatureKeyRotation.rotate(MasterKid(masterKey), Kid(body.kid), Duration.ofSeconds(body.keyTtl))
             .let { ResponseEntity.status(HttpStatus.NO_CONTENT).build<Unit>() }
     }
 
     @DeleteMapping("/api/keys")
-    fun deleteKey(principal: JwtAuthenticationToken, @RequestBody body: DeleteKeyRequest): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.KEY_EDITOR))
+    fun deleteKey(authentication: Authentication?, @RequestBody body: DeleteKeyRequest): ResponseEntity<Unit> {
+        permissionValidator.validate(authentication, Scopes.from(Scope.KEY_EDITOR))
 
         return keyRepository.deleteKeyFor(
             Kid(body.kid),

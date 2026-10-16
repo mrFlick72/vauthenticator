@@ -139,10 +139,13 @@ Documented custom management endpoints:
 - `POST /actuator/database-clean-up`
 - `POST /actuator/tenant-setup`
 
-Documented MFA endpoints:
+Documented MFA endpoints (see `docs/mfa.md`):
 
 - `POST /api/mfa/enrollment`
 - `POST /api/mfa/associate`
+- `GET /api/mfa/enrollment` (also used by the login MFA page via the session)
+- `PUT /api/mfa/device`
+- `PUT /api/mfa/challenge` (also used by the login MFA page via the session)
 
 Documented password lifecycle endpoints (`database` profile only, scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):
 
@@ -164,6 +167,8 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - If a change affects templates or frontend bundles, verify whether frontend assets or communication templates must be rebuilt or copied for the local filesystem-based setup.
 - Be careful with profile-specific behavior. Repository, key, and infrastructure code may have both AWS-backed and local/database-backed implementations.
 - Tests are organized near the same domain names in `src/test/kotlin/com/vauthenticator/server`.
+- `/api/**` authorization lives in the controllers, not in `WebSecurityConfig`. A JWT-only handler binds `Authentication?` and calls `PermissionValidator.validate(authentication, scopes)` (or `jwtAuthenticationOf(authentication)` when there is no scope to check), which returns the validated `JwtAuthenticationToken`. Never bind `JwtAuthenticationToken` directly: `/api/**` `.authenticated()` also accepts browser sessions, so a session caller would get a `500` instead of a `401`. Cover each JWT-only handler with a standalone controller test for "session user, even an admin → `401`". See ADR 0007.
+- Architecture decisions are recorded in `docs/adr/`. Read the related ADRs before changing authorization, and add a new one when a decision changes.
 - The logout support is RP-initiated OIDC logout plus session-management state cleanup. Do not describe `/oidc/logout` as OIDC Front-Channel Logout unless the front-channel metadata and iframe fan-out flow are implemented.
 
 ## Files Worth Reading First
@@ -175,6 +180,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - `docs/mfa.md`
 - `docs/password-lifecycle.md`
 - `docs/lambda.md`
+- `docs/adr/`
 - `src/main/kotlin/com/vauthenticator/server/config/AuthorizationServerConfig.kt`
 - `src/main/kotlin/com/vauthenticator/server/config/WebSecurityConfig.kt`
 - `src/main/frontend/webpack.config.js`

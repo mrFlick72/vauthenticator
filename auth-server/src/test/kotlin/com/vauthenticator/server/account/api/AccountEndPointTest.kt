@@ -16,6 +16,7 @@ import com.vauthenticator.server.support.ClientAppFixture
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.principalFor
 import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
+import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -78,6 +79,7 @@ internal class AccountEndPointTest {
                 SaveAccount(accountRepository)
             )
         )
+            .setControllerAdvice(ExceptionAdviceController())
             .build()
     }
 
@@ -163,5 +165,39 @@ internal class AccountEndPointTest {
         assertEquals(true, masterAccount.accountNonExpired)
         assertEquals(true, masterAccount.credentialsNonExpired)
         assertEquals(false, masterAccount.enabled)
+    }
+
+    @Test
+    internal fun `sign up a new account like form ui for an already logged in session user`() {
+        val clientAppId = ClientAppId(A_CLIENT_APP_ID)
+        every { signUpUse.execute(clientAppId, masterAccount) } just runs
+        every { clientApplicationRepository.findOne(clientAppId) } returns
+            ClientAppFixture.aClientApp(
+                ClientAppId(A_CLIENT_APP_ID),
+            ).copy(scopes = Scopes.from(Scope.SIGN_UP))
+
+        mokMvc.perform(
+            post(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .sessionAttr("clientId", A_CLIENT_APP_ID)
+                .principal(principalFor(EMAIL))
+                .content(objectMapper.writeValueAsString(representation))
+        )
+            .andExpect(MockMvcResultMatchers.status().isCreated)
+
+        verify { signUpUse.execute(clientAppId, masterAccount) }
+    }
+
+    @Test
+    internal fun `update account details is unauthorized for a session user`() {
+        mokMvc.perform(
+            MockMvcRequestBuilders.put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .principal(principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN)))
+                .content(objectMapper.writeValueAsString(representation))
+        )
+            .andExpect(MockMvcResultMatchers.status().isUnauthorized)
+
+        verify(exactly = 0) { accountRepository.save(any()) }
     }
 }

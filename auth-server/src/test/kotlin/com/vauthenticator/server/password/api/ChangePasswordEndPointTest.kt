@@ -3,14 +3,17 @@ package com.vauthenticator.server.password.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.password.domain.PasswordPolicyViolation
 import com.vauthenticator.server.password.domain.changepassword.ChangePassword
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordRequest
+import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.principalFor
 import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
+import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -38,12 +41,16 @@ class ChangePasswordEndPointTest {
     @MockK
     lateinit var changePassword: ChangePassword
 
+    @MockK
+    lateinit var clientApplicationRepository: ClientApplicationRepository
+
     @BeforeEach
     fun setUp() {
         mokMvc =
             MockMvcBuilders.standaloneSetup(
-                ChangePasswordEndPoint(changePassword)
+                ChangePasswordEndPoint(PermissionValidator(clientApplicationRepository), changePassword)
             )
+                .setControllerAdvice(ExceptionAdviceController())
                 .build()
     }
 
@@ -52,8 +59,7 @@ class ChangePasswordEndPointTest {
         val principal = principalFor(
             A_CLIENT_APP_ID,
             EMAIL,
-            listOf(VAUTHENTICATOR_ADMIN),
-            listOf(Scope.RESET_PASSWORD.content)
+            scopes = listOf(Scope.CHANGE_PASSWORD.content)
         )
         every { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) } just runs
 
@@ -123,5 +129,55 @@ class ChangePasswordEndPointTest {
 
     }
 
+    @Test
+    fun `when a change password attempt is executed with admin full access scope`() {
+        val principal = principalFor(
+            A_CLIENT_APP_ID,
+            EMAIL,
+            scopes = listOf(Scope.ADMIN_FULL_ACCESS.content)
+        )
+        every { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) } just runs
 
+        mokMvc.perform(
+            put("/api/accounts/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("pwd" to "it is a new password")))
+                .principal(principal)
+        )
+            .andExpect(status().isNoContent)
+
+        verify { changePassword.resetPasswordFor(principal, ChangePasswordRequest("it is a new password")) }
+    }
+
+    @Test
+    fun `when a change password attempt fails for insufficient scope`() {
+        val principal = principalFor(
+            A_CLIENT_APP_ID,
+            EMAIL,
+            scopes = listOf(Scope.RESET_PASSWORD.content)
+        )
+
+        mokMvc.perform(
+            put("/api/accounts/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("pwd" to "it is a new password")))
+                .principal(principal)
+        )
+            .andExpect(status().isForbidden)
+
+        verify(exactly = 0) { changePassword.resetPasswordFor(any(), any()) }
+    }
+
+    @Test
+    fun `when a change password attempt is unauthorized for a session user`() {
+        mokMvc.perform(
+            put("/api/accounts/password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("pwd" to "it is a new password")))
+                .principal(principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN)))
+        )
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { changePassword.resetPasswordFor(any(), any()) }
+    }
 }

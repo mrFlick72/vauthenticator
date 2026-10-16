@@ -10,7 +10,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -21,21 +21,21 @@ class EMailEndPoint(
 
     @GetMapping("/api/email-template/{emailType}")
     fun getMailTemplate(
-        principal: JwtAuthenticationToken,
+        authentication: Authentication?,
         @PathVariable emailType: EMailType
     ): ResponseEntity<EMailTemplate> {
-        permissionValidator.validate(principal, Scopes.from(Scope.MAIL_TEMPLATE_READER))
+        permissionValidator.validate(authentication, Scopes.from(Scope.MAIL_TEMPLATE_READER))
 
         val document = documentRepository.loadDocument(DocumentType.EMAIL.content, emailType.path)
         return ResponseEntity.ok(EMailTemplate(emailType, String(document.content)))
     }
 
     @PutMapping("/api/email-template")
-    fun saveMailTemplate(principal: JwtAuthenticationToken, @RequestBody request: EMailTemplate): ResponseEntity<Unit> {
-        permissionValidator.validate(principal, Scopes.from(Scope.MAIL_TEMPLATE_WRITER))
+    fun saveMailTemplate(authentication: Authentication?, @RequestBody request: EMailTemplate): ResponseEntity<Unit> {
+        permissionValidator.validate(authentication, Scopes.from(Scope.MAIL_TEMPLATE_WRITER))
 
         documentRepository.saveDocument(
-            DocumentType.EMAIL.content, //todo MAIL should be EMAIL
+            DocumentType.EMAIL.content,
             Document(
                 MediaType.TEXT_HTML_VALUE,
                 request.emailType.path,

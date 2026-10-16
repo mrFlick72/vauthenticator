@@ -10,7 +10,10 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationReposi
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
+import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
+import com.vauthenticator.server.support.SecurityFixture.principalFor
+import com.vauthenticator.server.support.VAUTHENTICATOR_ADMIN
 import com.vauthenticator.server.web.ExceptionAdviceController
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -189,5 +192,38 @@ class EMailEndPointTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
         ).andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `retrieving a mail template is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mockMvc.perform(
+            get("/api/email-template/${EMailType.MFA}")
+                .principal(sessionUser)
+        )
+            .andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { documentRepository.loadDocument(DocumentType.EMAIL.content, EMailType.MFA.path) }
+    }
+
+    @Test
+    fun `uploading a new mail template is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+        val request = EMailTemplate(
+            EMailType.WELCOME,
+            "A_TEMPLATE"
+        )
+
+        mockMvc.perform(
+            put("/api/email-template")
+                .principal(sessionUser)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request))
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) {
+            documentRepository.saveDocument(DocumentType.EMAIL.content, any())
+        }
     }
 }

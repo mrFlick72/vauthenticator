@@ -10,7 +10,6 @@ import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
 import com.vauthenticator.server.password.domain.changepassword.CHANGE_PASSWORD_URL
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
-import com.vauthenticator.server.role.domain.Role
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -78,33 +77,16 @@ class WebSecurityConfig {
             .authorizeHttpRequests { authz ->
                 authz
                     .requestMatchers(LOGIN_ENGINE_BROKER_PAGE).permitAll()
-                    .requestMatchers("/api/mfa/challenge").authenticated()
                     .requestMatchers(HttpMethod.GET, "/mfa-challenge", "/mfa-challenge/send").authenticated()
                     .requestMatchers(HttpMethod.POST, "/mfa-challenge").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/mfa/enrollment").authenticated()
 
                     .requestMatchers("/change-password").permitAll()
-
-                    .requestMatchers(HttpMethod.POST, "/api/password")
-                    .hasAnyAuthority(
-                        Scope.GENERATE_PASSWORD.content,
-                        Scope.ADMIN_FULL_ACCESS.content,
-                        Role.adminRole().name
-                    )
-
 
                     .requestMatchers(HttpMethod.PUT, "/api/reset-password-challenge").permitAll()
                     .requestMatchers(HttpMethod.PUT, "/api/reset-password/{ticket}").permitAll()
 
                     .requestMatchers(*WHITE_LIST).permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/accounts").permitAll()
-
-                    .requestMatchers(HttpMethod.PUT, "/api/accounts/password")
-                    .hasAnyAuthority(
-                        Scope.CHANGE_PASSWORD.content,
-                        Scope.ADMIN_FULL_ACCESS.content,
-                        Role.adminRole().name
-                    )
 
                     .requestMatchers("/api/**")
                     .authenticated()
