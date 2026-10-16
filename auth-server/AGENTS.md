@@ -139,10 +139,13 @@ Documented custom management endpoints:
 - `POST /actuator/database-clean-up`
 - `POST /actuator/tenant-setup`
 
-Documented MFA endpoints:
+Documented MFA endpoints (see `docs/mfa.md`):
 
 - `POST /api/mfa/enrollment`
 - `POST /api/mfa/associate`
+- `GET /api/mfa/enrollment` (also used by the login MFA page via the session)
+- `PUT /api/mfa/device`
+- `PUT /api/mfa/challenge` (also used by the login MFA page via the session)
 
 Documented password lifecycle endpoints (`database` profile only, scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):
 

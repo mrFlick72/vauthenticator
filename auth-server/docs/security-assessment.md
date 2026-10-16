@@ -121,6 +121,14 @@ migrated it for testability (unit-testable authorization without a full Spring S
 chain) and consistency; see ADR `docs/adr/0003-key-endpoint-scope-authorization.md`. No scope or
 behavior changes — `admin:key-reader`/`admin:key-editor` are unchanged.
 
+**2026-10-16 update — last `WebSecurityConfig` scope rules removed (#369, #340, PR #388):**
+`PasswordGeneratorEndPoint` (`POST /api/password`, `admin:generate-password`) and
+`ChangePasswordEndPoint` (`PUT /api/accounts/password`, `admin:change-password`) now validate
+in-controller, and their `hasAnyAuthority(...)` rules are gone. `GET /api/mfa/enrollment` now
+requires `mfa:enrollment` (JWT, or the session's client app). `WebSecurityConfig` no longer holds
+any `/api` scope rule, only `permitAll()` for anonymous paths and the `/api/**` `.authenticated()`
+catch-all. See ADR `docs/adr/0007-jwt-only-api-authentication-per-controller.md`.
+
 **Fix:**
 - Add explicit scope/role rules in `WebSecurityConfig` for `/api/admin/**`, `/api/roles/**`,
   `/api/groups/**` (e.g. require `ADMIN_FULL_ACCESS` or a dedicated account-admin scope + `VAUTHENTICATOR_ADMIN`).
@@ -244,7 +252,9 @@ doesn't resolve, the `?.let` is skipped and **no exception is thrown**, so autho
 `PUT /api/reset-password-challenge` now treat any non-JWT authentication, including a logged-in
 session user, as "no bearer token" and authorize it through the session's client application.
 Before #386 a logged-in session user got a `500` on these endpoints; now they go through this
-fail-open code. `PUT /api/mfa/challenge` already did this for session callers. The fix above is
+fail-open code. `PUT /api/mfa/challenge` already did this for session callers. `GET /api/mfa/enrollment`
+(#340), which had no permission check at all, now goes through the same session check
+(`mfa:enrollment` on the session's client app) for the login MFA page. The fix above is
 unchanged, but it now covers more traffic.
 
 ---
