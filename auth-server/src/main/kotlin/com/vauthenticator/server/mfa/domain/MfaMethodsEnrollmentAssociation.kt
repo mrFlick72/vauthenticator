@@ -55,7 +55,8 @@ class MfaMethodsEnrollmentAssociation(
             loadedTicket.context.mfaChannel(),
             true
         )
-        if (asDefaultMethod) {
+        // an account with an associated device always has a default one: login challenges go to it
+        if (asDefaultMethod || mfaAccountMethodsRepository.getDefaultDevice(loadedTicket.userName) == null) {
             mfaAccountMethodsRepository.setAsDefault(loadedTicket.userName, mfaAccountMethod.mfaDeviceId)
         }
         revoke(loadedTicket)

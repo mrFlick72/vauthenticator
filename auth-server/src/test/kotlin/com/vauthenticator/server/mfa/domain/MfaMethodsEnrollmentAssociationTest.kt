@@ -91,6 +91,7 @@ class MfaMethodsEnrollmentAssociationTest {
                 true
             )
         } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
         every { ticketRepository.delete(ticketWithAutoAssociationFeatureEnabled.ticketId) } just runs
 
         underTest.associate(RAW_TICKET)
@@ -129,6 +130,7 @@ class MfaMethodsEnrollmentAssociationTest {
                 true
             )
         } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
         every { ticketRepository.delete(ticket.ticketId) } just runs
 
 
@@ -212,5 +214,34 @@ class MfaMethodsEnrollmentAssociationTest {
         Assertions.assertThrows(InvalidTicketException::class.java) { underTest.associate(RAW_TICKET, CODE) }
 
         verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `when mfa is associated on an account without a default mfa device it becomes the default`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } just runs
+        every { mfaAccountMethodsRepository.save(userName, ticket.context.mfaMethod(), ticket.context.mfaChannel(), true) } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns null
+        every { mfaAccountMethodsRepository.setAsDefault(userName, mfaAccountMethod.mfaDeviceId) } just runs
+        every { ticketRepository.delete(ticket.ticketId) } just runs
+
+        underTest.associate(RAW_TICKET, CODE)
+
+        verify { mfaAccountMethodsRepository.setAsDefault(userName, mfaAccountMethod.mfaDeviceId) }
+    }
+
+    @Test
+    fun `when mfa is associated on an account with a default mfa device the default is kept`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } just runs
+        every { mfaAccountMethodsRepository.save(userName, ticket.context.mfaMethod(), ticket.context.mfaChannel(), true) } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
+        every { ticketRepository.delete(ticket.ticketId) } just runs
+
+        underTest.associate(RAW_TICKET, CODE)
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.setAsDefault(any(), any()) }
     }
 }

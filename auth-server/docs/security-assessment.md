@@ -273,8 +273,15 @@ devices are no longer looked up as email. `MfaMethodsEnrollmentAssociation` reje
 (`InvalidTicketException`) whose device no longer exists or is no longer the device named in the ticket,
 on both the code and the self-association path.
 
-**Operational note:** an account that reaches an `mfa:always` login with no Default Device (for example,
-its email was never verified) now fails the MFA step instead of skipping it.
+Associating a device now also makes it the Default Device when the account has none (before, only the
+email-verification self-association set a default, so a device associated through `POST /api/mfa/associate`
+on an account with an unverified email left it without one).
+
+**Operational note:** an account that reaches an `mfa:always` login with no Default Device now fails the MFA
+step instead of skipping it. Accounts that already have associated devices but no default stay in that state
+until the holder calls `PUT /api/mfa/device` or associates another device; find them before deploying
+(`database` profile:
+`SELECT user_name FROM MFA_ACCOUNT_METHODS GROUP BY user_name HAVING bool_or(associated::boolean) AND NOT bool_or(default_mfa_method)`).
 
 ---
 
