@@ -200,4 +200,47 @@ internal class AccountEndPointTest {
 
         verify(exactly = 0) { accountRepository.save(any()) }
     }
+
+    @Test
+    internal fun `update account details for an email that is not the principal one is forbidden`() {
+        every { accountRepository.accountFor(EMAIL) } returns masterAccount
+
+        mokMvc.perform(
+            MockMvcRequestBuilders.put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .principal(principalFor(A_CLIENT_APP_ID, EMAIL))
+                .content(objectMapper.writeValueAsString(representation.copy(email = "another@email.com")))
+        )
+            .andExpect(MockMvcResultMatchers.status().isForbidden)
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+    }
+
+    @Test
+    internal fun `update account details without an email in the body updates the principal account`() {
+        val storedAccount = masterAccount.copy(groups = setOf("A_STORED_GROUP"))
+        val expected = storedAccount.copy(firstName = "A_NEW_FIRST_NAME")
+
+        every { accountRepository.accountFor(EMAIL) } returns storedAccount
+        every { accountRepository.save(expected) } just runs
+
+        mokMvc.perform(
+            MockMvcRequestBuilders.put(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .principal(principalFor(A_CLIENT_APP_ID, EMAIL))
+                .content(
+                    objectMapper.writeValueAsString(
+                        representation.copy(
+                            email = "",
+                            firstName = "A_NEW_FIRST_NAME",
+                            lastName = storedAccount.lastName,
+                            groups = listOf("A_REQUEST_GROUP")
+                        )
+                    )
+                )
+        )
+            .andExpect(MockMvcResultMatchers.status().isNoContent)
+
+        verify { accountRepository.save(expected) }
+    }
 }
