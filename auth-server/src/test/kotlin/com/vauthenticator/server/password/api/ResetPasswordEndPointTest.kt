@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.api
 
+import com.vauthenticator.server.web.ExceptionAdviceController
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
@@ -56,6 +57,7 @@ class ResetPasswordEndPointTest {
                     resetAccountPassword
                 )
             )
+                .setControllerAdvice(ExceptionAdviceController())
                 .build()
     }
 
@@ -125,5 +127,30 @@ class ResetPasswordEndPointTest {
         ).andExpect(status().isNoContent)
 
         verify { sendResetPasswordMailChallenge.sendResetPasswordMailFor(EMAIL) }
+    }
+
+    @Test
+    fun `when a password reset challenge is sent without a session client app`() {
+        mokMvc.perform(
+            put("/api/reset-password-challenge")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { sendResetPasswordMailChallenge.sendResetPasswordMailFor(any()) }
+    }
+
+    @Test
+    fun `when a password reset challenge is sent with an unknown session client app`() {
+        every { clientApplicationRepository.findOne(clientAppId) } returns null
+
+        mokMvc.perform(
+            put("/api/reset-password-challenge")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsBytes(mapOf("email" to EMAIL)))
+                .sessionAttr("clientId", A_CLIENT_APP_ID)
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { sendResetPasswordMailChallenge.sendResetPasswordMailFor(any()) }
     }
 }
