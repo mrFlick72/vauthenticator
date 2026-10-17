@@ -62,6 +62,8 @@ react-router/react-router-dom).
 | VA-SEC-14 | **Medium** | `WebSecurityConfig` scope rule for email-template read never matches; falls back to authenticated-only |
 | VA-SEC-15 | **Medium** | `admin:account-writer` can self-grant `VAUTHENTICATOR_ADMIN` via caller-supplied `authorities` |
 | VA-SEC-16 | **Low** | `WebSecurityConfig` `/api/accounts` `permitAll()` matcher had no HTTP-method qualifier, covering self-service `PUT` too |
+| VA-SEC-17 | **High** | Self-service `PUT /api/accounts` took `username`, `groups` and mandatory action from the request body |
+| VA-SEC-18 | **Medium** | `PUT /api/reset-password/{ticket}` redeemed tickets issued for any flow, including MFA enrolment |
 
 ---
 
@@ -220,7 +222,44 @@ refresh-token rotation, especially for public PKCE clients.
 
 ---
 
+### VA-SEC-17 — Self-service account update trusted identity fields from the request body
+- [x] Fixed
+- [x] Tests added
+
+**Where:** `account/domain/SaveAccount.kt` (before #393). The account to update was looked up by the
+JWT identity (`principal.name`), but the saved account was built from the request body with only some
+fields overridden from the stored one: `username`, `groups` and `mandatoryAction` came from the body.
+`JdbcAccountRepository.save` upserts on `username` and rewrites that username's roles and groups;
+the DynamoDB save is a full `putItem` keyed on `user_name`.
+
+**Impact:** any user with a valid JWT for any client (the endpoint has no scope check by design)
+could overwrite another account identified by the body `email` with their own password hash and roles,
+add arbitrary groups to their own account, or clear a pending mandatory action such as a forced
+password reset. A body without `email` upserted a row with an empty username instead of updating the
+caller's account.
+
+**Fix (#393):** `SaveAccount` starts from the stored account and only copies the profile fields
+(first/last name, birth date, phone, locale) from the body. A body `email` that does not match the JWT
+identity is rejected (`AccountOwnershipException` → `403`). The endpoint stays JWT-only without a scope.
+
+---
+
 ## MEDIUM
+
+### VA-SEC-18 — Reset-password redeemed tickets of any flow
+- [x] Fixed
+- [x] Tests added
+
+**Where:** `password/domain/resetpassword/ResetAccountPassword.kt` (before #393). Tickets of every flow
+share one store, and `resetPasswordFromMailChallenge` loaded the ticket by id without checking which flow
+issued it. `POST /api/mfa/enrollment` returns its ticket to the caller.
+
+**Impact:** a client holding an MFA enrolment ticket for an account (scope `mfa:enrollment`) could redeem
+it at `PUT /api/reset-password/{ticket}` and set that account's password.
+
+**Fix (#393, ADR 0008):** reset-password tickets carry `purpose=resetPassword` in the ticket context and
+`ResetAccountPassword` rejects any other ticket (`InvalidTicketException`). Tickets issued before the fix
+have no purpose and are rejected.
 
 ### VA-SEC-06 — Signup trusts caller-supplied authorities
 - [ ] Fixed
@@ -232,14 +271,15 @@ refresh-token rotation, especially for public PKCE clients.
 **Impact:** A client with only `admin:signup` can mint an account carrying `VAUTHENTICATOR_ADMIN` /
 `admin:full-access`, breaking separation between "create users" and "grant admin".
 
-**Reference pattern:** the self-service `PUT /api/accounts` path preserves stored authorities correctly
-(`account/domain/SaveAccount.kt:18`). Signup should do likewise — strip or whitelist authorities on creation.
+**Reference pattern:** the self-service `PUT /api/accounts` path keeps the stored authorities, groups and
+identity and only takes profile fields from the body (`account/domain/SaveAccount.kt`, after VA-SEC-17).
+Signup should do likewise — strip or whitelist authorities on creation.
 
 ---
 
 ### VA-SEC-07 — Fail-open authorization in session/client path
-- [ ] Fixed
-- [ ] Tests added
+- [x] Fixed
+- [x] Tests added
 
 **Where:** `role/domain/PermissionValidator.kt:55` (`clientAppScopesValidation`) —
 `clientApplicationRepository.findOne(clientAppId)?.let { if (!hasEnoughScopes) throw }`. If the client
@@ -256,6 +296,11 @@ fail-open code. `PUT /api/mfa/challenge` already did this for session callers. `
 (#340), which had no permission check at all, now goes through the same session check
 (`mfa:enrollment` on the session's client app) for the login MFA page. The fix above is
 unchanged, but it now covers more traffic.
+
+**2026-10-17 — fixed (#393, ADR 0008):** `clientAppScopesValidation` throws
+`ClientApplicationNotResolvedException` (→ `403`) when the session has no client app or it
+cannot be loaded, instead of authorizing. A missing session client app previously surfaced as an
+unmapped `ClientApplicationNotFound` (`500`); it is now `403` as well.
 
 ---
 
