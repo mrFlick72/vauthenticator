@@ -38,13 +38,16 @@ class MfaMethodsEnrollmentAssociation(
     private fun associate(ticket: String, asDefaultMethod: Boolean, verifier: MfaAssociationVerifier) {
         val loadedTicket = ticketRepository.loadFor(TicketId(ticket))
             ?: throw InvalidTicketException("The ticket $ticket is not a valid ticket, it seems to be expired")
-        mfaAccountMethodsRepository.findBy(loadedTicket.userName, loadedTicket.context.mfaMethod(), loadedTicket.context.mfaChannel())
-            ?.let {
-                if (it.associated) {
-                    revoke(loadedTicket)
-                    throw InvalidTicketException("The ticket $ticket is not a valid ticket, it seems that the mfa associated is already associated", InvalidTicketCause.ALREADY_ASSOCIATED_MFA)
-                }
+        val enrolledMfaAccountMethod = mfaAccountMethodsRepository.findBy(loadedTicket.userName, loadedTicket.context.mfaMethod(), loadedTicket.context.mfaChannel())
+            ?.takeIf { it.mfaDeviceId == loadedTicket.context.mfaDeviceId() }
+            ?: run {
+                revoke(loadedTicket)
+                throw InvalidTicketException("The ticket $ticket is not a valid ticket, its mfa device no longer exists")
             }
+        if (enrolledMfaAccountMethod.associated) {
+            revoke(loadedTicket)
+            throw InvalidTicketException("The ticket $ticket is not a valid ticket, it seems that the mfa associated is already associated", InvalidTicketCause.ALREADY_ASSOCIATED_MFA)
+        }
         verifier.invoke(loadedTicket)
         val mfaAccountMethod = mfaAccountMethodsRepository.save(
             loadedTicket.userName,

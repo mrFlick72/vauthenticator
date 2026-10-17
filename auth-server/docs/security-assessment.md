@@ -64,6 +64,7 @@ react-router/react-router-dom).
 | VA-SEC-16 | **Low** | `WebSecurityConfig` `/api/accounts` `permitAll()` matcher had no HTTP-method qualifier, covering self-service `PUT` too |
 | VA-SEC-17 | **High** | Self-service `PUT /api/accounts` took `username`, `groups` and mandatory action from the request body |
 | VA-SEC-18 | **Medium** | `PUT /api/reset-password/{ticket}` redeemed tickets issued for any flow, including MFA enrolment |
+| VA-SEC-19 | **High** | MFA verification (login and association) fails open on an unknown, foreign or missing device |
 
 ---
 
@@ -241,6 +242,39 @@ caller's account.
 **Fix (#393):** `SaveAccount` starts from the stored account and only copies the profile fields
 (first/last name, birth date, phone, locale) from the body. A body `email` that does not match the JWT
 identity is rejected (`AccountOwnershipException` → `403`). The endpoint stays JWT-only without a scope.
+
+### VA-SEC-19 — MFA verification (login and association) fails open on an unknown, foreign or missing device
+- [x] Fixed
+- [x] Tests added
+
+**Where:** `mfa/domain/MfaVerifier.kt`: the `verifyAssociatedMfaChallengeFor` overloads (called from
+`mfa/web/MfaController.kt` `POST /mfa-challenge`) and `verifyMfaChallengeToBeAssociatedFor` (called from
+`MfaMethodsEnrollmentAssociation` for `POST /api/mfa/associate`). Found 2026-10-17 while grilling issue #338
+(MFA device revocation). Confirmed by unit tests that failed before the fix.
+
+**Impact:** `POST /mfa-challenge` treats "no exception" as success. The verifier returns without
+throwing when `mfa-device-id` matches no device (`findBy(deviceId)` is `null`), when it names another
+account's device (`findBy(deviceId)` is not scoped to the user, and the follow-up lookup by
+`(userName, EMAIL_MFA_METHOD, channel)` is `null`), and when no `mfa-device-id` is sent and the account
+has no default device (`getDefaultDevice(...) ?: return`). A user past the first factor can likely
+skip the second factor by sending an arbitrary `mfa-device-id`. The lookup also hard-codes
+`EMAIL_MFA_METHOD`.
+
+Association has the same shape: when the ticket's `mfaDeviceId` no longer resolves,
+`verifyMfaChallengeToBeAssociatedFor` returns without checking the code and `associate` then `save`s the
+channel as associated with a new device id and key, so the channel is associated without proof of
+possession. Before #338 no device row was ever deleted, so this needed an id that no longer resolves; device
+revocation (#338) would make it reachable with any outstanding enrolment ticket.
+
+**Fix:** `OtpMfaVerifier` resolves the device once by id (the given one, or the account's default) and
+throws `MfaDeviceNotFoundException` when it is missing or belongs to another account, or when the account
+has no default device. It then verifies the code with the device's own MFA Method and channel, so SMS
+devices are no longer looked up as email. `MfaMethodsEnrollmentAssociation` rejects a ticket
+(`InvalidTicketException`) whose device no longer exists or is no longer the device named in the ticket,
+on both the code and the self-association path.
+
+**Operational note:** an account that reaches an `mfa:always` login with no Default Device (for example,
+its email was never verified) now fails the MFA step instead of skipping it.
 
 ---
 

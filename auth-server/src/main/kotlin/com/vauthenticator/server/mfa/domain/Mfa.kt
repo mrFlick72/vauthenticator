@@ -73,5 +73,6 @@ class MfaException(message: String) : AuthenticationException(message) {
     }
 }
 
+class MfaDeviceNotFoundException(message: String) : AuthenticationException(message)
 class UnAssociatedMfaVerificationException(message: String) : AuthenticationException(message)
 class AssociatedMfaVerificationException(message: String) : AuthenticationException(message)

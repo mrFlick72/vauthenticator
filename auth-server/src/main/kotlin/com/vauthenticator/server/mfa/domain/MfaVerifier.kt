@@ -31,48 +31,36 @@ class OtpMfaVerifier(
         mfaDeviceId: MfaDeviceId,
         challenge: MfaChallenge
     ) {
-        mfaAccountMethodsRepository.findBy(mfaDeviceId)?.let { mfaAccountMethod ->
-            val account = requireNotNull(accountRepository.accountFor(userName)) { "Account $userName not found" }
-            if (!mfaAccountMethod.associated) {
-                otpMfa.verify(account, mfaAccountMethod.mfaMethod, mfaAccountMethod.mfaChannel, challenge)
-            } else {
-                throw AssociatedMfaVerificationException("Mfa Challenge verification failed: this mfa method is already associated")
-            }
+        val mfaAccountMethod = accountDeviceFor(userName, mfaDeviceId)
+        if (mfaAccountMethod.associated) {
+            throw AssociatedMfaVerificationException("Mfa Challenge verification failed: this mfa method is already associated")
         }
-
-    }
-
-    private fun verifyAssociatedMfaChallengeFor(
-        userName: String,
-        mfaMethod: MfaMethod,
-        mfaChannel: String,
-        challenge: MfaChallenge
-    ) {
-        mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, mfaChannel)?.let {
-            val account = requireNotNull(accountRepository.accountFor(userName)) { "Account $userName not found" }
-            if (it.associated) {
-                otpMfa.verify(account, mfaMethod, mfaChannel, challenge)
-            } else {
-                throw UnAssociatedMfaVerificationException("Mfa Challenge verification failed: this mfa method has to be associated")
-            }
-        }
+        verify(userName, mfaAccountMethod, challenge)
     }
 
     override fun verifyAssociatedMfaChallengeFor(userName: String, challenge: MfaChallenge) {
-        val defaultDevice = mfaAccountMethodsRepository.getDefaultDevice(userName) ?: return
-        mfaAccountMethodsRepository.findBy(defaultDevice)?.let {
-            verifyAssociatedMfaChallengeFor(
-                userName, it.mfaMethod, it.mfaChannel, challenge
-            )
-        }
+        val defaultDevice = mfaAccountMethodsRepository.getDefaultDevice(userName)
+            ?: throw MfaDeviceNotFoundException("Mfa Challenge verification failed: no default mfa device")
+        verifyAssociatedMfaChallengeFor(userName, defaultDevice, challenge)
     }
 
     override fun verifyAssociatedMfaChallengeFor(userName: String, mfaDeviceId: MfaDeviceId, challenge: MfaChallenge) {
-        mfaAccountMethodsRepository.findBy(mfaDeviceId)?.let {
-            verifyAssociatedMfaChallengeFor(
-                userName, it.mfaMethod, it.mfaChannel, challenge
-            )
+        val mfaAccountMethod = accountDeviceFor(userName, mfaDeviceId)
+        if (!mfaAccountMethod.associated) {
+            throw UnAssociatedMfaVerificationException("Mfa Challenge verification failed: this mfa method has to be associated")
         }
+        verify(userName, mfaAccountMethod, challenge)
+    }
+
+    private fun accountDeviceFor(userName: String, mfaDeviceId: MfaDeviceId): MfaAccountMethod =
+        mfaAccountMethodsRepository.findBy(mfaDeviceId)
+            ?.takeIf { it.userName == userName }
+            ?: throw MfaDeviceNotFoundException("Mfa Challenge verification failed: mfa device not found")
+
+    private fun verify(userName: String, mfaAccountMethod: MfaAccountMethod, challenge: MfaChallenge) {
+        val account = accountRepository.accountFor(userName)
+            ?: throw MfaException("Mfa Challenge verification failed: account not found")
+        otpMfa.verify(account, mfaAccountMethod.mfaMethod, mfaAccountMethod.mfaChannel, challenge)
     }
 
 }
