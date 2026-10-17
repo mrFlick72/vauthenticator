@@ -3,6 +3,7 @@ package com.vauthenticator.server.password.domain.resetpassword
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.communication.domain.EMailSenderService
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
+import com.vauthenticator.server.ticket.domain.TicketContext
 import com.vauthenticator.server.ticket.domain.TicketCreator
 
 class SendResetPasswordMailChallenge(
@@ -14,7 +15,7 @@ class SendResetPasswordMailChallenge(
 
     fun sendResetPasswordMailFor(email: String) {
         accountRepository.accountFor(username = email)?.let {
-            val ticket = ticketFactory.createTicketFor(it, ClientAppId.empty())
+            val ticket = ticketFactory.createTicketFor(it, ClientAppId.empty(), TicketContext.resetPasswordContext())
             emailSenderService.sendFor(
                 account = it,
                 mapOf("resetPasswordLink" to "$frontChannelBaseUrl/reset-password/${ticket.content}")

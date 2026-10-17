@@ -8,6 +8,8 @@ import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_METHOD_CONTE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_NOT_SELF_ASSOCIATION_CONTEXT_VALUE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_SELF_ASSOCIATION_CONTEXT_KEY
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_SELF_ASSOCIATION_CONTEXT_VALUE
+import com.vauthenticator.server.ticket.domain.Ticket.Companion.PURPOSE_CONTEXT_KEY
+import com.vauthenticator.server.ticket.domain.Ticket.Companion.RESET_PASSWORD_PURPOSE_CONTEXT_VALUE
 import java.time.Duration
 
 data class Ticket(
@@ -24,6 +26,8 @@ data class Ticket(
         const val MFA_SELF_ASSOCIATION_CONTEXT_KEY = "selfAssociation"
         const val MFA_SELF_ASSOCIATION_CONTEXT_VALUE = "true"
         const val MFA_NOT_SELF_ASSOCIATION_CONTEXT_VALUE = "false"
+        const val PURPOSE_CONTEXT_KEY = "purpose"
+        const val RESET_PASSWORD_PURPOSE_CONTEXT_VALUE = "resetPassword"
     }
 }
 
@@ -31,6 +35,7 @@ data class TicketContext(val content: Map<String, String>) {
 
     companion object {
         fun empty() = TicketContext(emptyMap())
+        fun resetPasswordContext() = TicketContext(mapOf(PURPOSE_CONTEXT_KEY to RESET_PASSWORD_PURPOSE_CONTEXT_VALUE))
         fun mfaContextFor(
             mfaMethod: MfaMethod,
             mfaChannel: String,
@@ -51,6 +56,7 @@ data class TicketContext(val content: Map<String, String>) {
         )
     }
 
+    fun isForResetPassword() = content[PURPOSE_CONTEXT_KEY] == RESET_PASSWORD_PURPOSE_CONTEXT_VALUE
     fun isMfaNotSelfAssociable() = content[MFA_SELF_ASSOCIATION_CONTEXT_KEY] != MFA_SELF_ASSOCIATION_CONTEXT_VALUE
     fun mfaMethod(): MfaMethod {
         val mfaMethod = requiredValue(MFA_METHOD_CONTEXT_KEY)
