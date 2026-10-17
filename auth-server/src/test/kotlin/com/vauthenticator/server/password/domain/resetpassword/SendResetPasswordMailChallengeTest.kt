@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.domain.resetpassword
 
+import com.vauthenticator.server.ticket.domain.TicketContext
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.communication.domain.EMailSenderService
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
@@ -11,6 +12,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
+import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -45,7 +47,9 @@ class SendResetPasswordMailChallengeTest {
         val anAccount = anAccount()
 
         every { accountRepository.accountFor(anAccount.email) } returns anAccount
-        every { ticketCreator.createTicketFor(anAccount, ClientAppId.empty()) } returns TicketId("A_TICKET")
+        every {
+            ticketCreator.createTicketFor(anAccount, ClientAppId.empty(), TicketContext.resetPasswordContext())
+        } returns TicketId("A_TICKET")
         every {
             emailSenderService.sendFor(
                 anAccount,
@@ -54,6 +58,8 @@ class SendResetPasswordMailChallengeTest {
         } just runs
 
         underTest.sendResetPasswordMailFor(anAccount.email)
+
+        verify { ticketCreator.createTicketFor(anAccount, ClientAppId.empty(), TicketContext.resetPasswordContext()) }
     }
 
 }

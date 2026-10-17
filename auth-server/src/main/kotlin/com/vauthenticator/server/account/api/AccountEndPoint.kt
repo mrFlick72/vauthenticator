@@ -66,9 +66,13 @@ class AccountEndPoint(
 
     private fun logWarningForNotEmptyUserNameInRequestBodyFor(representation: AccountRepresentation) {
         if (representation.email.isNotEmpty()) {
-            logger.warn("there is an email in the body.............. it will be ignored in favour of the access token identity")
+            logger.warn("there is an email in the body.............. the account to update is always the one of the access token identity")
         }
     }
+
+    @ExceptionHandler(AccountOwnershipException::class)
+    fun accountOwnershipExceptionHandler(): ResponseEntity<Unit> =
+        status(HttpStatus.FORBIDDEN).build()
 
 }
 

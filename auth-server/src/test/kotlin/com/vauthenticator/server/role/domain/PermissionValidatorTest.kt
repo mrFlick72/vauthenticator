@@ -61,6 +61,22 @@ class PermissionValidatorTest {
     }
 
     @Test
+    fun `when the client app in session is not found`() {
+        every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns httpSessionWithClientApp()
+        every { clientApplicationRepository.findOne(clientAppId) } returns null
+
+        assertThrows(ClientApplicationNotResolvedException::class.java) { uut.validate(null, session, scopes) }
+    }
+
+    @Test
+    fun `when there is no client app in session`() {
+        every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns null
+        every { session.getAttribute("clientId") } returns null
+
+        assertThrows(ClientApplicationNotResolvedException::class.java) { uut.validate(null, session, scopes) }
+    }
+
+    @Test
     fun `when scopes are validate on principal scopes`() {
         every { session.getAttribute("SPRING_SECURITY_SAVED_REQUEST") } returns emptyHttpSession()
 

@@ -3,7 +3,6 @@ package com.vauthenticator.server.role.domain
 import com.vauthenticator.server.extentions.clientAppId
 import com.vauthenticator.server.extentions.hasEnoughScopes
 import com.vauthenticator.server.extentions.oauth2ClientId
-import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationNotFound
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.InsufficientClientApplicationScopeException
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
@@ -49,17 +48,17 @@ class PermissionValidator(private val clientApplicationRepository: ClientApplica
         scopes: Scopes
     ) {
         val clientAppId = session.oauth2ClientId()
-            ?: throw ClientApplicationNotFound("no client app found")
+            ?: throw ClientApplicationNotResolvedException("no client app found in session")
 
-        clientApplicationRepository.findOne(clientAppId)
-            ?.let { clientApplication ->
-                logger.debug("clientApplication.hasEnoughScopes(scopes) ${clientApplication.hasEnoughScopes(scopes)}")
-                logger.debug("scopes {}", scopes)
-                logger.debug("clientApplication.scopes {}", clientApplication.scopes)
-                if (!clientApplication.hasEnoughScopes(scopes)) {
-                    throw InsufficientClientApplicationScopeException("The client app ${clientApplication.clientAppId.content} does not support this use case........ consider to add ${scopes.content.map { it.content }} as scope")
-                }
-            }
+        val clientApplication = clientApplicationRepository.findOne(clientAppId)
+            ?: throw ClientApplicationNotResolvedException("the client app ${clientAppId.content} in session was not found")
+
+        logger.debug("clientApplication.hasEnoughScopes(scopes) ${clientApplication.hasEnoughScopes(scopes)}")
+        logger.debug("scopes {}", scopes)
+        logger.debug("clientApplication.scopes {}", clientApplication.scopes)
+        if (!clientApplication.hasEnoughScopes(scopes)) {
+            throw InsufficientClientApplicationScopeException("The client app ${clientApplication.clientAppId.content} does not support this use case........ consider to add ${scopes.content.map { it.content }} as scope")
+        }
     }
 
     private fun principalScopesValidation(

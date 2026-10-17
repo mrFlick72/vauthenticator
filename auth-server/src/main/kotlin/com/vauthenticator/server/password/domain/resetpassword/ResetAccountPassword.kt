@@ -24,6 +24,7 @@ class ResetAccountPassword(
 ) {
     fun resetPasswordFromMailChallenge(ticketId: TicketId, request: ResetPasswordRequest) {
         val ticket = ticketRepository.loadFor(ticketId)
+            ?.takeIf { it.context.isForResetPassword() }
             ?: throw InvalidTicketException("The ticket ${ticketId.content} is not a valid ticket it seems to be used or expired")
         passwordPolicy.accept(ticket.userName, request.newPassword)
         val encodedNewPassword = vAuthenticatorPasswordEncoder.encode(request.newPassword)

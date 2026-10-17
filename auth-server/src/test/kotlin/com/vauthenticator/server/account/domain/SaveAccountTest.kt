@@ -10,6 +10,7 @@ import io.mockk.runs
 import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import java.util.*
@@ -50,5 +51,46 @@ class SaveAccountTest {
         underTest.execute(principal, account)
 
         verify(exactly = 0) { accountRepository.save(account) }
+    }
+
+    @Test
+    fun `when account data are updated identity and membership come from the stored account`() {
+        val storedAccount = anAccount().copy(
+            groups = setOf("A_STORED_GROUP"),
+            authorities = setOf("A_STORED_ROLE"),
+            mandatoryAction = AccountMandatoryAction.RESET_PASSWORD
+        )
+        val requestAccount = anAccount().copy(
+            username = "",
+            email = "",
+            password = "A_REQUEST_PASSWORD",
+            groups = setOf("A_REQUEST_GROUP"),
+            authorities = setOf("A_REQUEST_ROLE"),
+            mandatoryAction = AccountMandatoryAction.NO_ACTION,
+            firstName = "A_NEW_FIRST_NAME",
+            lastName = "A_NEW_LAST_NAME"
+        )
+        val principal: JwtAuthenticationToken = SecurityFixture.principalFor("A_CLIENT_APP_ID", storedAccount.email)
+        val expected = storedAccount.copy(firstName = "A_NEW_FIRST_NAME", lastName = "A_NEW_LAST_NAME")
+
+        every { accountRepository.accountFor(storedAccount.email) } returns storedAccount
+        every { accountRepository.save(expected) } just runs
+
+        underTest.execute(principal, requestAccount)
+
+        verify { accountRepository.save(expected) }
+    }
+
+    @Test
+    fun `when account data are updated for an email that is not the principal one`() {
+        val storedAccount = anAccount()
+        val requestAccount = anAccount().copy(username = "another@email.com", email = "another@email.com")
+        val principal: JwtAuthenticationToken = SecurityFixture.principalFor("A_CLIENT_APP_ID", storedAccount.email)
+
+        every { accountRepository.accountFor(storedAccount.email) } returns storedAccount
+
+        assertThrows<AccountOwnershipException> { underTest.execute(principal, requestAccount) }
+
+        verify(exactly = 0) { accountRepository.save(any()) }
     }
 }

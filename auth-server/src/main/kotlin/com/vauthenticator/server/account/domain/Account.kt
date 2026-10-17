@@ -139,6 +139,8 @@ data class Phone(private val countryPrefix: String, private val prefix: String, 
 
 class AccountNotFoundException(message: String) : RuntimeException(message)
 
+class AccountOwnershipException(message: String) : RuntimeException(message)
+
 class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : CacheContentConverter<Account> {
     override fun getObjectFromCacheContentFor(cacheContent: String): Account =
         objectMapper.readValue(cacheContent, Map::class.java)

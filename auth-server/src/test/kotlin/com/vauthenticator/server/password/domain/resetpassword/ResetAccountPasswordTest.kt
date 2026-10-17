@@ -1,5 +1,8 @@
 package com.vauthenticator.server.password.domain.resetpassword
 
+import io.mockk.verify
+import com.vauthenticator.server.ticket.domain.TicketContext
+import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.ResetPasswordEvent
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
@@ -60,7 +63,7 @@ class ResetAccountPasswordTest {
         val email = anAccount.email
 
         val ticketId = TicketId("A_TICKET")
-        val ticket = TicketFixture.ticketFor(ticketId.content, email, "")
+        val ticket = Ticket(ticketId, email, "", 200, TicketContext.resetPasswordContext())
 
         every { passwordPolicy.accept(email, "NEW_PSWD") } just runs
         every { ticketRepository.loadFor(ticketId) } returns ticket
@@ -86,5 +89,21 @@ class ResetAccountPasswordTest {
                 ResetPasswordRequest("NEW_PSWD")
             )
         }
+    }
+
+    @Test
+    fun `when the ticket was not issued for a password reset`() {
+        val email = anAccount().email
+        val ticketId = TicketId("A_TICKET")
+        val mfaTicket = TicketFixture.ticketFor(ticketId.content, email, "A_CLIENT_APP_ID")
+
+        every { ticketRepository.loadFor(ticketId) } returns mfaTicket
+
+        assertThrows(InvalidTicketException::class.java) {
+            underTest.resetPasswordFromMailChallenge(ticketId, ResetPasswordRequest("NEW_PSWD"))
+        }
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+        verify(exactly = 0) { ticketRepository.delete(any()) }
     }
 }
