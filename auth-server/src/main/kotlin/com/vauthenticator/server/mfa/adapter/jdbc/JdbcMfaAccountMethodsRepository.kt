@@ -1,10 +1,7 @@
 package com.vauthenticator.server.mfa.adapter.jdbc
 
 import com.vauthenticator.server.keys.domain.*
-import com.vauthenticator.server.mfa.domain.MfaAccountMethod
-import com.vauthenticator.server.mfa.domain.MfaAccountMethodsRepository
-import com.vauthenticator.server.mfa.domain.MfaDeviceId
-import com.vauthenticator.server.mfa.domain.MfaMethod
+import com.vauthenticator.server.mfa.domain.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
 import java.sql.ResultSet
@@ -107,4 +104,21 @@ class JdbcMfaAccountMethodsRepository(
         associated = rs.getBoolean("associated"),
     )
 
+    override fun revoke(userName: String, mfaDeviceId: MfaDeviceId, check: MfaDeviceRevocationCheck): MfaAccountMethod {
+        val accountDevices = jdbcTemplate.query(
+            "SELECT * FROM MFA_ACCOUNT_METHODS WHERE user_name=? FOR UPDATE",
+            { rs, _ -> mfaAccountMethodFrom(rs) },
+            userName
+        )
+        val device = accountDevices.find { it.mfaDeviceId == mfaDeviceId }
+            ?: throw MfaDeviceNotFoundException("mfa device not found")
+
+        check(MfaDeviceRevocationCandidate(device, accountDevices, getDefaultDevice(userName)))
+
+        jdbcTemplate.update(
+            "DELETE FROM MFA_ACCOUNT_METHODS WHERE user_name=? AND mfa_device_id=?",
+            userName, mfaDeviceId.content
+        )
+        return device
+    }
 }

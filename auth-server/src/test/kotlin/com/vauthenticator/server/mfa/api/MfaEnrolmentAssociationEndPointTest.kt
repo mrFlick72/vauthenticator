@@ -42,7 +42,7 @@ class MfaEnrolmentAssociationEndPointTest {
     private val objectMapper = ObjectMapper()
 
     @MockK
-    private lateinit var mfaAccountMethodsRepository: MfaAccountMethodsRepository
+    private lateinit var mfaDevices: MfaDevices
 
     @MockK
     private lateinit var mfaMethodsEnrollment: MfaMethodsEnrollment
@@ -58,7 +58,7 @@ class MfaEnrolmentAssociationEndPointTest {
     internal fun setUp() {
         mokMvc = MockMvcBuilders.standaloneSetup(
             MfaEnrolmentAssociationEndPoint(
-                mfaAccountMethodsRepository,
+                mfaDevices,
                 mfaMethodsEnrollment,
                 mfaMethodsEnrolmentAssociation,
                 PermissionValidator(clientApplicationRepository)
@@ -256,7 +256,7 @@ class MfaEnrolmentAssociationEndPointTest {
             authorities = listOf("USER"),
             scopes = listOf(Scope.MFA_ENROLLMENT.content)
         )
-        every { mfaAccountMethodsRepository.setAsDefault(email, MfaDeviceId("A_DEVICE_ID")) } just runs
+        every { mfaDevices.setAsDefault(email, MfaDeviceId("A_DEVICE_ID")) } just runs
 
         mokMvc.perform(
             put("/api/mfa/device")
@@ -277,7 +277,7 @@ class MfaEnrolmentAssociationEndPointTest {
             authorities = listOf("USER"),
             scopes = listOf(Scope.OPEN_ID.content)
         )
-        every { mfaAccountMethodsRepository.setAsDefault(email, MfaDeviceId("A_DEVICE_ID")) } just runs
+        every { mfaDevices.setAsDefault(email, MfaDeviceId("A_DEVICE_ID")) } just runs
 
         mokMvc.perform(
             put("/api/mfa/device")
@@ -326,6 +326,82 @@ class MfaEnrolmentAssociationEndPointTest {
                 .principal(sessionUser)
         ).andExpect(status().isUnauthorized)
 
-        verify(exactly = 0) { mfaAccountMethodsRepository.setAsDefault(any(), any()) }
+        verify(exactly = 0) { mfaDevices.setAsDefault(any(), any()) }
+    }
+
+    @Test
+    fun `when an enrolled mfa set as default is not an associated device of the account`() {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+        every { mfaDevices.setAsDefault(EMAIL, MfaDeviceId("A_DEVICE_ID")) } throws MfaDeviceNotFoundException("not found")
+
+        mokMvc.perform(
+            put("/api/mfa/device")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(SetDefaultMfaDeviceRequest("A_DEVICE_ID")))
+                .principal(authentication)
+        ).andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `when a mfa device is revoked`() {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+        every { mfaDevices.revoke(EMAIL, MfaDeviceId("A_DEVICE_ID"), ClientAppId(A_CLIENT_APP_ID)) } just runs
+
+        mokMvc.perform(
+            delete("/api/mfa/enrollment/A_DEVICE_ID")
+                .principal(authentication)
+        ).andExpect(status().isNoContent)
+
+        verify { mfaDevices.revoke(EMAIL, MfaDeviceId("A_DEVICE_ID"), ClientAppId(A_CLIENT_APP_ID)) }
+    }
+
+    @Test
+    fun `when a mfa device to revoke is not found`() {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+        every { mfaDevices.revoke(EMAIL, MfaDeviceId("A_DEVICE_ID"), ClientAppId(A_CLIENT_APP_ID)) } throws
+                MfaDeviceNotFoundException("not found")
+
+        mokMvc.perform(
+            delete("/api/mfa/enrollment/A_DEVICE_ID")
+                .principal(authentication)
+        ).andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `when a mfa device revocation is refused`() {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+        every { mfaDevices.revoke(EMAIL, MfaDeviceId("A_DEVICE_ID"), ClientAppId(A_CLIENT_APP_ID)) } throws
+                MfaDeviceRevocationException(MfaDeviceRevocationRefusal.DEFAULT_DEVICE)
+
+        mokMvc.perform(
+            delete("/api/mfa/enrollment/A_DEVICE_ID")
+                .principal(authentication)
+        )
+            .andExpect(status().isConflict)
+            .andExpect(content().json("""{"reason":"DEFAULT_DEVICE"}"""))
+    }
+
+    @Test
+    fun `when a mfa device revocation fails for insufficient scope`() {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.OPEN_ID.content))
+
+        mokMvc.perform(
+            delete("/api/mfa/enrollment/A_DEVICE_ID")
+                .principal(authentication)
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { mfaDevices.revoke(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a mfa device revocation is unauthorized for a session user`() {
+        val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            delete("/api/mfa/enrollment/A_DEVICE_ID")
+                .principal(sessionUser)
+        ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { mfaDevices.revoke(any(), any(), any()) }
     }
 }

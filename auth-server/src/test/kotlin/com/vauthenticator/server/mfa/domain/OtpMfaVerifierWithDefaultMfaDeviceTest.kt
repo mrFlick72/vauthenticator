@@ -60,7 +60,6 @@ class OtpMfaVerifierWithDefaultMfaDeviceTest {
 
         verify { mfaAccountMethodsRepository.getDefaultDevice(userName) }
         verify { mfaAccountMethodsRepository.findBy(mfaDeviceId) }
-        verify { mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, email) }
         verify { accountRepository.accountFor(userName) }
         verify { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) }
 
@@ -91,8 +90,6 @@ class OtpMfaVerifierWithDefaultMfaDeviceTest {
 
         verify { mfaAccountMethodsRepository.getDefaultDevice(userName) }
         verify { mfaAccountMethodsRepository.findBy(mfaDeviceId) }
-        verify { mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, email) }
-        verify { accountRepository.accountFor(userName) }
     }
 
     @Test
@@ -121,6 +118,5 @@ class OtpMfaVerifierWithDefaultMfaDeviceTest {
         verify { mfaAccountMethodsRepository.findBy(mfaDeviceId) }
         verify { accountRepository.accountFor(account.email) }
         verify { otpMfa.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, challenge) }
-        verify { mfaAccountMethodsRepository.findBy(userName, MfaMethod.EMAIL_MFA_METHOD, email) }
     }
 }

@@ -1,14 +1,12 @@
 package com.vauthenticator.server.mfa.adapter
 
 import com.vauthenticator.server.keys.domain.*
-import com.vauthenticator.server.mfa.domain.MfaAccountMethod
-import com.vauthenticator.server.mfa.domain.MfaAccountMethodsRepository
-import com.vauthenticator.server.mfa.domain.MfaDeviceId
-import com.vauthenticator.server.mfa.domain.MfaMethod
+import com.vauthenticator.server.mfa.domain.*
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNull
@@ -24,6 +22,12 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
     @MockK
     lateinit var keyRepository: KeyRepository
 
+    private var generatedDeviceIds = 0
+    val mfaDeviceIdGenerator: () -> MfaDeviceId = {
+        generatedDeviceIds++
+        if (generatedDeviceIds == 1) mfaDeviceId else MfaDeviceId("A_MFA_DEVICE_ID_$generatedDeviceIds")
+    }
+
     lateinit var uut: MfaAccountMethodsRepository
     abstract fun initMfaAccountMethodsRepository(): MfaAccountMethodsRepository
     abstract fun resetDatabase()
@@ -32,6 +36,7 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
     fun setUp() {
         every { keyRepository.createKeyFrom(masterKid, KeyType.SYMMETRIC, KeyPurpose.MFA) } returns key
 
+        generatedDeviceIds = 0
         resetDatabase()
         uut = initMfaAccountMethodsRepository()
     }
@@ -128,4 +133,60 @@ abstract class AbstractMfaAccountMethodsRepositoryTest {
         assertEquals(afterAssociated?.userName, beforeToBeAssociated?.userName)
     }
 
+    @Test
+    fun `when a mfa device is revoked it is removed and the other devices of the account are kept`() {
+        val revoked = uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
+        val kept = uut.save(email, MfaMethod.EMAIL_MFA_METHOD, "another-$email", true)
+        uut.setAsDefault(email, kept.mfaDeviceId)
+        var candidate: MfaDeviceRevocationCandidate? = null
+
+        val actual = uut.revoke(email, revoked.mfaDeviceId) { candidate = it }
+
+        assertEquals(revoked, actual)
+        assertEquals(MfaDeviceRevocationCandidate(revoked, listOf(revoked, kept), kept.mfaDeviceId), candidate?.sorted())
+        assertNull(uut.findBy(revoked.mfaDeviceId))
+        assertEquals(listOf(kept), uut.findAll(email))
+        assertEquals(kept.mfaDeviceId, uut.getDefaultDevice(email))
+    }
+
+    @Test
+    fun `when a mfa device revocation check fails the device is kept`() {
+        val device = uut.save(email, MfaMethod.EMAIL_MFA_METHOD, email, true)
+
+        assertThrows(MfaDeviceRevocationException::class.java) {
+            uut.revoke(email, device.mfaDeviceId) {
+                throw MfaDeviceRevocationException(MfaDeviceRevocationRefusal.LAST_ASSOCIATED_DEVICE)
+            }
+        }
+
+        assertEquals(listOf(device), uut.findAll(email))
+    }
+
+    @Test
+    fun `when an unknown mfa device is revoked`() {
+        var checked = false
+
+        assertThrows(MfaDeviceNotFoundException::class.java) {
+            uut.revoke(email, MfaDeviceId("AN_UNKNOWN_MFA_DEVICE_ID")) { checked = true }
+        }
+
+        assertEquals(false, checked)
+    }
+
+    @Test
+    fun `when a mfa device of another account is revoked it is not found and kept`() {
+        val otherEmail = "other-$email"
+        val otherAccountDevice = uut.save(otherEmail, MfaMethod.EMAIL_MFA_METHOD, otherEmail, true)
+        var checked = false
+
+        assertThrows(MfaDeviceNotFoundException::class.java) {
+            uut.revoke(email, otherAccountDevice.mfaDeviceId) { checked = true }
+        }
+
+        assertEquals(false, checked)
+        assertEquals(listOf(otherAccountDevice), uut.findAll(otherEmail))
+    }
+
+    private fun MfaDeviceRevocationCandidate.sorted() =
+        copy(accountDevices = accountDevices.sortedBy { it.mfaDeviceId.content })
 }

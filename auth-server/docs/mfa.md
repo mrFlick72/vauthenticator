@@ -7,10 +7,12 @@ In order to increase account security VAuthenticator allows registering MFA via 
 
 ## How to
 
+Sequence diagrams of each use case, from the endpoint to the stores, are in [mfa-sequence-diagrams.md](mfa-sequence-diagrams.md).
+
 During the account registration a step to validate the main mail, that is the user_name too, the main mail became a valid MFA channel.
 It is possible to register multiple email via api.
 
-*Authentication:* Enrollment, Association and Set Default Device require a bearer JWT. A call without one, including from a logged-in browser session, gets ```401 Unauthorized``` with ```WWW-Authenticate: Bearer```. A JWT without the required scope gets ```403 Forbidden```. List Enrolled Devices and Challenge also accept the browser session used by the MFA pages: without a bearer JWT, the scope is checked on the session's client application (see ADR ```docs/adr/0007-jwt-only-api-authentication-per-controller.md```).
+*Authentication:* Enrollment, Association, Set Default Device and Revoke Device require a bearer JWT. A call without one, including from a logged-in browser session, gets ```401 Unauthorized``` with ```WWW-Authenticate: Bearer```. A JWT without the required scope gets ```403 Forbidden```. List Enrolled Devices and Challenge also accept the browser session used by the MFA pages: without a bearer JWT, the scope is checked on the session's client application (see ADR ```docs/adr/0007-jwt-only-api-authentication-per-controller.md```).
 
 ### Enrollment
 
@@ -66,9 +68,9 @@ Returns the MFA devices enrolled for the authenticated account. The `userName` a
 ```json
 [
   {
-    "userName": "a***@email.com",
+    "userName": "axxxx@email.com",
     "mfaMethod": "EMAIL_MFA_METHOD",
-    "mfaChannel": "a***@email.com",
+    "mfaChannel": "axxxx@email.com",
     "mfaDeviceId": "xxxx",
     "default": true
   }
@@ -90,7 +92,87 @@ Returns the MFA devices enrolled for the authenticated account. The `userName` a
 }
 ```
 
+The device must be an associated device of the authenticated account, otherwise ```404 Not Found```.
+
 *Response Status:* ```204 No Content```
+
+### Revoke Device
+
+Revokes one of the authenticated account's MFA devices: the device and its key are deleted, and enrolling the same channel again creates a new device. See ```docs/adr/0009-mfa-device-revocation-keeps-a-usable-second-factor.md```.
+
+*URI:* ```Delete /api/mfa/enrollment/{mfaDeviceId}```
+
+*Scope:* ```mfa:enrollment```
+
+*Response Status:*
+
+- ```204 No Content```: the device is revoked
+- ```404 Not Found```: the account has no device with this id (a device of another account is reported the same way)
+- ```409 Conflict```: the revocation is refused, with the reason in the body:
+  - ```LAST_ASSOCIATED_DEVICE```: it is the account's last associated device. Enrolled devices that were never associated can always be revoked.
+  - ```DEFAULT_DEVICE```: it is the account's default device; set another device as default first
+
+  When both apply (the account's only associated device is also its default), the reason is ```LAST_ASSOCIATED_DEVICE```.
+
+```json
+{
+  "reason": "DEFAULT_DEVICE"
+}
+```
+
+*Example:*
+
+An account has an email device (the default) and a phone device, and wants to drop the email one. The calls use a bearer JWT with scope ```mfa:enrollment```; the host is the local one from ```local/http-client.env.json```.
+
+1. List the devices to find the ids:
+
+   ```bash
+   curl -H "Authorization: Bearer $TOKEN" \
+     http://local.api.vauthenticator.com:9090/api/mfa/enrollment
+   ```
+
+   ```json
+   [
+     { "userName": "axxxx@email.com", "mfaMethod": "EMAIL_MFA_METHOD", "mfaChannel": "axxxx@email.com", "mfaDeviceId": "EMAIL_DEVICE_ID", "default": true },
+     { "userName": "axxxx@email.com", "mfaMethod": "SMS_MFA_METHOD", "mfaChannel": "+39 233xxxxx233", "mfaDeviceId": "PHONE_DEVICE_ID", "default": false }
+   ]
+   ```
+
+2. Revoking the email device now is refused, because it is the default:
+
+   ```bash
+   curl -i -X DELETE -H "Authorization: Bearer $TOKEN" \
+     http://local.api.vauthenticator.com:9090/api/mfa/enrollment/EMAIL_DEVICE_ID
+   ```
+
+   ```
+   HTTP/1.1 409 Conflict
+
+   {"reason":"DEFAULT_DEVICE"}
+   ```
+
+3. Make the phone the default device:
+
+   ```bash
+   curl -X PUT -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"mfaDeviceId": "PHONE_DEVICE_ID"}' \
+     http://local.api.vauthenticator.com:9090/api/mfa/device
+   ```
+
+4. Revoke the email device:
+
+   ```bash
+   curl -i -X DELETE -H "Authorization: Bearer $TOKEN" \
+     http://local.api.vauthenticator.com:9090/api/mfa/enrollment/EMAIL_DEVICE_ID
+   ```
+
+   ```
+   HTTP/1.1 204 No Content
+   ```
+
+   Revoking the phone device afterwards would return ```409``` with ```LAST_ASSOCIATED_DEVICE```, since it is now the account's only associated device.
+
+On the ```database``` profile the check and the delete hold the account's devices locked. On the ```dynamo``` profile they do not: two concurrent revocations on the same account can both pass the check and leave it without an associated device. Such an account cannot complete an MFA login until its devices are repaired.
 
 ### Challenge
 
@@ -105,3 +187,7 @@ Sends an MFA challenge code to the account's default enrolled device, or to a sp
 - `mfa-device-id` (optional): the id of a specific enrolled device to send the challenge to. When omitted, the challenge is sent to the account's default device.
 
 *Response Status:* ```200 OK```
+
+### Verification
+
+A login challenge is verified against the device named by ```mfa-device-id```, or against the account's default device. The verification fails when that device does not exist, belongs to another account, or is not associated, and when the account has no default device. An association ticket fails when its device no longer exists.
