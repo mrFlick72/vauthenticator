@@ -19,7 +19,7 @@ export const features = [
   {
     title: 'Multi-factor authentication',
     href: sitePath('features/mfa/'),
-    description: 'Add an extra verification step with email, SMS, and OTP support.',
+    description: 'Add an extra verification step with email, SMS, and OTP, and let account holders manage their devices.',
     label: '03 · Authentication',
   },
   {
