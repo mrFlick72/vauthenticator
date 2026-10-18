@@ -33,7 +33,7 @@ class MfaMethodsEnrollmentAssociationTest {
 
     private val mfaAccountMethod = MfaAccountMethod(
         email,
-        MfaDeviceId("A_MFA_DEVICE_ID"),
+        MfaDeviceId("AN_MFA_DEVICE_ID"),
         Kid("A_KID"),
         MfaMethod.EMAIL_MFA_METHOD,
         email,
@@ -41,7 +41,7 @@ class MfaMethodsEnrollmentAssociationTest {
     )
     private val notAssociatedMfaAccountMethod = MfaAccountMethod(
         email,
-        MfaDeviceId("A_MFA_DEVICE_ID"),
+        MfaDeviceId("AN_MFA_DEVICE_ID"),
         Kid("A_KID"),
         MfaMethod.EMAIL_MFA_METHOD,
         email,
@@ -77,7 +77,7 @@ class MfaMethodsEnrollmentAssociationTest {
                 context = TicketFixture.ticketContext(
                     userName,
                     Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE,
-                    "A_MFA_DEVICE_ID"
+                    "AN_MFA_DEVICE_ID"
                 )
             )
         every { ticketRepository.loadFor(ticketId) } returns ticketWithAutoAssociationFeatureEnabled
@@ -91,6 +91,7 @@ class MfaMethodsEnrollmentAssociationTest {
                 true
             )
         } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
         every { ticketRepository.delete(ticketWithAutoAssociationFeatureEnabled.ticketId) } just runs
 
         underTest.associate(RAW_TICKET)
@@ -129,6 +130,7 @@ class MfaMethodsEnrollmentAssociationTest {
                 true
             )
         } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
         every { ticketRepository.delete(ticket.ticketId) } just runs
 
 
@@ -175,5 +177,71 @@ class MfaMethodsEnrollmentAssociationTest {
         verify { ticketRepository.loadFor(ticketId) }
         verify { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())}
         verify { ticketRepository.delete(ticket.ticketId) }
+    }
+
+    @Test
+    fun `when the mfa device of the ticket no longer exists the association is rejected`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns null
+        every { ticketRepository.delete(ticket.ticketId) } just runs
+
+        Assertions.assertThrows(InvalidTicketException::class.java) { underTest.associate(RAW_TICKET, CODE) }
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+        verify { ticketRepository.delete(ticket.ticketId) }
+    }
+
+    @Test
+    fun `when the mfa device of a self association ticket no longer exists the association is rejected`() {
+        val selfAssociationTicket =
+            ticket.copy(context = TicketFixture.ticketContext(userName, Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE))
+        every { ticketRepository.loadFor(ticketId) } returns selfAssociationTicket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns null
+        every { ticketRepository.delete(selfAssociationTicket.ticketId) } just runs
+
+        Assertions.assertThrows(InvalidTicketException::class.java) { underTest.associate(RAW_TICKET) }
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the channel of the ticket was enrolled again as a new mfa device the association is rejected`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns
+                notAssociatedMfaAccountMethod.copy(mfaDeviceId = MfaDeviceId("A_NEW_MFA_DEVICE_ID"))
+        every { ticketRepository.delete(ticket.ticketId) } just runs
+
+        Assertions.assertThrows(InvalidTicketException::class.java) { underTest.associate(RAW_TICKET, CODE) }
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `when mfa is associated on an account without a default mfa device it becomes the default`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } just runs
+        every { mfaAccountMethodsRepository.save(userName, ticket.context.mfaMethod(), ticket.context.mfaChannel(), true) } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns null
+        every { mfaAccountMethodsRepository.setAsDefault(userName, mfaAccountMethod.mfaDeviceId) } just runs
+        every { ticketRepository.delete(ticket.ticketId) } just runs
+
+        underTest.associate(RAW_TICKET, CODE)
+
+        verify { mfaAccountMethodsRepository.setAsDefault(userName, mfaAccountMethod.mfaDeviceId) }
+    }
+
+    @Test
+    fun `when mfa is associated on an account with a default mfa device the default is kept`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } just runs
+        every { mfaAccountMethodsRepository.save(userName, ticket.context.mfaMethod(), ticket.context.mfaChannel(), true) } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
+        every { ticketRepository.delete(ticket.ticketId) } just runs
+
+        underTest.associate(RAW_TICKET, CODE)
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.setAsDefault(any(), any()) }
     }
 }

@@ -145,6 +145,7 @@ Documented MFA endpoints (see `docs/mfa.md`):
 - `POST /api/mfa/associate`
 - `GET /api/mfa/enrollment` (also used by the login MFA page via the session)
 - `PUT /api/mfa/device`
+- `DELETE /api/mfa/enrollment/{mfaDeviceId}` (revoke a device; rules in ADR 0009)
 - `PUT /api/mfa/challenge` (also used by the login MFA page via the session)
 
 Documented password lifecycle endpoints (`database` profile only, scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):

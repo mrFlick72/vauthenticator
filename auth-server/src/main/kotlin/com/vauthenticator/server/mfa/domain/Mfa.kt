@@ -73,5 +73,22 @@ class MfaException(message: String) : AuthenticationException(message) {
     }
 }
 
+class MfaDeviceNotFoundException(message: String) : AuthenticationException(message)
+enum class MfaDeviceRevocationRefusal { LAST_ASSOCIATED_DEVICE, DEFAULT_DEVICE }
+
+class MfaDeviceRevocationException(val refusal: MfaDeviceRevocationRefusal) :
+    RuntimeException("Mfa device revocation refused: $refusal")
+
+/** What a revocation is decided on: the device, all the account's devices and its default device. */
+data class MfaDeviceRevocationCandidate(
+    val device: MfaAccountMethod,
+    val accountDevices: List<MfaAccountMethod>,
+    val defaultDevice: MfaDeviceId?
+)
+
+typealias MfaDeviceRevocationCheck = (MfaDeviceRevocationCandidate) -> Unit
+
+data class MfaDeviceRevoked(val mfaDeviceId: MfaDeviceId, val mfaMethod: MfaMethod)
+
 class UnAssociatedMfaVerificationException(message: String) : AuthenticationException(message)
 class AssociatedMfaVerificationException(message: String) : AuthenticationException(message)

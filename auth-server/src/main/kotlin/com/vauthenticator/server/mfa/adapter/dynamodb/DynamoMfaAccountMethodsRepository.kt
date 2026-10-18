@@ -3,11 +3,9 @@ package com.vauthenticator.server.mfa.adapter.dynamodb
 import com.vauthenticator.server.extentions.asDynamoAttribute
 import com.vauthenticator.server.extentions.valueAsStringFor
 import com.vauthenticator.server.keys.domain.*
-import com.vauthenticator.server.mfa.domain.MfaAccountMethod
-import com.vauthenticator.server.mfa.domain.MfaAccountMethodsRepository
-import com.vauthenticator.server.mfa.domain.MfaDeviceId
-import com.vauthenticator.server.mfa.domain.MfaMethod
+import com.vauthenticator.server.mfa.domain.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.DeleteItemRequest
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest
 
@@ -137,5 +135,24 @@ class DynamoMfaAccountMethodsRepository(
         )
     }
 
-}
+    // Not atomic: two concurrent revocations of the same account can both pass the check (docs/mfa.md, ADR 0009).
+    override fun revoke(userName: String, mfaDeviceId: MfaDeviceId, check: MfaDeviceRevocationCheck): MfaAccountMethod {
+        val accountDevices = findAll(userName)
+        val device = accountDevices.find { it.mfaDeviceId == mfaDeviceId }
+            ?: throw MfaDeviceNotFoundException("mfa device not found")
 
+        check(MfaDeviceRevocationCandidate(device, accountDevices, getDefaultDevice(userName)))
+
+        dynamoDbClient.deleteItem(
+            DeleteItemRequest.builder()
+                .tableName(mfaAccountMethodTableName)
+                .key(
+                    mapOf(
+                        "user_name" to userName.asDynamoAttribute(),
+                        "mfa_channel" to device.mfaChannel.asDynamoAttribute()
+                    )
+                ).build()
+        )
+        return device
+    }
+}

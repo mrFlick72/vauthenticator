@@ -37,7 +37,7 @@ class MfaController(
 
     @GetMapping("/mfa-challenge")
     fun view(
-        model: Model, authentication: Authentication, httpServletRequest: HttpServletRequest
+        model: Model
     ): String {
         model.addAttribute("assetBundle", "mfa_bundle.js")
         i18nMessageInjector.setMessagedFor(I18nScope.MFA_PAGE, model)

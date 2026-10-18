@@ -18,8 +18,9 @@ class DynamoMfaAccountMethodsRepositoryTest : AbstractMfaAccountMethodsRepositor
             dynamoDefaultMfaAccountMethodsTableName,
             dynamoDbClient,
             keyRepository,
-            masterKid
-        ) { mfaDeviceId }
+            masterKid,
+            mfaDeviceIdGenerator
+        )
 
     override fun resetDatabase() {
         resetDynamoDb()

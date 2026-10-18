@@ -8,6 +8,7 @@ import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderService
 import com.vauthenticator.server.communication.adapter.sns.SnsSmsSenderService
 import com.vauthenticator.server.communication.domain.*
+import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyDecrypter
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.MasterKid
@@ -87,6 +88,13 @@ class MfaConfig {
         mfaVerifier: MfaVerifier
     ) =
         MfaMethodsEnrollmentAssociation(ticketRepository, mfaAccountMethodsRepository, mfaVerifier)
+
+    @Bean
+    fun mfaDevices(
+        mfaAccountMethodsRepository: MfaAccountMethodsRepository,
+        keyRepository: KeyRepository,
+        eventsDispatcher: VAuthenticatorEventsDispatcher
+    ) = MfaDevices(mfaAccountMethodsRepository, keyRepository, eventsDispatcher)
 
     @Bean
     fun mfaMethodsEnrollment(

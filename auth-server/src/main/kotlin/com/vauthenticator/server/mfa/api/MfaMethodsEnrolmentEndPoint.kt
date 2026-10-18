@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 class MfaEnrolmentAssociationEndPoint(
-    private val mfaAccountMethodsRepository: MfaAccountMethodsRepository,
+    private val mfaDevices: MfaDevices,
     private val mfaMethodsEnrollment: MfaMethodsEnrollment,
     private val mfaMethodsEnrolmentAssociation: MfaMethodsEnrollmentAssociation,
     private val permissionValidator: PermissionValidator
@@ -47,13 +47,23 @@ class MfaEnrolmentAssociationEndPoint(
         @RequestBody defaultMethod: SetDefaultMfaDeviceRequest
     ): ResponseEntity<Unit> {
         val principal = permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
-        mfaAccountMethodsRepository.setAsDefault(
+        mfaDevices.setAsDefault(
             principal.name,
             MfaDeviceId(defaultMethod.mfaDeviceId)
         )
         return noContent().build()
     }
 
+
+    @DeleteMapping("/api/mfa/enrollment/{mfaDeviceId}")
+    fun revokeMfaDevice(
+        authentication: Authentication?,
+        @PathVariable mfaDeviceId: String
+    ): ResponseEntity<Unit> {
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
+        mfaDevices.revoke(principal.name, MfaDeviceId(mfaDeviceId), principal.clientAppId())
+        return noContent().build()
+    }
 
     @PostMapping("/api/mfa/enrollment")
     fun enrollMfa(
@@ -81,6 +91,13 @@ class MfaEnrolmentAssociationEndPoint(
         return noContent().build()
     }
 
+    @ExceptionHandler(MfaDeviceNotFoundException::class)
+    fun mfaDeviceNotFoundExceptionHandler() = notFound().build<Unit>()
+
+    @ExceptionHandler(MfaDeviceRevocationException::class)
+    fun mfaDeviceRevocationExceptionHandler(e: MfaDeviceRevocationException) =
+        status(HttpStatus.CONFLICT).body(MfaDeviceRevocationRefusalResponse(e.refusal))
+
 }
 
 data class SetDefaultMfaDeviceRequest(
@@ -99,6 +116,10 @@ data class MfaEnrollmentResponse(
 data class MfaEnrollmentAssociationRequest(
     val ticket: String,
     val code: String,
+)
+
+data class MfaDeviceRevocationRefusalResponse(
+    val reason: MfaDeviceRevocationRefusal
 )
 
 data class MfaDeviceRepresentation(
