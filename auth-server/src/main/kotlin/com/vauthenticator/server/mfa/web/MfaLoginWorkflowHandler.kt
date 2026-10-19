@@ -1,29 +1,24 @@
 package com.vauthenticator.server.mfa.web
 
-import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
-
 import com.vauthenticator.server.login.workflow.LoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
+import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
 
 class MfaLoginWorkflowHandler(
     private val clientApplicationRepository: ClientApplicationRepository,
     private val url: String
 ) : LoginWorkflowHandler {
 
+    override fun id(): String = "MFA"
+
     override fun view(): String = this.url
 
-    override fun canHandle(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ): Boolean {
-        val clientId = request.session.getAttribute("clientId") as String
-        return clientApplicationRepository.findOne(ClientAppId(clientId))
+    override fun isRequiredFor(userName: String, clientAppId: ClientAppId?): Boolean =
+        clientAppId
+            ?.let { clientApplicationRepository.findOne(it) }
             ?.hasEnoughScopes(Scope.MFA_ALWAYS)
             ?: false
-    }
 
 }

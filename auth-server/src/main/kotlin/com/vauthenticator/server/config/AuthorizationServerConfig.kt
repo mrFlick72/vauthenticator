@@ -46,6 +46,9 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationSuccessHandler
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
+import com.vauthenticator.server.login.workflow.LoginWorkflowFilter
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
@@ -143,6 +146,7 @@ class AuthorizationServerConfig {
     fun authorizationServerSecurityFilterChain(
         providerSettings: AuthorizationServerSettings,
         redisTemplate: RedisTemplate<String, String?>,
+        loginWorkflowEngine: LoginWorkflowEngine,
         http: HttpSecurity
     ): SecurityFilterChain {
         http.csrf { it.disable() }.headers { it.frameOptions { it.disable() } }
@@ -198,6 +202,9 @@ class AuthorizationServerConfig {
                     )
                 )
             }
+        // must run before the authorization endpoint filter, which the configurer also registers before
+        // AbstractPreAuthenticatedProcessingFilter, but later, when the chain is built
+        http.addFilterBefore(LoginWorkflowFilter(loginWorkflowEngine, providerSettings.authorizationEndpoint), AbstractPreAuthenticatedProcessingFilter::class.java)
         http.exceptionHandling { it.authenticationEntryPoint(LoginUrlAuthenticationEntryPoint("/login")) }
             .oauth2ResourceServer { it.jwt {} }
 

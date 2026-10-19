@@ -21,7 +21,7 @@ import java.util.*
 class MfaController(
     private val i18nMessageInjector: I18nMessageInjector,
     private val publisher: ApplicationEventPublisher,
-    private val nextHopeLoginWorkflowSuccessHandler: AuthenticationSuccessHandler,
+    private val mfaLoginWorkflowSuccessHandler: AuthenticationSuccessHandler,
     private val mfaFailureHandler: AuthenticationFailureHandler,
     private val mfaChallengeSender: MfaChallengeSender,
     private val mfaVerifier: MfaVerifier
@@ -70,7 +70,7 @@ class MfaController(
             )
 
             publisher.publishEvent(MfaSuccessEvent(authentication))
-            nextHopeLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
+            mfaLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
         } catch (e: RuntimeException) {
             logger.error(e.message, e)
             val mfaException = MfaException("Invalid mfa code")

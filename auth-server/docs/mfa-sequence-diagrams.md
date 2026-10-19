@@ -267,7 +267,7 @@ sequenceDiagram
 
 ## 7. Verify the second factor at login
 
-`POST /mfa-challenge`: the login MFA page submits the code, optionally with the device it was sent to. Verification fails closed when the device cannot be resolved (VA-SEC-19).
+`POST /mfa-challenge`: the login MFA page submits the code, optionally with the device it was sent to. Verification fails closed when the device cannot be resolved (VA-SEC-19). Passing it makes MFA a passed step for the rest of the session, then resumes the authorization request that asked for it; the login workflow is checked again on every authorization request (ADR 0010).
 
 ```mermaid
 sequenceDiagram
@@ -299,7 +299,7 @@ sequenceDiagram
     Note right of OtpMfa: secret lookup: see 6. Send a challenge,<br/>wrong code → MfaException
     alt verified
         Controller->>Publisher: publishEvent(MfaSuccessEvent)
-        Controller->>Handlers: onAuthenticationSuccess → next login workflow step
+        Controller->>Handlers: onAuthenticationSuccess → MFA step passed in the session,<br/>resume the saved authorization request
     else any exception
         Controller->>Publisher: publishEvent(MfaFailureEvent)
         Controller->>Handlers: onAuthenticationFailure

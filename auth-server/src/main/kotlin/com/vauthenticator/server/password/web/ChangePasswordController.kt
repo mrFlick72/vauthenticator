@@ -24,7 +24,7 @@ class ChangePasswordController(
     private val accountRepository: AccountRepository,
     private val publisher: ApplicationEventPublisher,
     private val changePassword: ChangePassword,
-    private val nextHopeLoginWorkflowSuccessHandler: AuthenticationSuccessHandler,
+    private val changePasswordLoginWorkflowSuccessHandler: AuthenticationSuccessHandler,
     private val changePasswordFailureHandler: AuthenticationFailureHandler
 ) {
 
@@ -46,7 +46,7 @@ class ChangePasswordController(
     ) {
         try {
             changePasswordFor(authentication, newPassword)
-            nextHopeLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
+            changePasswordLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
         } catch (e: Exception) {
             logger.error(e.message, e)
             val changePasswordException = ChangePasswordException(e.message ?: "")
