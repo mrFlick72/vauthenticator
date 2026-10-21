@@ -19,6 +19,8 @@ Use MFA when a password alone is insufficient for the sign-in experience your ap
 
 A client application with the `mfa:always` scope gets a sign-in only once the account holder has passed the MFA challenge. The check runs every time an application asks for a sign-in, so leaving the MFA page does not skip it. A challenge passed once counts for every application that requires MFA for the rest of the session, and signing in again with the password starts over.
 
+A client application with `mfa:always` must also have the `mfa:enrollment` scope. The MFA sign-in page lists the account's devices on behalf of that application, so without `mfa:enrollment` it cannot find a device and every code is rejected as wrong or expired.
+
 ## Managing MFA devices
 
 Your application can let account holders manage their own devices through the API, with a bearer token carrying the `mfa:enrollment` scope:
