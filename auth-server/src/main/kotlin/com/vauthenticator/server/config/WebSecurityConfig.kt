@@ -2,13 +2,11 @@ package com.vauthenticator.server.config
 
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.login.userdetails.AccountUserDetailsService
-import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
-import com.vauthenticator.server.login.workflow.LOGIN_ENGINE_BROKER_PAGE
-import com.vauthenticator.server.mfa.web.MfaLoginWorkflowHandler
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
+import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
-import com.vauthenticator.server.password.domain.changepassword.CHANGE_PASSWORD_URL
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,6 +15,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.security.authentication.AuthenticationTrustResolver
+import org.springframework.security.authentication.AuthenticationTrustResolverImpl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -25,7 +25,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.web.DefaultRedirectStrategy
+import org.springframework.security.web.RedirectStrategy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache
+import org.springframework.security.web.savedrequest.RequestCache
 import org.springframework.security.web.authentication.*
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
@@ -73,10 +77,9 @@ class WebSecurityConfig {
 
         http.userDetailsService(accountUserDetailsService)
         http.oauth2ResourceServer { it.jwt {} }
-        http.securityMatcher(*WHITE_LIST, "/api/**", "/mfa-challenge/**", "/change-password", LOGIN_ENGINE_BROKER_PAGE)
+        http.securityMatcher(*WHITE_LIST, "/api/**", "/mfa-challenge/**", "/change-password")
             .authorizeHttpRequests { authz ->
                 authz
-                    .requestMatchers(LOGIN_ENGINE_BROKER_PAGE).permitAll()
                     .requestMatchers(HttpMethod.GET, "/mfa-challenge", "/mfa-challenge/send").authenticated()
                     .requestMatchers(HttpMethod.POST, "/mfa-challenge").authenticated()
 
@@ -96,20 +99,37 @@ class WebSecurityConfig {
     }
 
     @Bean
+    fun mfaLoginWorkflowHandler(clientApplicationRepository: ClientApplicationRepository) =
+        MfaLoginWorkflowHandler(clientApplicationRepository, "/mfa-challenge/send")
+
+    @Bean
+    fun changePasswordLoginWorkflowHandler(accountRepository: AccountRepository) =
+        ChangePasswordLoginWorkflowHandler(accountRepository)
+
+    @Bean
+    fun authenticationTrustResolver(): AuthenticationTrustResolver = AuthenticationTrustResolverImpl()
+
+    @Bean
+    fun loginWorkflowRequestCache(): RequestCache = HttpSessionRequestCache()
+
+    @Bean
+    fun loginWorkflowRedirectStrategy(): RedirectStrategy = DefaultRedirectStrategy()
+
+    @Bean
     fun loginWorkflowEngine(
-        accountRepository: AccountRepository,
-        clientApplicationRepository: ClientApplicationRepository
+        mfaLoginWorkflowHandler: MfaLoginWorkflowHandler,
+        changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler,
+        loginWorkflowRequestCache: RequestCache,
+        loginWorkflowRedirectStrategy: RedirectStrategy,
+        successHandler: AuthenticationSuccessHandler
     ) =
-        CompositeLoginWorkflowEngine(
-            listOf(
-                MfaLoginWorkflowHandler(clientApplicationRepository, "/mfa-challenge/send"),
-                ChangePasswordLoginWorkflowHandler(
-                    accountRepository,
-                    SimpleUrlAuthenticationSuccessHandler(CHANGE_PASSWORD_URL)
-                )
-            ),
-            SimpleUrlAuthenticationSuccessHandler(LOGIN_ENGINE_BROKER_PAGE)
+        LoginWorkflowEngine(
+            listOf(mfaLoginWorkflowHandler, changePasswordLoginWorkflowHandler),
+            loginWorkflowRequestCache,
+            loginWorkflowRedirectStrategy,
+            successHandler
         )
+
 
 
     @Bean
@@ -158,11 +178,6 @@ class WebSecurityConfig {
     @Bean
     fun successHandler(): AuthenticationSuccessHandler {
         return SavedRequestAwareAuthenticationSuccessHandler()
-    }
-
-    @Bean
-    fun nextHopeLoginWorkflowSuccessHandler(): AuthenticationSuccessHandler {
-        return SimpleUrlAuthenticationSuccessHandler(LOGIN_ENGINE_BROKER_PAGE)
     }
 
     @Bean

@@ -7,7 +7,7 @@ section: Features · Account lifecycle
 
 ## What it provides
 
-Account flows include signup, welcome email, email verification, password reset, and password change. Post-login workflows can require a password reset before the user continues.
+Account flows include signup, welcome email, email verification, password reset, and password change. A pending password change must be completed before any application accepts the sign-in. It is presented right after the password, after MFA when the application requires it.
 
 Administrators can manage accounts and assign password lifecycle rules through the management UI or management APIs.
 

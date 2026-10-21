@@ -4,6 +4,7 @@ import com.vauthenticator.server.account.domain.AccountMandatoryAction
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.password.domain.changepassword.*
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -11,7 +12,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,7 +24,8 @@ class ChangePasswordController(
     private val accountRepository: AccountRepository,
     private val publisher: ApplicationEventPublisher,
     private val changePassword: ChangePassword,
-    private val nextHopeLoginWorkflowSuccessHandler: AuthenticationSuccessHandler,
+    private val loginWorkflowEngine: LoginWorkflowEngine,
+    private val changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler,
     private val changePasswordFailureHandler: AuthenticationFailureHandler
 ) {
 
@@ -46,7 +47,7 @@ class ChangePasswordController(
     ) {
         try {
             changePasswordFor(authentication, newPassword)
-            nextHopeLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
+            loginWorkflowEngine.stepPassed(changePasswordLoginWorkflowHandler, request, response, authentication)
         } catch (e: Exception) {
             logger.error(e.message, e)
             val changePasswordException = ChangePasswordException(e.message ?: "")

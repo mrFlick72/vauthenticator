@@ -46,6 +46,14 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationSuccessHandler
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
+import com.vauthenticator.server.login.workflow.LoginWorkflowFilter
+import org.springframework.boot.web.servlet.FilterRegistrationBean
+import org.springframework.security.authentication.AuthenticationTrustResolver
+import org.springframework.security.web.RedirectStrategy
+import org.springframework.security.web.savedrequest.RequestCache
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer
@@ -139,10 +147,32 @@ class AuthorizationServerConfig {
 
 
     @Bean
+    fun loginWorkflowFilter(
+        loginWorkflowEngine: LoginWorkflowEngine,
+        providerSettings: AuthorizationServerSettings,
+        authenticationTrustResolver: AuthenticationTrustResolver,
+        loginWorkflowRequestCache: RequestCache,
+        loginWorkflowRedirectStrategy: RedirectStrategy
+    ) = LoginWorkflowFilter(
+        loginWorkflowEngine,
+        PathPatternRequestMatcher.withDefaults().matcher(providerSettings.authorizationEndpoint),
+        authenticationTrustResolver,
+        loginWorkflowRequestCache,
+        loginWorkflowRedirectStrategy
+    )
+
+    // the login workflow filter runs only inside the authorization server security chain: keep Spring Boot
+    // from also registering it as a servlet filter on every request
+    @Bean
+    fun loginWorkflowFilterRegistration(loginWorkflowFilter: LoginWorkflowFilter) =
+        FilterRegistrationBean(loginWorkflowFilter).apply { isEnabled = false }
+
+    @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun authorizationServerSecurityFilterChain(
         providerSettings: AuthorizationServerSettings,
         redisTemplate: RedisTemplate<String, String?>,
+        loginWorkflowFilter: LoginWorkflowFilter,
         http: HttpSecurity
     ): SecurityFilterChain {
         http.csrf { it.disable() }.headers { it.frameOptions { it.disable() } }
@@ -198,6 +228,9 @@ class AuthorizationServerConfig {
                     )
                 )
             }
+        // must run before the authorization endpoint filter, which the configurer also registers before
+        // AbstractPreAuthenticatedProcessingFilter, but later, when the chain is built
+        http.addFilterBefore(loginWorkflowFilter, AbstractPreAuthenticatedProcessingFilter::class.java)
         http.exceptionHandling { it.authenticationEntryPoint(LoginUrlAuthenticationEntryPoint("/login")) }
             .oauth2ResourceServer { it.jwt {} }
 

@@ -10,6 +10,23 @@ The OAuth2/OIDC authorization server and the account, password, MFA and role con
 The client identity that server-initiated actions (such as scheduled jobs) are attributed to when no real client app is involved.
 _Avoid_: anonymous client, null client
 
+### Login
+
+**Login Workflow**:
+The steps an account holder must pass, after proving their password, before a client app accepts the session: today the MFA challenge (for apps that require it) and the mandatory password change. The workflow is checked on every authorization request, not only right after the password: each **Passed Step** is skipped, every other step is evaluated again. Reaching a step's page does not pass it. Steps run in a fixed order (MFA before password change). A login with no client app asking runs only the steps that do not depend on an app; the others wait for the first authorization request.
+_Avoid_: next hop
+
+**Passed Step**:
+A **Login Workflow** step the account holder actually completed in this session. It stays passed until the session ends (logout or expiry) or the password is proven again in the session (any new login starts the workflow fresh), and is not evaluated again on later authorization requests. A step that was skipped because it was not required is not passed; it is evaluated again next time.
+
+**Login-Complete**:
+A session is login-complete for a client app when every **Login Workflow** step that app requires has been passed. A session that proved the password but is not login-complete for the requesting app is sent back into the workflow instead of being logged into the app. It is judged per app: a session can be login-complete for one app and not for another.
+_Avoid_: logged in (when the workflow is not complete), fully authenticated
+
+**Second-Factor-Verified Session**:
+A session in which the MFA challenge is a **Passed Step**. It counts for every client app that requires MFA for the rest of the session, so MFA is not presented again; a session that is login-complete only for an app without MFA is not second-factor-verified.
+_Avoid_: MFA session, step-up
+
 ### Password lifecycle
 
 **Password Lifecycle Rule**:

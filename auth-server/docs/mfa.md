@@ -9,6 +9,10 @@ In order to increase account security VAuthenticator allows registering MFA via 
 
 Sequence diagrams of each use case, from the endpoint to the stores, are in [mfa-sequence-diagrams.md](mfa-sequence-diagrams.md).
 
+At login, MFA is a step of the login workflow: a client application with the ```mfa:always``` scope gets an authorization code only once the session has passed the MFA challenge, and a challenge passed once counts for every such application for the rest of the session. See [login-workflow.md](login-workflow.md).
+
+**A client application with ```mfa:always``` must also have ```mfa:enrollment```.** The login MFA page lists the account's devices with ```GET /api/mfa/enrollment```, authorized by the scopes of the client application in the browser session. Without ```mfa:enrollment``` that call gets ```403```, the page has no device to submit, and every code is rejected as wrong or expired (the server logs ```MfaDeviceNotFoundException```).
+
 During the account registration a step to validate the main mail, that is the user_name too, the main mail became a valid MFA channel.
 It is possible to register multiple email via api.
 
@@ -191,3 +195,5 @@ Sends an MFA challenge code to the account's default enrolled device, or to a sp
 ### Verification
 
 A login challenge is verified against the device named by ```mfa-device-id```, or against the account's default device. The verification fails when that device does not exist, belongs to another account, or is not associated, and when the account has no default device. An association ticket fails when its device no longer exists.
+
+A verified login challenge marks MFA as passed in the session and resumes the authorization request that asked for it (see [login-workflow.md](login-workflow.md)).

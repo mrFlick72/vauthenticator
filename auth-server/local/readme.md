@@ -9,6 +9,7 @@ That's way we provide one docker compose with all the needed infrastructure and 
 - default client application for configure the sso login for the admin ui:
     - username: vauthenticator-management-ui
     - password: secret
+    - to require MFA at login, give it both `mfa:always` and `mfa:enrollment`; with `mfa:always` alone the MFA page cannot list the devices and every code is rejected (see [mfa.md](../docs/mfa.md))
 - default admin user
     - link: http://local.management.vauthenticator.com:8085/secure/admin/index
     - username: admin@email.com
