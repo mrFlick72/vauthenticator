@@ -92,4 +92,17 @@ class CompositeLoginWorkflowEngineTest {
 
         assertEquals("/", response.redirectedUrl)
     }
+
+    @Test
+    fun `when a step is passed it is remembered in the session and the authorization request is resumed`() {
+        val authorizationRequest = MockHttpServletRequest("GET", "/oauth2/authorize")
+            .apply { queryString = "client_id=A_CLIENT_APP_ID" }
+        HttpSessionRequestCache().saveRequest(authorizationRequest, MockHttpServletResponse())
+        val stepRequest = MockHttpServletRequest("POST", "/mfa-challenge").apply { setSession(authorizationRequest.session!!) }
+
+        uut.stepPassed(mfaStep, stepRequest, response, authentication)
+
+        assertEquals(setOf("MFA"), stepRequest.session!!.passedLoginWorkflowSteps())
+        assertEquals("http://localhost/oauth2/authorize?client_id=A_CLIENT_APP_ID&continue", response.redirectedUrl)
+    }
 }

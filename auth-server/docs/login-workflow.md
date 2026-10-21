@@ -9,6 +9,8 @@ The vocabulary (Login Workflow, Passed Step, Login-Complete, Second-Factor-Verif
 
 The diagrams are Mermaid, so GitHub renders them in place.
 
+The engine itself is kept deliberately small for now; its design is to be revisited in [#288](https://github.com/mrFlick72/vauthenticator/issues/288).
+
 ## Rules
 
 - **The workflow is checked on every authorization request** (`/oauth2/authorize`), not only right after the password. That is the only point where a session becomes a login into a client app, so a session that left a step page, or that asks for a second app, is checked again.
@@ -25,12 +27,10 @@ The diagrams are Mermaid, so GitHub renders them in place.
 | Component | Package | Role |
 |---|---|---|
 | `LoginWorkflowHandler` | `login.workflow` | A step: its `id`, its page (`view`) and `isRequiredFor(userName, clientAppId?)`. |
-| `MfaLoginWorkflowHandler` | `mfa.web` | The MFA step (`MFA`). Required when the client app has `mfa:always`; never when no app is asking. Page: `/mfa-challenge/send`. |
+| `MfaLoginWorkflowHandler` | `mfa.domain` | The MFA step (`MFA`). Required when the client app has `mfa:always`; never when no app is asking. Page: `/mfa-challenge/send`. |
 | `ChangePasswordLoginWorkflowHandler` | `password.domain.changepassword` | The password change step (`CHANGE_PASSWORD`). Required while the account has `RESET_PASSWORD`. Page: `/change-password`. |
-| `LoginWorkflowEngine` | `login.workflow` | `pendingStepFor(userName, clientAppId?, passedSteps)`: the first required step that is not passed, or `null`. |
-| `CompositeLoginWorkflowEngine` | `login.workflow` | The engine over the ordered steps, and the form login success handler. |
+| `CompositeLoginWorkflowEngine` | `login.workflow` | The ordered steps and `pendingStepFor(userName, clientAppId?, passedSteps)`: the first required step that is not passed, or `null`. Also the form login success handler, and `stepPassed`, which a step page calls once its step is passed: it records the step and resumes the authorization request. |
 | `LoginWorkflowFilter` | `login.workflow` | Runs the workflow on every authorization request in the authorization server security chain. |
-| `LoginWorkflowStepPassedHandler` | `login.workflow` | Called by a step page once the step is passed: records it and resumes the authorization request. One instance per step. |
 | `PassedLoginWorkflowSteps.kt` | `login.workflow` | `HttpSession` extensions that read, add and forget the passed steps. |
 
 ```mermaid
@@ -51,21 +51,14 @@ classDiagram
         id = CHANGE_PASSWORD
         view = /change-password
     }
-    class LoginWorkflowEngine {
-        <<interface>>
-        +pendingStepFor(userName, clientAppId?, passedSteps) LoginWorkflowHandler?
-    }
     class CompositeLoginWorkflowEngine {
         -handlers: List~LoginWorkflowHandler~
-        +pendingStepFor(...)
+        +pendingStepFor(userName, clientAppId?, passedSteps) LoginWorkflowHandler?
         +onAuthenticationSuccess(...)
+        +stepPassed(step, ...)
     }
     class LoginWorkflowFilter {
         +doFilterInternal(...)
-    }
-    class LoginWorkflowStepPassedHandler {
-        -step: LoginWorkflowHandler
-        +onAuthenticationSuccess(...)
     }
     class AuthenticationSuccessHandler {
         <<interface>>
@@ -86,18 +79,14 @@ classDiagram
 
     LoginWorkflowHandler <|.. MfaLoginWorkflowHandler
     LoginWorkflowHandler <|.. ChangePasswordLoginWorkflowHandler
-    LoginWorkflowEngine <|.. CompositeLoginWorkflowEngine
     AuthenticationSuccessHandler <|.. CompositeLoginWorkflowEngine
-    AuthenticationSuccessHandler <|.. LoginWorkflowStepPassedHandler
     OncePerRequestFilter <|-- LoginWorkflowFilter
     CompositeLoginWorkflowEngine o-- "1..*" LoginWorkflowHandler : steps in order
-    LoginWorkflowFilter --> LoginWorkflowEngine : pendingStepFor
+    LoginWorkflowFilter --> CompositeLoginWorkflowEngine : pendingStepFor
     LoginWorkflowFilter ..> PassedLoginWorkflowSteps : reads
-    CompositeLoginWorkflowEngine ..> PassedLoginWorkflowSteps : forgets
-    LoginWorkflowStepPassedHandler ..> PassedLoginWorkflowSteps : adds
-    LoginWorkflowStepPassedHandler --> LoginWorkflowHandler : step
-    MfaController --> LoginWorkflowStepPassedHandler : MFA passed
-    ChangePasswordController --> LoginWorkflowStepPassedHandler : password changed
+    CompositeLoginWorkflowEngine ..> PassedLoginWorkflowSteps : forgets, adds
+    MfaController --> CompositeLoginWorkflowEngine : stepPassed(MFA)
+    ChangePasswordController --> CompositeLoginWorkflowEngine : stepPassed(CHANGE_PASSWORD)
 ```
 
 ## Session state
@@ -122,7 +111,6 @@ sequenceDiagram
     participant Engine as CompositeLoginWorkflowEngine
     participant Login as Form login<br/>(Spring Security)
     participant Mfa as MfaController
-    participant Passed as LoginWorkflowStepPassedHandler<br/>(MFA)
     participant Session as HTTP session
 
     Browser->>Filter: GET /oauth2/authorize?client_id=app
@@ -140,9 +128,9 @@ sequenceDiagram
     Filter-->>Browser: redirect to /mfa-challenge/send
     Browser->>Mfa: GET /mfa-challenge/send, then POST /mfa-challenge (code)
     Mfa->>Mfa: verify the code
-    Mfa->>Passed: onAuthenticationSuccess
-    Passed->>Session: passed steps = {MFA}
-    Passed-->>Browser: redirect to the saved /oauth2/authorize
+    Mfa->>Engine: stepPassed(MFA)
+    Engine->>Session: passed steps = {MFA}
+    Engine-->>Browser: redirect to the saved /oauth2/authorize
     Browser->>Filter: GET /oauth2/authorize?client_id=app
     Filter->>Engine: pendingStepFor(user, app, {MFA})
     Engine-->>Filter: null (login-complete for app)
@@ -204,7 +192,6 @@ sequenceDiagram
     participant Filter as LoginWorkflowFilter
     participant Engine as CompositeLoginWorkflowEngine
     participant ChangePassword as ChangePasswordController
-    participant Passed as LoginWorkflowStepPassedHandler<br/>(CHANGE_PASSWORD)
     participant SAS as Authorization endpoint
 
     Note over Browser,SAS: Account has RESET_PASSWORD, app has mfa:always, MFA just passed: passed steps = {MFA}
@@ -214,8 +201,8 @@ sequenceDiagram
     Filter-->>Browser: redirect to /change-password
     Browser->>ChangePassword: POST /change-password (new password)
     ChangePassword->>ChangePassword: change the password, clear RESET_PASSWORD
-    ChangePassword->>Passed: onAuthenticationSuccess
-    Passed-->>Browser: passed steps = {MFA, CHANGE_PASSWORD},<br/>redirect to the saved /oauth2/authorize
+    ChangePassword->>Engine: stepPassed(CHANGE_PASSWORD)
+    Engine-->>Browser: passed steps = {MFA, CHANGE_PASSWORD},<br/>redirect to the saved /oauth2/authorize
     Browser->>Filter: GET /oauth2/authorize?client_id=app
     Filter->>Engine: pendingStepFor(user, app, {MFA, CHANGE_PASSWORD})
     Engine-->>Filter: null
@@ -247,7 +234,7 @@ sequenceDiagram
 
 ## Spring wiring
 
-- `WebSecurityConfig` declares the steps (`mfaLoginWorkflowHandler`, `changePasswordLoginWorkflowHandler`), the engine (`loginWorkflowEngine`, used as the form login `successHandler`), one `LoginWorkflowStepPassedHandler` per step (`mfaLoginWorkflowSuccessHandler`, `changePasswordLoginWorkflowSuccessHandler`, injected by name into `MfaController` and `ChangePasswordController`), the request cache and redirect strategy, and the `AuthenticationTrustResolver`.
+- `WebSecurityConfig` declares the steps (`mfaLoginWorkflowHandler`, `changePasswordLoginWorkflowHandler`), the engine (`loginWorkflowEngine`, used as the form login `successHandler` and injected into `MfaController` and `ChangePasswordController` together with their step), the request cache and redirect strategy, and the `AuthenticationTrustResolver`.
 - `AuthorizationServerConfig` declares `loginWorkflowFilter` and adds it to `authorizationServerSecurityFilterChain` with `addFilterBefore(…, AbstractPreAuthenticatedProcessingFilter)`. The authorization endpoint filter is registered at the same position later, when the chain is built, so the login workflow filter runs first.
 - `loginWorkflowFilterRegistration` is a disabled `FilterRegistrationBean`. Spring Boot registers every `Filter` bean as a servlet filter on all requests; this filter must run only inside the security chain, where the security context is loaded.
 - The filter matches the authorization endpoint configured in `AuthorizationServerSettings`.
@@ -256,7 +243,7 @@ sequenceDiagram
 
 1. Implement `LoginWorkflowHandler` in the domain package that owns the step: a stable `id`, the page, and `isRequiredFor`. Return `false` when the step depends on the client app and `clientAppId` is `null`.
 2. Declare it as a bean and add it to the list in `loginWorkflowEngine`, at the position it must be presented in.
-3. Declare a `LoginWorkflowStepPassedHandler` bean for it, and call it from the step page once the step is passed.
+3. From the step page, once the step is passed, call `CompositeLoginWorkflowEngine.stepPassed` with the step.
 4. Make the step page reachable by an authenticated session that is not login-complete (`WebSecurityConfig`), and keep anything it calls from accepting a session for more than the step needs.
 5. Add the step to the list at the top of this page and to [CONTEXT.md](../CONTEXT.md).
 

@@ -2,6 +2,7 @@ package com.vauthenticator.server.mfa.web
 
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
+import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.*
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -21,7 +21,8 @@ import java.util.*
 class MfaController(
     private val i18nMessageInjector: I18nMessageInjector,
     private val publisher: ApplicationEventPublisher,
-    private val mfaLoginWorkflowSuccessHandler: AuthenticationSuccessHandler,
+    private val loginWorkflowEngine: CompositeLoginWorkflowEngine,
+    private val mfaLoginWorkflowHandler: MfaLoginWorkflowHandler,
     private val mfaFailureHandler: AuthenticationFailureHandler,
     private val mfaChallengeSender: MfaChallengeSender,
     private val mfaVerifier: MfaVerifier
@@ -70,7 +71,7 @@ class MfaController(
             )
 
             publisher.publishEvent(MfaSuccessEvent(authentication))
-            mfaLoginWorkflowSuccessHandler.onAuthenticationSuccess(request, response, authentication)
+            loginWorkflowEngine.stepPassed(mfaLoginWorkflowHandler, request, response, authentication)
         } catch (e: RuntimeException) {
             logger.error(e.message, e)
             val mfaException = MfaException("Invalid mfa code")

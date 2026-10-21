@@ -28,7 +28,7 @@ import org.springframework.web.filter.OncePerRequestFilter
  * @param redirectStrategy sends the account holder to the pending step
  */
 class LoginWorkflowFilter(
-    private val engine: LoginWorkflowEngine,
+    private val engine: CompositeLoginWorkflowEngine,
     private val authorizationRequest: RequestMatcher,
     private val trustResolver: AuthenticationTrustResolver,
     private val requestCache: RequestCache,

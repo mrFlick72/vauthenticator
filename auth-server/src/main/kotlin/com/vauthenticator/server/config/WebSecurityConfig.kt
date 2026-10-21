@@ -3,7 +3,6 @@ package com.vauthenticator.server.config
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.login.userdetails.AccountUserDetailsService
 import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
-import com.vauthenticator.server.login.workflow.LoginWorkflowStepPassedHandler
 import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
@@ -131,19 +130,6 @@ class WebSecurityConfig {
             successHandler
         )
 
-    @Bean
-    fun mfaLoginWorkflowSuccessHandler(
-        mfaLoginWorkflowHandler: MfaLoginWorkflowHandler,
-        successHandler: AuthenticationSuccessHandler
-    ): AuthenticationSuccessHandler =
-        LoginWorkflowStepPassedHandler(mfaLoginWorkflowHandler, successHandler)
-
-    @Bean
-    fun changePasswordLoginWorkflowSuccessHandler(
-        changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler,
-        successHandler: AuthenticationSuccessHandler
-    ): AuthenticationSuccessHandler =
-        LoginWorkflowStepPassedHandler(changePasswordLoginWorkflowHandler, successHandler)
 
 
     @Bean

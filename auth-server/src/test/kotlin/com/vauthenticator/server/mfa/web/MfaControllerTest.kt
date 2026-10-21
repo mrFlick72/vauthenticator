@@ -2,6 +2,7 @@ package com.vauthenticator.server.mfa.web
 
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
+import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.*
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.SecurityFixture.principalFor
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.security.web.authentication.AuthenticationFailureHandler
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -29,7 +29,10 @@ class MfaControllerTest {
     lateinit var mokMvc: MockMvc
 
     @MockK
-    private lateinit var successHandler: AuthenticationSuccessHandler
+    private lateinit var loginWorkflowEngine: CompositeLoginWorkflowEngine
+
+    @MockK
+    private lateinit var mfaLoginWorkflowHandler: MfaLoginWorkflowHandler
 
     @MockK
     private lateinit var failureHandler: AuthenticationFailureHandler
@@ -54,7 +57,8 @@ class MfaControllerTest {
             MfaController(
                 i18nMessageInjector,
                 publisher,
-                successHandler,
+                loginWorkflowEngine,
+                mfaLoginWorkflowHandler,
                 failureHandler,
                 mfaChallengeSender,
                 mfaVerifier
@@ -97,7 +101,7 @@ class MfaControllerTest {
             )
         } just runs
         every { publisher.publishEvent(MfaSuccessEvent(mfaAuthentication)) } just runs
-        every { successHandler.onAuthenticationSuccess(any(), any(), mfaAuthentication) } just runs
+        every { loginWorkflowEngine.stepPassed(mfaLoginWorkflowHandler, any(), any(), mfaAuthentication) } just runs
 
         mokMvc.perform(
             post("/mfa-challenge")
@@ -112,7 +116,7 @@ class MfaControllerTest {
                 MfaChallenge("AN_MFA_CHALLENGE_CODE")
             )
         }
-        verify { successHandler.onAuthenticationSuccess(any(), any(), mfaAuthentication) }
+        verify { loginWorkflowEngine.stepPassed(mfaLoginWorkflowHandler, any(), any(), mfaAuthentication) }
     }
 
     @Test
@@ -128,7 +132,7 @@ class MfaControllerTest {
             )
         } just runs
         every { publisher.publishEvent(MfaSuccessEvent(mfaAuthentication)) } just runs
-        every { successHandler.onAuthenticationSuccess(any(), any(), mfaAuthentication) } just runs
+        every { loginWorkflowEngine.stepPassed(mfaLoginWorkflowHandler, any(), any(), mfaAuthentication) } just runs
 
         mokMvc.perform(
             post("/mfa-challenge")
@@ -145,7 +149,7 @@ class MfaControllerTest {
                 MfaChallenge("AN_MFA_CHALLENGE_CODE")
             )
         }
-        verify { successHandler.onAuthenticationSuccess(any(), any(), mfaAuthentication) }
+        verify { loginWorkflowEngine.stepPassed(mfaLoginWorkflowHandler, any(), any(), mfaAuthentication) }
     }
 
     @Test
