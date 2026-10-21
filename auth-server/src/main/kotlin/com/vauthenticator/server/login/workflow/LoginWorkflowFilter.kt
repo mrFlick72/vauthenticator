@@ -4,11 +4,11 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.security.authentication.AuthenticationTrustResolverImpl
+import org.springframework.security.authentication.AuthenticationTrustResolver
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.web.DefaultRedirectStrategy
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
+import org.springframework.security.web.RedirectStrategy
+import org.springframework.security.web.savedrequest.RequestCache
+import org.springframework.security.web.util.matcher.RequestMatcher
 import org.springframework.web.filter.OncePerRequestFilter
 
 /**
@@ -17,13 +17,11 @@ import org.springframework.web.filter.OncePerRequestFilter
  */
 class LoginWorkflowFilter(
     private val engine: LoginWorkflowEngine,
-    authorizationEndpoint: String = "/oauth2/authorize"
+    private val authorizationRequest: RequestMatcher,
+    private val trustResolver: AuthenticationTrustResolver,
+    private val requestCache: RequestCache,
+    private val redirectStrategy: RedirectStrategy
 ) : OncePerRequestFilter() {
-
-    private val authorizationRequest = PathPatternRequestMatcher.withDefaults().matcher(authorizationEndpoint)
-    private val trustResolver = AuthenticationTrustResolverImpl()
-    private val requestCache = HttpSessionRequestCache()
-    private val redirectStrategy = DefaultRedirectStrategy()
 
     override fun shouldNotFilter(request: HttpServletRequest) = !authorizationRequest.matches(request)
 

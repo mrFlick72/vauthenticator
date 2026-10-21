@@ -23,6 +23,10 @@ import org.springframework.mock.web.MockFilterChain
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.authentication.AnonymousAuthenticationToken
+import org.springframework.security.authentication.AuthenticationTrustResolverImpl
+import org.springframework.security.web.DefaultRedirectStrategy
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.core.authority.AuthorityUtils
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
@@ -53,7 +57,18 @@ class LoginWorkflowFilterTest {
     fun setUp() {
         mfaStep = MfaLoginWorkflowHandler(clientApplicationRepository, "/mfa-challenge/send")
         changePasswordStep = ChangePasswordLoginWorkflowHandler(accountRepository)
-        uut = LoginWorkflowFilter(CompositeLoginWorkflowEngine(listOf(mfaStep, changePasswordStep)))
+        uut = LoginWorkflowFilter(
+            CompositeLoginWorkflowEngine(
+                listOf(mfaStep, changePasswordStep),
+                HttpSessionRequestCache(),
+                DefaultRedirectStrategy(),
+                SavedRequestAwareAuthenticationSuccessHandler()
+            ),
+            PathPatternRequestMatcher.withDefaults().matcher("/oauth2/authorize"),
+            AuthenticationTrustResolverImpl(),
+            HttpSessionRequestCache(),
+            DefaultRedirectStrategy()
+        )
 
         every { accountRepository.accountFor(account.email) } returns account
     }

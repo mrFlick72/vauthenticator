@@ -4,10 +4,9 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.core.Authentication
-import org.springframework.security.web.DefaultRedirectStrategy
+import org.springframework.security.web.RedirectStrategy
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
-import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler
-import org.springframework.security.web.savedrequest.HttpSessionRequestCache
+import org.springframework.security.web.savedrequest.RequestCache
 
 interface LoginWorkflowEngine {
     fun pendingStepFor(userName: String, clientAppId: ClientAppId?, passedSteps: Set<String>): LoginWorkflowHandler?
@@ -19,12 +18,11 @@ interface LoginWorkflowEngine {
  * asking runs the steps that do not depend on an app straight away.
  */
 class CompositeLoginWorkflowEngine(
-    private val handlers: List<LoginWorkflowHandler>
+    private val handlers: List<LoginWorkflowHandler>,
+    private val requestCache: RequestCache,
+    private val redirectStrategy: RedirectStrategy,
+    private val defaultSuccessHandler: AuthenticationSuccessHandler
 ) : LoginWorkflowEngine, AuthenticationSuccessHandler {
-
-    private val requestCache = HttpSessionRequestCache()
-    private val redirectStrategy = DefaultRedirectStrategy()
-    private val defaultSuccessHandler = SavedRequestAwareAuthenticationSuccessHandler()
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,

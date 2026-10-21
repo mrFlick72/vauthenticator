@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
 
 class LoginWorkflowStepPassedHandlerTest {
@@ -16,7 +17,7 @@ class LoginWorkflowStepPassedHandlerTest {
         override fun isRequiredFor(userName: String, clientAppId: ClientAppId?) = true
     }
 
-    private val uut = LoginWorkflowStepPassedHandler(step)
+    private val uut = LoginWorkflowStepPassedHandler(step, SavedRequestAwareAuthenticationSuccessHandler())
 
     @Test
     fun `when a step is passed it is remembered in the session and the authorization request is resumed`() {

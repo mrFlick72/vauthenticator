@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import org.springframework.security.web.DefaultRedirectStrategy
+import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
 
 @ExtendWith(MockKExtension::class)
@@ -38,7 +40,12 @@ class CompositeLoginWorkflowEngineTest {
     @BeforeEach
     fun setUp() {
         mfaStep = MfaLoginWorkflowHandler(clientApplicationRepository, "/mfa-challenge/send")
-        uut = CompositeLoginWorkflowEngine(listOf(mfaStep, ChangePasswordLoginWorkflowHandler(accountRepository)))
+        uut = CompositeLoginWorkflowEngine(
+            listOf(mfaStep, ChangePasswordLoginWorkflowHandler(accountRepository)),
+            HttpSessionRequestCache(),
+            DefaultRedirectStrategy(),
+            SavedRequestAwareAuthenticationSuccessHandler()
+        )
 
         every { accountRepository.accountFor(account.email) } returns account
     }

@@ -16,6 +16,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.security.authentication.AuthenticationTrustResolver
+import org.springframework.security.authentication.AuthenticationTrustResolverImpl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -24,7 +26,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.web.DefaultRedirectStrategy
+import org.springframework.security.web.RedirectStrategy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache
+import org.springframework.security.web.savedrequest.RequestCache
 import org.springframework.security.web.authentication.*
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
@@ -102,23 +108,42 @@ class WebSecurityConfig {
         ChangePasswordLoginWorkflowHandler(accountRepository)
 
     @Bean
+    fun authenticationTrustResolver(): AuthenticationTrustResolver = AuthenticationTrustResolverImpl()
+
+    @Bean
+    fun loginWorkflowRequestCache(): RequestCache = HttpSessionRequestCache()
+
+    @Bean
+    fun loginWorkflowRedirectStrategy(): RedirectStrategy = DefaultRedirectStrategy()
+
+    @Bean
     fun loginWorkflowEngine(
         mfaLoginWorkflowHandler: MfaLoginWorkflowHandler,
-        changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler
+        changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler,
+        loginWorkflowRequestCache: RequestCache,
+        loginWorkflowRedirectStrategy: RedirectStrategy,
+        successHandler: AuthenticationSuccessHandler
     ) =
         CompositeLoginWorkflowEngine(
-            listOf(mfaLoginWorkflowHandler, changePasswordLoginWorkflowHandler)
+            listOf(mfaLoginWorkflowHandler, changePasswordLoginWorkflowHandler),
+            loginWorkflowRequestCache,
+            loginWorkflowRedirectStrategy,
+            successHandler
         )
 
     @Bean
-    fun mfaLoginWorkflowSuccessHandler(mfaLoginWorkflowHandler: MfaLoginWorkflowHandler): AuthenticationSuccessHandler =
-        LoginWorkflowStepPassedHandler(mfaLoginWorkflowHandler)
+    fun mfaLoginWorkflowSuccessHandler(
+        mfaLoginWorkflowHandler: MfaLoginWorkflowHandler,
+        successHandler: AuthenticationSuccessHandler
+    ): AuthenticationSuccessHandler =
+        LoginWorkflowStepPassedHandler(mfaLoginWorkflowHandler, successHandler)
 
     @Bean
     fun changePasswordLoginWorkflowSuccessHandler(
-        changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler
+        changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler,
+        successHandler: AuthenticationSuccessHandler
     ): AuthenticationSuccessHandler =
-        LoginWorkflowStepPassedHandler(changePasswordLoginWorkflowHandler)
+        LoginWorkflowStepPassedHandler(changePasswordLoginWorkflowHandler, successHandler)
 
 
     @Bean
