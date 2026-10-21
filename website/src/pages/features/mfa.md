@@ -15,6 +15,10 @@ An MFA device is one method (email or SMS) on one channel: an email address or a
 
 Use MFA when a password alone is insufficient for the sign-in experience your application needs. A client application requires it with the `mfa:always` scope. The available channel depends on how the server and its communication services are configured.
 
+## How MFA applies at sign-in
+
+A client application with the `mfa:always` scope gets a sign-in only once the account holder has passed the MFA challenge. The check runs every time an application asks for a sign-in, so leaving the MFA page does not skip it. A challenge passed once counts for every application that requires MFA for the rest of the session, and signing in again with the password starts over.
+
 ## Managing MFA devices
 
 Your application can let account holders manage their own devices through the API, with a bearer token carrying the `mfa:enrollment` scope:
@@ -37,3 +41,5 @@ To replace that email with a phone, the account enrolls and associates the phone
 [Read the MFA API reference, including a revocation walkthrough](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/mfa.md).
 
 [See the sequence diagrams of each MFA use case](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/mfa-sequence-diagrams.md).
+
+[Read how the login workflow runs MFA and the mandatory password change](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/login-workflow.md).
