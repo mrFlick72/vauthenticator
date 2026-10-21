@@ -2,7 +2,7 @@ package com.vauthenticator.server.mfa.web
 
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
-import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.*
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.SecurityFixture.principalFor
@@ -29,7 +29,7 @@ class MfaControllerTest {
     lateinit var mokMvc: MockMvc
 
     @MockK
-    private lateinit var loginWorkflowEngine: CompositeLoginWorkflowEngine
+    private lateinit var loginWorkflowEngine: LoginWorkflowEngine
 
     @MockK
     private lateinit var mfaLoginWorkflowHandler: MfaLoginWorkflowHandler

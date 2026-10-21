@@ -27,7 +27,7 @@ import org.springframework.security.web.savedrequest.RequestCache
  * @param redirectStrategy sends the account holder to a pending step
  * @param defaultSuccessHandler resumes the saved request, or goes to the default target when there is none
  */
-class CompositeLoginWorkflowEngine(
+class LoginWorkflowEngine(
     private val handlers: List<LoginWorkflowHandler>,
     private val requestCache: RequestCache,
     private val redirectStrategy: RedirectStrategy,

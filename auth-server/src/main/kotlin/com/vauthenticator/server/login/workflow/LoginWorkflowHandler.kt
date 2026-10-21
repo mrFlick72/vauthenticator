@@ -7,7 +7,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
  * before a client app accepts the session (see docs/login-workflow.md).
  *
  * A step only says whether it is required; whether it is passed is remembered in the session
- * ([passedLoginWorkflowSteps]) once its page records it through [CompositeLoginWorkflowEngine.stepPassed].
+ * ([passedLoginWorkflowSteps]) once its page records it through [LoginWorkflowEngine.stepPassed].
  */
 interface LoginWorkflowHandler {
 

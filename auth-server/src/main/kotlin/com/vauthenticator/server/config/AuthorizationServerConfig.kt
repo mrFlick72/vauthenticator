@@ -47,7 +47,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2TokenType
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository
 import org.springframework.security.oauth2.server.authorization.oidc.web.authentication.OidcLogoutAuthenticationSuccessHandler
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter
-import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.login.workflow.LoginWorkflowFilter
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.security.authentication.AuthenticationTrustResolver
@@ -148,7 +148,7 @@ class AuthorizationServerConfig {
 
     @Bean
     fun loginWorkflowFilter(
-        loginWorkflowEngine: CompositeLoginWorkflowEngine,
+        loginWorkflowEngine: LoginWorkflowEngine,
         providerSettings: AuthorizationServerSettings,
         authenticationTrustResolver: AuthenticationTrustResolver,
         loginWorkflowRequestCache: RequestCache,

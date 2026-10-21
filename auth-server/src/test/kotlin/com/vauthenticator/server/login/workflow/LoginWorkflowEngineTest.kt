@@ -21,7 +21,7 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache
 
 @ExtendWith(MockKExtension::class)
-class CompositeLoginWorkflowEngineTest {
+class LoginWorkflowEngineTest {
 
     @MockK
     lateinit var clientApplicationRepository: ClientApplicationRepository
@@ -35,12 +35,12 @@ class CompositeLoginWorkflowEngineTest {
     private val response = MockHttpServletResponse()
 
     lateinit var mfaStep: MfaLoginWorkflowHandler
-    lateinit var uut: CompositeLoginWorkflowEngine
+    lateinit var uut: LoginWorkflowEngine
 
     @BeforeEach
     fun setUp() {
         mfaStep = MfaLoginWorkflowHandler(clientApplicationRepository, "/mfa-challenge/send")
-        uut = CompositeLoginWorkflowEngine(
+        uut = LoginWorkflowEngine(
             listOf(mfaStep, ChangePasswordLoginWorkflowHandler(accountRepository)),
             HttpSessionRequestCache(),
             DefaultRedirectStrategy(),

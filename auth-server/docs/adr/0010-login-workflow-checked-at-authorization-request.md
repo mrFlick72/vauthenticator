@@ -18,8 +18,8 @@ For issue [#287](https://github.com/mrFlick72/vauthenticator/issues/287) the Log
 - Remember "the workflow passed" for the session: rejected. The first app's requirements would count for every later app.
 
 **Consequences:**
-- `LoginWorkflowFilter` runs the check in the authorization server filter chain. A step is a `LoginWorkflowHandler` (`id`, page, `isRequiredFor(userName, clientAppId?)`); `CompositeLoginWorkflowEngine` keeps the ordered steps, finds the pending one, and is still the form login success handler. Passed steps are a set of step ids in a session attribute.
-- `MfaController` and `ChangePasswordController` call `CompositeLoginWorkflowEngine.stepPassed` with their step, which records it as passed and resumes the saved authorization request. The `/login-workflow` page, its session counter and `nextHopeLoginWorkflowSuccessHandler` are gone.
+- `LoginWorkflowFilter` runs the check in the authorization server filter chain. A step is a `LoginWorkflowHandler` (`id`, page, `isRequiredFor(userName, clientAppId?)`); `LoginWorkflowEngine` keeps the ordered steps, finds the pending one, and is still the form login success handler. Passed steps are a set of step ids in a session attribute.
+- `MfaController` and `ChangePasswordController` call `LoginWorkflowEngine.stepPassed` with their step, which records it as passed and resumes the saved authorization request. The `/login-workflow` page, its session counter and `nextHopeLoginWorkflowSuccessHandler` are gone.
 - The MFA step no longer reads `clientId` from the session with an unchecked cast; it takes the client app from the authorization request, and is never required when no app is asking.
 - Every active user is asked for MFA once after the deploy when they next open an `mfa:always` app.
 - The shape of the engine (one class that is both the step list and the form login success handler, controllers depending on it directly) is a stopgap; it is to be revisited in [#288](https://github.com/mrFlick72/vauthenticator/issues/288) without changing the rules above.

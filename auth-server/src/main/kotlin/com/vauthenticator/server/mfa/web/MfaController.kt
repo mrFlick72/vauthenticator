@@ -2,7 +2,7 @@ package com.vauthenticator.server.mfa.web
 
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
-import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.*
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -21,7 +21,7 @@ import java.util.*
 class MfaController(
     private val i18nMessageInjector: I18nMessageInjector,
     private val publisher: ApplicationEventPublisher,
-    private val loginWorkflowEngine: CompositeLoginWorkflowEngine,
+    private val loginWorkflowEngine: LoginWorkflowEngine,
     private val mfaLoginWorkflowHandler: MfaLoginWorkflowHandler,
     private val mfaFailureHandler: AuthenticationFailureHandler,
     private val mfaChallengeSender: MfaChallengeSender,

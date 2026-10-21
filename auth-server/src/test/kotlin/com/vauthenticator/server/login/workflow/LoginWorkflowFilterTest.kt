@@ -58,7 +58,7 @@ class LoginWorkflowFilterTest {
         mfaStep = MfaLoginWorkflowHandler(clientApplicationRepository, "/mfa-challenge/send")
         changePasswordStep = ChangePasswordLoginWorkflowHandler(accountRepository)
         uut = LoginWorkflowFilter(
-            CompositeLoginWorkflowEngine(
+            LoginWorkflowEngine(
                 listOf(mfaStep, changePasswordStep),
                 HttpSessionRequestCache(),
                 DefaultRedirectStrategy(),

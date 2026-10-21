@@ -4,7 +4,7 @@ import com.vauthenticator.server.account.domain.AccountMandatoryAction
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
-import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
+import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.password.domain.changepassword.*
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -24,7 +24,7 @@ class ChangePasswordController(
     private val accountRepository: AccountRepository,
     private val publisher: ApplicationEventPublisher,
     private val changePassword: ChangePassword,
-    private val loginWorkflowEngine: CompositeLoginWorkflowEngine,
+    private val loginWorkflowEngine: LoginWorkflowEngine,
     private val changePasswordLoginWorkflowHandler: ChangePasswordLoginWorkflowHandler,
     private val changePasswordFailureHandler: AuthenticationFailureHandler
 ) {
