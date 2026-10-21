@@ -2,7 +2,7 @@
 
 After the account holder proves their password, the login workflow decides what else they must pass before a client app accepts the session. Today the steps are, in this order:
 
-1. **MFA challenge**: required by client apps with the `mfa:always` scope.
+1. **MFA challenge**: required by client apps with the `mfa:always` scope. Such an app must also have `mfa:enrollment`, or the MFA page cannot list the account's devices (see [mfa.md](mfa.md)).
 2. **Mandatory password change**: required while the account has the `RESET_PASSWORD` mandatory action.
 
 The vocabulary (Login Workflow, Passed Step, Login-Complete, Second-Factor-Verified Session) is defined in [CONTEXT.md](../CONTEXT.md). The design decisions and the rejected alternatives are in [ADR 0010](adr/0010-login-workflow-checked-at-authorization-request.md). The MFA endpoints are described in [mfa.md](mfa.md).

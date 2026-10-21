@@ -11,6 +11,8 @@ Sequence diagrams of each use case, from the endpoint to the stores, are in [mfa
 
 At login, MFA is a step of the login workflow: a client application with the ```mfa:always``` scope gets an authorization code only once the session has passed the MFA challenge, and a challenge passed once counts for every such application for the rest of the session. See [login-workflow.md](login-workflow.md).
 
+**A client application with ```mfa:always``` must also have ```mfa:enrollment```.** The login MFA page lists the account's devices with ```GET /api/mfa/enrollment```, authorized by the scopes of the client application in the browser session. Without ```mfa:enrollment``` that call gets ```403```, the page has no device to submit, and every code is rejected as wrong or expired (the server logs ```MfaDeviceNotFoundException```).
+
 During the account registration a step to validate the main mail, that is the user_name too, the main mail became a valid MFA channel.
 It is possible to register multiple email via api.
 
