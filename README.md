@@ -75,6 +75,7 @@ Runtime auth/API settings are loaded from a static `GET /config.json`, generated
 
 - [Auth server profiles](auth-server/docs/profiles.md)
 - [Auth server MFA](auth-server/docs/mfa.md)
+- [Auth server login workflow](auth-server/docs/login-workflow.md)
 - [Auth server Lambda token customization](auth-server/docs/lambda.md)
 - [Auth server management endpoints](auth-server/docs/management.md)
 - [Auth server security assessment](auth-server/docs/security-assessment.md)

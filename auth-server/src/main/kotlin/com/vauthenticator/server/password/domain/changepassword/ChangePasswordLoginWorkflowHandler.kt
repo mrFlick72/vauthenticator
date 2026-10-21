@@ -7,6 +7,11 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 
 const val CHANGE_PASSWORD_URL = "/change-password"
 
+/**
+ * The mandatory password change step of the login workflow. It is required while the account has the
+ * `RESET_PASSWORD` mandatory action, for any client app and also when none is asking, so it runs right after a
+ * direct login too.
+ */
 class ChangePasswordLoginWorkflowHandler(
     val accountRepository: AccountRepository
 ) : LoginWorkflowHandler {

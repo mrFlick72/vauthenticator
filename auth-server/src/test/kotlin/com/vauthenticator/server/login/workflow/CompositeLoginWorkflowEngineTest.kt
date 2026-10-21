@@ -2,7 +2,7 @@ package com.vauthenticator.server.login.workflow
 
 import com.vauthenticator.server.account.domain.AccountMandatoryAction.RESET_PASSWORD
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.mfa.web.MfaLoginWorkflowHandler
+import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
 import com.vauthenticator.server.support.AccountTestFixture.anAccount

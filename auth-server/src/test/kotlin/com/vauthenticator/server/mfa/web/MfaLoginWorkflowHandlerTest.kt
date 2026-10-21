@@ -1,5 +1,6 @@
 package com.vauthenticator.server.mfa.web
 
+import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import com.vauthenticator.server.support.ClientAppFixture
 import io.mockk.every

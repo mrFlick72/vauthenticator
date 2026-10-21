@@ -267,7 +267,7 @@ sequenceDiagram
 
 ## 7. Verify the second factor at login
 
-`POST /mfa-challenge`: the login MFA page submits the code, optionally with the device it was sent to. Verification fails closed when the device cannot be resolved (VA-SEC-19). Passing it makes MFA a passed step for the rest of the session, then resumes the authorization request that asked for it; the login workflow is checked again on every authorization request (ADR 0010).
+`POST /mfa-challenge`: the login MFA page submits the code, optionally with the device it was sent to. Verification fails closed when the device cannot be resolved (VA-SEC-19). Passing it makes MFA a passed step for the rest of the session, then resumes the authorization request that asked for it; the login workflow is checked again on every authorization request (see [login-workflow.md](login-workflow.md) and ADR 0010).
 
 ```mermaid
 sequenceDiagram

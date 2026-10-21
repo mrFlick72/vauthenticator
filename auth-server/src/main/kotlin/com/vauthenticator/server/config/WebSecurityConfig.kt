@@ -4,7 +4,7 @@ import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.login.userdetails.AccountUserDetailsService
 import com.vauthenticator.server.login.workflow.CompositeLoginWorkflowEngine
 import com.vauthenticator.server.login.workflow.LoginWorkflowStepPassedHandler
-import com.vauthenticator.server.mfa.web.MfaLoginWorkflowHandler
+import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
