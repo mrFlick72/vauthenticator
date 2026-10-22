@@ -142,14 +142,8 @@ class MfaConfig {
 
     @Bean
     fun mfaSmsSender(
-        snsClient: SnsClient,
-        documentRepository: DocumentRepository
-    ) = SnsSmsSenderService(
-        snsClient,
-        documentRepository,
-        JinJavaTemplateResolver(Jinjava()),
-        SimpleSmsMessageFactory(SmsType.MFA)
-    )
+        snsClient: SnsClient
+    ) = SnsSmsSenderService(snsClient, SimpleSmsMessageFactory())
 
     @Bean
     fun mfaMailSender(

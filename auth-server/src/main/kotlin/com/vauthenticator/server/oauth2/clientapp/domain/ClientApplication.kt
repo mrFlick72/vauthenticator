@@ -292,9 +292,6 @@ data class Scope(val content: String) {
         val MAIL_TEMPLATE_READER = Scope("admin:email-template-reader")
         val MAIL_TEMPLATE_WRITER = Scope("admin:email-template-writer")
 
-        val SMS_TEMPLATE_READER = Scope("admin:sms-template-reader")
-        val SMS_TEMPLATE_WRITER = Scope("admin:sms-template-writer")
-
         val KEY_READER = Scope("admin:key-reader")
         val KEY_EDITOR = Scope("admin:key-editor")
 
@@ -336,9 +333,6 @@ data class Scope(val content: String) {
 
             MAIL_TEMPLATE_READER,
             MAIL_TEMPLATE_WRITER,
-
-            SMS_TEMPLATE_READER,
-            SMS_TEMPLATE_WRITER,
 
             MFA_ALWAYS,
             MFA_ENROLLMENT,

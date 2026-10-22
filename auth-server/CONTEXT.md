@@ -71,12 +71,3 @@ The associated device a challenge goes to when the caller does not name one.
 **Revoke**:
 The account holder takes a device off their account; it can no longer receive or verify challenges. An account's last associated device cannot be revoked, nor can its **Default Device** until another device is made default; enrolled devices can always be revoked. Revoking a device is distinct from revoking a ticket or a token.
 _Avoid_: remove, delete
-
-### Communication
-
-**SMS Type**:
-The purpose an SMS is sent for; each type has exactly one **SMS Template**. Today the only type is the MFA challenge; more purposes may be added later.
-
-**SMS Template**:
-The admin-editable text an SMS of a given **SMS Type** is rendered from. It mirrors the email template of an email type: an SMS whose template has not been set up cannot be sent.
-_Avoid_: SMS message (for the template)

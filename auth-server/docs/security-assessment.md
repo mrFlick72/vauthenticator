@@ -476,10 +476,6 @@ settings") could not be trusted below version 2.8.3. Fixed in PR #350 by bumping
 tightly gating `admin:email-template-writer`, and revisiting Jinjava sandbox configuration now that
 the underlying sandbox bug is patched — is still open.**
 
-**2026-10-22 update (#290):** SMS templates (`PUT /api/sms-template`) are rendered by the same
-`JinJavaTemplateResolver`, so `admin:sms-template-writer` is the same code-execution-equivalent grant
-as `admin:email-template-writer` and falls under this finding.
-
 ### VA-SEC-13 — Possible flag-mapping bug
 - [ ] Verified / fixed
 

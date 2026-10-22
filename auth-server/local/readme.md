@@ -33,7 +33,7 @@ add on your local hosts file the following configurations
     127.0.0.1   local.management.vauthenticator.com
     ```
 
-### ui, mail and sms template local environment
+### ui and mail template local environment
 In order to make simple the ui assets build for local development take in consideration to enable the following spring configuration properties:
 
 ```yaml
@@ -42,7 +42,7 @@ In order to make simple the ui assets build for local development take in consid
     fs-base-path: dist
 ```
 
-in order to be sure to have the assets and the default email and SMS templates you can use the ```build-frontend.sh```
+in order to be sure to have the assets you can use the ```build-frontend.sh```
 
 ## Installation in a NON AWS Environment 
 

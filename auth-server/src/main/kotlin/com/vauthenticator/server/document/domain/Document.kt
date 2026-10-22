@@ -19,5 +19,5 @@ data class Document(val contentType: String, val path: String, val content: Byte
 }
 
 enum class DocumentType(val content: String) {
-    EMAIL("email"), SMS("sms"), STATIC_ASSET("static-asset")
+    EMAIL("email"), STATIC_ASSET("static-asset")
 }

@@ -11,8 +11,6 @@ VAuthenticator includes MFA support with email, SMS, and OTP methods. The login 
 
 An MFA device is one method (email or SMS) on one channel: an email address or a phone number. A device is enrolled when it is registered, and associated once the account holder confirms the code sent to it. Only associated devices count as a second factor. One associated device is the default device, which receives the login challenge unless the sign-in page picks another one.
 
-The text of a challenge is a template an administrator can edit, for email and for SMS alike, from the management UI or the template APIs. An SMS challenge, like an email one, can be sent only once its template is set up; the local setup installs a default one.
-
 ## When it is useful
 
 Use MFA when a password alone is insufficient for the sign-in experience your application needs. A client application requires it with the `mfa:always` scope. The available channel depends on how the server and its communication services are configured.

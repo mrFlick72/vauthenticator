@@ -11,13 +11,9 @@ class SimpleSmsMessageFactoryTest {
     @Test
     fun `happy path`() {
         val account = anAccountWithPhoneNumber()
-        val uut = SimpleSmsMessageFactory(SmsType.MFA)
+        val uut = SimpleSmsMessageFactory()
 
-        val expected = SmsMessage(
-            "+39 339 2323223",
-            SmsType.MFA,
-            messageContextFrom(account) + mapOf("mfaCode" to "123")
-        )
+        val expected = SmsMessage("+39 339 2323223", "123")
         val actual = uut.makeSmsMessageFor(account, mapOf("mfaCode" to "123"))
 
         assertEquals(expected, actual)
@@ -26,7 +22,7 @@ class SimpleSmsMessageFactoryTest {
     @Test
     fun `missing mfa code makes sms context invalid`() {
         val account = anAccountWithPhoneNumber()
-        val uut = SimpleSmsMessageFactory(SmsType.MFA)
+        val uut = SimpleSmsMessageFactory()
 
         val actual = assertThrows(InvalidSmsMessageContextException::class.java) {
             uut.makeSmsMessageFor(account, emptyMap())
@@ -38,7 +34,7 @@ class SimpleSmsMessageFactoryTest {
     @Test
     fun `blank phone makes sms context invalid`() {
         val account = anAccount()
-        val uut = SimpleSmsMessageFactory(SmsType.MFA)
+        val uut = SimpleSmsMessageFactory()
 
         val actual = assertThrows(InvalidSmsMessageContextException::class.java) {
             uut.makeSmsMessageFor(account, mapOf("mfaCode" to "123"))
@@ -50,7 +46,7 @@ class SimpleSmsMessageFactoryTest {
     @Test
     fun `mfa code must be a string`() {
         val account = anAccountWithPhoneNumber()
-        val uut = SimpleSmsMessageFactory(SmsType.MFA)
+        val uut = SimpleSmsMessageFactory()
 
         val actual = assertThrows(InvalidSmsMessageContextException::class.java) {
             uut.makeSmsMessageFor(account, mapOf("mfaCode" to 123))

@@ -36,7 +36,6 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - `src/main/resources`: Spring config, SQL schema, i18n messages, HTML templates
 - `src/main/frontend`: React/TypeScript asset source and webpack config
 - `communication/default/email`: default email templates used for communication rendering and local asset/template build flows
-- `communication/default/sms`: default SMS templates (today the MFA challenge text), same flows as the email templates
 - `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, and lambda integration
 - `local`: local development compose files, sample config, helper script, and HTTP requests
 - `iac/terraform`: infrastructure-as-code assets
@@ -131,7 +130,7 @@ Combined local asset/template build:
 
 - `bash local/build-frontend.sh`
 
-Note: `local/build-frontend.sh` rebuilds frontend assets and copies email and SMS templates into the local filesystem-based document/template layout.
+Note: `local/build-frontend.sh` rebuilds frontend assets and copies email templates into the local filesystem-based document/template layout.
 
 ## Management And Feature Endpoints
 
@@ -148,7 +147,6 @@ Documented MFA endpoints (see `docs/mfa.md`):
 - `PUT /api/mfa/device`
 - `DELETE /api/mfa/enrollment/{mfaDeviceId}` (revoke a device; rules in ADR 0009)
 - `PUT /api/mfa/challenge` (also used by the login MFA page via the session)
-- `GET /api/sms-template/{smsType}` / `PUT /api/sms-template` (MFA SMS text, scopes `admin:sms-template-reader` / `admin:sms-template-writer`; mirrors `/api/email-template`)
 
 Documented password lifecycle endpoints (`database` profile only, scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):
 

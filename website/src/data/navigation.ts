@@ -25,7 +25,7 @@ export const features = [
   {
     title: 'Management UI',
     href: sitePath('features/management/'),
-    description: 'Manage clients, accounts, roles, keys, and email and SMS templates from a dedicated interface.',
+    description: 'Manage clients, accounts, roles, keys, and email templates from a dedicated interface.',
     label: '04 · Administration',
   },
   {
