@@ -7,14 +7,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 
-fun readAllBytesFrom(filePath: Path): ByteArray {
-    return try {
-        Files.readAllBytes(filePath)
-    } catch (e: IOException) {
-        ByteArray(0)
-    }
-}
-
 fun readAllBytesFrom(response: ResponseInputStream<GetObjectResponse?>): ByteArray {
     return try {
         response.readAllBytes()

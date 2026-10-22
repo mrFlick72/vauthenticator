@@ -39,5 +39,6 @@ object SmsUtils {
         restClient.delete()
             .uri("http://localhost:4566/_aws/sns/sms-messages")
             .retrieve()
+            .toBodilessEntity()
     }
 }

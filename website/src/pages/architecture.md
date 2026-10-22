@@ -11,7 +11,7 @@ The Kotlin and Spring Boot application provides OAuth2 and OpenID Connect endpoi
 
 ## Management UI
 
-A separate React and TypeScript application lets administrators manage clients, accounts, roles, keys, email templates, and password lifecycle rules. It authenticates through the authorization server and calls its management APIs.
+A separate React and TypeScript application lets administrators manage clients, accounts, roles, keys, email and SMS templates, and password lifecycle rules. It authenticates through the authorization server and calls its management APIs.
 
 ## Infrastructure
 

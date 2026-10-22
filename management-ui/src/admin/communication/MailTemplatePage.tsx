@@ -31,7 +31,7 @@ const MailTemplatePage = () => {
                 if (r.status === 204) {
                     setOpenSucceeded(true);
                 } else {
-                    setOpenFailure(false);
+                    setOpenFailure(true);
                 }
             })
     };

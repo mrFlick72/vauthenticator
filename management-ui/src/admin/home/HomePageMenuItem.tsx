@@ -1,7 +1,7 @@
 import React, {ReactNode} from 'react';
 import MenuCard from "../../components/MenuCard";
 import LocalPostOfficeIcon from '@mui/icons-material/LocalPostOffice';
-import {Apps, AssignmentInd, Key, LockClock, PeopleAlt} from "@mui/icons-material";
+import {Apps, AssignmentInd, Key, LockClock, PeopleAlt, Sms} from "@mui/icons-material";
 
 const FONT_SIZE: number = 150
 
@@ -73,6 +73,12 @@ export const homeMenuContent = {
         titleIcon: <LocalPostOfficeIcon style={{fontSize: FONT_SIZE}}/>,
         body: "In this section you can manage EMail templates in VAuthenticator",
         link: "/email-templates"
+    },
+    sms: {
+        titleText: "SMS Template Management Section",
+        titleIcon: <Sms style={{fontSize: FONT_SIZE}}/>,
+        body: "In this section you can manage SMS templates in VAuthenticator",
+        link: "/sms-templates"
     }
 }
 export default HomePageMenuItem

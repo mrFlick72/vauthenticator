@@ -2,7 +2,7 @@ package com.vauthenticator.server.communication.domain
 
 import com.vauthenticator.server.account.domain.Account
 
-data class SmsMessage(val phoneNumber: String, val message: String)
+data class SmsMessage(val phoneNumber: String, val type: SmsType, val context: MessageContext)
 
 class InvalidSmsMessageContextException(message: String) : RuntimeException(message)
 
@@ -14,15 +14,18 @@ fun interface SmsMessageFactory {
     fun makeSmsMessageFor(account: Account, requestContext: MessageContext): SmsMessage
 }
 
-class SimpleSmsMessageFactory :
+class SimpleSmsMessageFactory(private val smsType: SmsType) :
     SmsMessageFactory {
 
     override fun makeSmsMessageFor(account: Account, requestContext: MessageContext): SmsMessage {
         val context = messageContextFrom(account) + requestContext
 
+        requestContext.requiredString("mfaCode")
+
         return SmsMessage(
             phoneNumber = context.requiredString("phone"),
-            message = requestContext.requiredString("mfaCode")
+            type = smsType,
+            context = context
         )
     }
 
@@ -36,3 +39,9 @@ class SimpleSmsMessageFactory :
     }
 
 }
+
+enum class SmsType(val path: String) {
+    MFA("templates/mfa-challenge.txt");
+}
+
+data class SmsTemplate(val smsType: SmsType, val body: String)

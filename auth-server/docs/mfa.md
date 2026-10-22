@@ -192,6 +192,38 @@ Sends an MFA challenge code to the account's default enrolled device, or to a sp
 
 *Response Status:* ```200 OK```
 
+### SMS Challenge Text
+
+The SMS a challenge sends is rendered from the MFA SMS template, the same way an email challenge is rendered from the MFA email template. The template is a Jinjava text with the account fields (```firstName```, ```lastName```, ```email```, ...) plus ```phone``` and ```mfaCode``` in context, for example:
+
+```
+Your VAuthenticator verification code is {{ mfaCode }}
+```
+
+The template is stored in the document store at ```sms/templates/mfa-challenge.txt```. **An SMS challenge fails until that template exists**, as an email challenge fails without its email template. The default template is in ```communication/default/sms/mfa-challenge.txt```: ```local/build-frontend.sh``` copies it into the local file-system store, while an S3 deployment must upload it to ```sms/templates/mfa-challenge.txt``` in the document bucket.
+
+The template is read and replaced through the SMS template API:
+
+*URI:* ```Get /api/sms-template/{smsType}``` (```smsType```: ```MFA```)
+
+*Scope:* ```admin:sms-template-reader```
+
+*Response Body:*
+
+```json
+{ "smsType": "MFA", "body": "Your VAuthenticator verification code is {{ mfaCode }}" }
+```
+
+*URI:* ```Put /api/sms-template```
+
+*Scope:* ```admin:sms-template-writer```
+
+*Request:* the same body as the ```GET``` response.
+
+*Response Status:* ```204 No Content```
+
+Both endpoints accept a bearer JWT only, as the email template endpoints do: a browser session gets ```401```, a JWT without the scope gets ```403```, and ```admin:full-access``` covers both. Like ```admin:email-template-writer```, ```admin:sms-template-writer``` lets its holder write Jinjava templates, so grant it only to trusted admin clients.
+
 ### Verification
 
 A login challenge is verified against the device named by ```mfa-device-id```, or against the account's default device. The verification fails when that device does not exist, belongs to another account, or is not associated, and when the account has no default device. An association ticket fails when its device no longer exists.

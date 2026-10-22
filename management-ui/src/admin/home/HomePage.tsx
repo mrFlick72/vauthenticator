@@ -13,6 +13,7 @@ const HomePage = () => {
                 <HomePageMenuItem content={homeMenuContent.passwordLifeCycle} />
                 <HomePageMenuItem content={homeMenuContent.keys} />
                 <HomePageMenuItem content={homeMenuContent.mails} />
+                <HomePageMenuItem content={homeMenuContent.sms} />
             </MenuCardContainer>
 
         </AdminTemplate>
