@@ -32,6 +32,8 @@ spring:
               - admin:key-editor
               - admin:email-template-reader
               - admin:email-template-writer
+              - admin:sms-template-reader
+              - admin:sms-template-writer
               - mfa:enrollment
               - admin:client-app-reader
               - admin:client-app-writer
