@@ -45,7 +45,8 @@ The admin app uses `BrowserRouter` with `basename="/secure/admin"`. Current top-
 - roles
 - accounts list/edit
 - keys
-- email templates
+- email templates (`/email-templates`)
+- SMS templates (`/sms-templates`, today only the MFA challenge text)
 - password lifecycle (`/password-lifecycle`, optional `?account=<email>` preloads an account)
 
 The home screen is a card-based navigation page that links into those feature areas.
