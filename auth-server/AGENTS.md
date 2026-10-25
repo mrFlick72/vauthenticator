@@ -37,7 +37,7 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - `src/main/frontend`: React/TypeScript asset source and webpack config
 - `communication/default/email`: default email templates used for communication rendering and local asset/template build flows
 - `communication/default/sms`: default SMS templates (today the MFA challenge text), same flows as the email templates
-- `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, and lambda integration
+- `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, and lambda integration
 - `local`: local development compose files, sample config, helper script, and HTTP requests
 - `iac/terraform`: infrastructure-as-code assets
 

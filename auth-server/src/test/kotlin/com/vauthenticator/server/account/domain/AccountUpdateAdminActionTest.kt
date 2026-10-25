@@ -52,7 +52,7 @@ class AccountUpdateAdminActionTest {
 
     @Test
     fun `when we change account data`() {
-        val account = anAccount.copy(accountNonLocked = false, enabled = true, authorities = setOf("A_ROLE"))
+        val account = anAccount.lock().copy(enabled = true, authorities = setOf("A_ROLE"))
         every { accountRepository.accountFor(account.email) } returns anAccount()
         every { accountRepository.save(account) } just runs
 
@@ -64,7 +64,7 @@ class AccountUpdateAdminActionTest {
 
     @Test
     fun `when the account is not found`() {
-        val account = anAccount.copy(accountNonLocked = false, enabled = true, authorities = setOf("A_ROLE"))
+        val account = anAccount.lock().copy(enabled = true, authorities = setOf("A_ROLE"))
         every { accountRepository.accountFor(account.email) } returns null
 
         underTest.execute(request, ADMIN_CLIENT_APP_ID)
@@ -75,7 +75,7 @@ class AccountUpdateAdminActionTest {
 
     @Test
     fun `when an account under a failed-login lock is saved still locked the lock stays temporary`() {
-        val locked = anAccount.copy(accountNonLocked = false, lockedUntil = NOW.plusSeconds(30))
+        val locked = anAccount.lockUntil(NOW.plusSeconds(30))
         every { accountRepository.accountFor(locked.email) } returns locked
         every { accountRepository.save(any()) } just runs
 
@@ -88,7 +88,7 @@ class AccountUpdateAdminActionTest {
     @Test
     fun `when an account under a failed-login lock is unlocked the lock ends and the release is published`() {
         val lockedUntil = NOW.plusSeconds(30)
-        val locked = anAccount.copy(accountNonLocked = false, lockedUntil = lockedUntil)
+        val locked = anAccount.lockUntil(lockedUntil)
         val event = slot<VAuthenticatorEvent>()
         every { accountRepository.accountFor(locked.email) } returns locked
         every { accountRepository.save(any()) } just runs
@@ -98,7 +98,7 @@ class AccountUpdateAdminActionTest {
 
         verify {
             accountRepository.save(
-                locked.copy(accountNonLocked = true, lockedUntil = null, enabled = true, authorities = setOf("A_ROLE"))
+                locked.unlock().copy(enabled = true, authorities = setOf("A_ROLE"))
             )
         }
         assertTrue(event.captured is FailedLoginLockReleasedEvent)
@@ -113,13 +113,13 @@ class AccountUpdateAdminActionTest {
 
     @Test
     fun `when an account with a lasting lock is unlocked no failed-login lock release is published`() {
-        val locked = anAccount.copy(accountNonLocked = false, lockedUntil = null)
+        val locked = anAccount.lock()
         every { accountRepository.accountFor(locked.email) } returns locked
         every { accountRepository.save(any()) } just runs
 
         underTest.execute(request.copy(accountLocked = false), ADMIN_CLIENT_APP_ID)
 
-        verify { accountRepository.save(locked.copy(accountNonLocked = true, enabled = true, authorities = setOf("A_ROLE"))) }
+        verify { accountRepository.save(locked.unlock().copy(enabled = true, authorities = setOf("A_ROLE"))) }
         verify(exactly = 0) { eventsDispatcher.dispatch(any()) }
     }
 }

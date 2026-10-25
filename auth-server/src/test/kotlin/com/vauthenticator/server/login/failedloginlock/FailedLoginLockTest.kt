@@ -49,7 +49,7 @@ class FailedLoginLockTest {
 
     lateinit var uut: FailedLoginLock
 
-    private val unlocked = anAccount().copy(accountNonLocked = true)
+    private val unlocked = anAccount().unlock()
 
     @BeforeEach
     fun setUp() {
@@ -101,6 +101,31 @@ class FailedLoginLockTest {
     }
 
     @Test
+    fun `when the lock is applied its end is kept to the microsecond the database stores`() {
+        val clockWithNanos = Clock.fixed(Instant.parse("2026-10-25T10:15:30.123456789Z"), ZoneOffset.UTC)
+        val uut = FailedLoginLock(
+            accountRepository,
+            failedLoginLockStore,
+            consecutiveFailedLogins,
+            eventsDispatcher,
+            clockWithNanos,
+            FailedLoginLockConfig(threshold = THRESHOLD, duration = LOCK_DURATION)
+        )
+        val lockedUntil = Instant.parse("2026-10-25T10:16:30.123456Z")
+        val event = slot<VAuthenticatorEvent>()
+        every { accountRepository.accountFor(unlocked.username) } returns unlocked
+        every { consecutiveFailedLogins.increment(unlocked.username, LOCK_DURATION) } returns THRESHOLD
+        every { consecutiveFailedLogins.reset(unlocked.username) } just runs
+        every { failedLoginLockStore.lockUntilIfUnlocked(unlocked.username, lockedUntil) } returns true
+        every { eventsDispatcher.dispatch(capture(event)) } just runs
+
+        uut.failedLogin(unlocked.username, CLIENT_APP_ID)
+
+        verify { failedLoginLockStore.lockUntilIfUnlocked(unlocked.username, lockedUntil) }
+        assertEquals(FailedLoginLockApplied(lockedUntil), event.captured.payload)
+    }
+
+    @Test
     fun `when the account got locked meanwhile no failed-login lock is applied or published`() {
         every { accountRepository.accountFor(unlocked.username) } returns unlocked
         every { consecutiveFailedLogins.increment(unlocked.username, LOCK_DURATION) } returns THRESHOLD
@@ -126,7 +151,7 @@ class FailedLoginLockTest {
 
     @Test
     fun `when an already locked account fails a login it is not counted and its lock stays lasting`() {
-        val account = anAccount().copy(accountNonLocked = false)
+        val account = anAccount().lock()
         every { accountRepository.accountFor(account.username) } returns account
 
         uut.failedLogin(account.username, CLIENT_APP_ID)
@@ -156,7 +181,7 @@ class FailedLoginLockTest {
     @Test
     fun `when a failed-login lock has expired the account is unlocked and the release is published`() {
         val lockedUntil = NOW.minusSeconds(1)
-        val account = anAccount().copy(accountNonLocked = false, lockedUntil = lockedUntil)
+        val account = anAccount().lockUntil(lockedUntil)
         val event = slot<VAuthenticatorEvent>()
         every { failedLoginLockStore.releaseIfLockedUntil(account.username, lockedUntil) } returns true
         every { consecutiveFailedLogins.reset(account.username) } just runs
@@ -176,7 +201,7 @@ class FailedLoginLockTest {
     @Test
     fun `when an expired failed-login lock was already released by another login it is not published again`() {
         val lockedUntil = NOW.minusSeconds(1)
-        val account = anAccount().copy(accountNonLocked = false, lockedUntil = lockedUntil)
+        val account = anAccount().lockUntil(lockedUntil)
         every { failedLoginLockStore.releaseIfLockedUntil(account.username, lockedUntil) } returns false
         every { accountRepository.accountFor(account.username) } returns account.unlock()
 
@@ -189,7 +214,7 @@ class FailedLoginLockTest {
     @Test
     fun `when an expired failed-login lock was made lasting meanwhile the account stays locked`() {
         val lockedUntil = NOW.minusSeconds(1)
-        val account = anAccount().copy(accountNonLocked = false, lockedUntil = lockedUntil)
+        val account = anAccount().lockUntil(lockedUntil)
         every { failedLoginLockStore.releaseIfLockedUntil(account.username, lockedUntil) } returns false
         every { accountRepository.accountFor(account.username) } returns account.lock()
 
@@ -201,7 +226,7 @@ class FailedLoginLockTest {
 
     @Test
     fun `when a failed-login lock ends exactly now the account is unlocked`() {
-        val account = anAccount().copy(accountNonLocked = false, lockedUntil = NOW)
+        val account = anAccount().lockUntil(NOW)
         every { failedLoginLockStore.releaseIfLockedUntil(account.username, NOW) } returns true
         every { consecutiveFailedLogins.reset(account.username) } just runs
         every { eventsDispatcher.dispatch(any()) } just runs
@@ -213,7 +238,7 @@ class FailedLoginLockTest {
 
     @Test
     fun `when a failed-login lock has not expired yet the account stays locked`() {
-        val account = anAccount().copy(accountNonLocked = false, lockedUntil = NOW.plusSeconds(1))
+        val account = anAccount().lockUntil(NOW.plusSeconds(1))
 
         val actual = uut.releaseIfExpired(account, CLIENT_APP_ID)
 
@@ -223,7 +248,7 @@ class FailedLoginLockTest {
 
     @Test
     fun `when an account has a lasting lock it is never released`() {
-        val account = anAccount().copy(accountNonLocked = false, lockedUntil = null)
+        val account = anAccount().lock()
 
         val actual = uut.releaseIfExpired(account, CLIENT_APP_ID)
 

@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 @ConfigurationProperties("login.failed-login-lock")
 data class FailedLoginLockConfig(
@@ -55,7 +56,8 @@ class FailedLoginLock(
         if (failures >= config.threshold) {
             consecutiveFailedLogins.reset(userName)
             val now = clock.instant()
-            val lockedUntil = now.plus(config.duration)
+            // PostgreSQL keeps microseconds: the applied event must carry the same lock end the release reads back
+            val lockedUntil = now.plus(config.duration).truncatedTo(ChronoUnit.MICROS)
             if (failedLoginLockStore.lockUntilIfUnlocked(userName, lockedUntil)) {
                 eventsDispatcher.dispatch(
                     FailedLoginLockAppliedEvent(Email(userName), clientAppId, now, FailedLoginLockApplied(lockedUntil))

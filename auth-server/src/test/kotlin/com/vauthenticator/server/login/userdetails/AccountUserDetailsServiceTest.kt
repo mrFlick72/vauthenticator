@@ -71,7 +71,7 @@ class AccountUserDetailsServiceTest {
 
     @Test
     fun `when the failed-login lock of the account has expired the user is no longer locked`() {
-        val locked = account.copy(accountNonLocked = false, lockedUntil = NOW.minusSeconds(1))
+        val locked = account.lockUntil(NOW.minusSeconds(1))
         val event = slot<VAuthenticatorEvent>()
         val request = MockHttpServletRequest().apply { addParameter("client_id", "A_CLIENT_APP_ID") }
         every { accountRepository.accountFor(account.username) } returns locked
@@ -88,7 +88,7 @@ class AccountUserDetailsServiceTest {
 
     @Test
     fun `when the failed-login lock of the account has not expired the user is still locked`() {
-        val locked = account.copy(accountNonLocked = false, lockedUntil = NOW.plusSeconds(1))
+        val locked = account.lockUntil(NOW.plusSeconds(1))
         every { accountRepository.accountFor(account.username) } returns locked
         every { currentHttpServletRequestService.getServletRequest() } returns MockHttpServletRequest()
 
@@ -99,7 +99,7 @@ class AccountUserDetailsServiceTest {
 
     @Test
     fun `when the login has no client app the release is attributed to the system client`() {
-        val locked = account.copy(accountNonLocked = false, lockedUntil = NOW.minusSeconds(1))
+        val locked = account.lockUntil(NOW.minusSeconds(1))
         val event = slot<VAuthenticatorEvent>()
         every { accountRepository.accountFor(account.username) } returns locked
         every { failedLoginLockStore.releaseIfLockedUntil(account.username, any()) } returns true

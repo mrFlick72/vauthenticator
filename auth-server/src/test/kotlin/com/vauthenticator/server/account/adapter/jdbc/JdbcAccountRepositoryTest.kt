@@ -41,12 +41,12 @@ class JdbcAccountRepositoryTest : AbstractAccountRepositoryTest() {
     @Test
     fun `when an account under a failed-login lock is saved the lock end is stored and can be cleared`() {
         val uut = JdbcAccountRepository(jdbcTemplate)
-        val locked = anAccount().copy(accountNonLocked = false, lockedUntil = Instant.parse("2026-10-25T10:16:30Z"))
+        val locked = anAccount().lockUntil(Instant.parse("2026-10-25T10:16:30Z"))
 
         uut.save(locked)
         assertEquals(locked, uut.accountFor(locked.username))
 
-        val unlocked = locked.copy(accountNonLocked = true, lockedUntil = null)
+        val unlocked = locked.unlock()
         uut.save(unlocked)
         assertEquals(unlocked, uut.accountFor(locked.username))
     }
@@ -54,7 +54,7 @@ class JdbcAccountRepositoryTest : AbstractAccountRepositoryTest() {
     @Test
     fun `when an account under a failed-login lock is created the lock end is stored`() {
         val uut = JdbcAccountRepository(jdbcTemplate)
-        val locked = anAccount().copy(accountNonLocked = false, lockedUntil = Instant.parse("2026-10-25T10:16:30Z"))
+        val locked = anAccount().lockUntil(Instant.parse("2026-10-25T10:16:30Z"))
 
         uut.create(locked)
 

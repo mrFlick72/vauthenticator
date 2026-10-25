@@ -3,13 +3,13 @@ package com.vauthenticator.server.config
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.login.userdetails.AccountUserDetailsService
-import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.password.adapter.spring.BcryptVAuthenticatorPasswordEncoder
 import com.vauthenticator.server.password.domain.changepassword.ChangePasswordLoginWorkflowHandler
+import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired

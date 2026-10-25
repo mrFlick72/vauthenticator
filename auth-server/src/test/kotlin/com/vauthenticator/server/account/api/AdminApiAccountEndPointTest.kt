@@ -80,7 +80,7 @@ internal class AdminApiAccountEndPointTest {
     internal fun `find an account under a failed-login lock shows when the lock ends`() {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.READ_ACCOUNT.content))
         val locked = AccountTestFixture.anAccount()
-            .copy(accountNonLocked = false, lockedUntil = Instant.parse("2026-10-25T10:16:30Z"))
+            .lockUntil(Instant.parse("2026-10-25T10:16:30Z"))
 
         every { accountRepository.accountFor("anemail@domain.com") } returns locked
 
