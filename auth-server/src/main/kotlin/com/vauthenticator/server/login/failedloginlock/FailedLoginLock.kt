@@ -31,8 +31,9 @@ interface ConsecutiveFailedLogins {
 }
 
 /**
- * Applies and lifts a Failed-Login Lock as conditional updates, so that concurrent logins, admin saves and lifecycle
- * locks never overwrite each other: each method returns true only when this call changed the account.
+ * Applies and lifts a Failed-Login Lock as conditional updates: applying it never overwrites an admin or lifecycle
+ * lock, and of several logins after expiry only one releases it. Each method returns true only when this call changed
+ * the account. Other account updates still save the whole account, and there the last write wins.
  */
 interface FailedLoginLockStore {
     fun lockUntilIfUnlocked(userName: String, lockedUntil: Instant): Boolean

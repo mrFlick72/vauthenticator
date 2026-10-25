@@ -26,9 +26,9 @@ There is no scheduler: at the first login attempt after the lock end, the accoun
 checked. Only an account that is unlocked gets a Failed-Login Lock, so locks set by signup (email verification), by an
 admin, or by the `ACCOUNT_LOCK` password lifecycle action never expire on their own. Applying and lifting the lock are
 conditional updates on the `ACCOUNT` row, so applying a lock never overwrites an admin or lifecycle lock, and only one
-of several logins after expiry releases the lock and publishes the release. Other account updates (admin save, password
-reset or change) still save the whole account and the last write wins, so one that races a lock being applied can
-erase it.
+of several logins after expiry releases the lock and publishes the release. Other account updates, such as an admin
+save or a password reset or change, still save the whole account and the last write wins, so one that races a lock
+being applied can erase it.
 
 - **Admin save** (`PUT /api/admin/accounts`): only a change of `accountLocked` is an explicit lock or unlock. Saving
   `accountLocked: true` for an account under a Failed-Login Lock keeps it temporary; saving `false` ends it at once.
