@@ -49,7 +49,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `communication`: email/SMS abstractions and template resolution
 - `document`: document/template loading from filesystem or S3
 - `keys`: signing/encryption key generation, storage, and rotation
-- `login`: login page, Spring Security user details, and the login workflow (`login/workflow`, see `docs/login-workflow.md`)
+- `login`: login page, Spring Security user details, the login workflow (`login/workflow`, see `docs/login-workflow.md`), and the Failed-Login Lock (`login/failedloginlock`, see `docs/failed-login-lock.md`)
 - `management`: actuator-style setup and cleanup endpoints, including tenant bootstrap
 - `mfa`: MFA enrollment, challenge, association, and login workflow integration
 - `oauth2`: authorization storage, registered client adaptation, and token enhancement
@@ -173,6 +173,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - `/api/**` authorization lives in the controllers, not in `WebSecurityConfig`. A JWT-only handler binds `Authentication?` and calls `PermissionValidator.validate(authentication, scopes)` (or `jwtAuthenticationOf(authentication)` when there is no scope to check), which returns the validated `JwtAuthenticationToken`. Never bind `JwtAuthenticationToken` directly: `/api/**` `.authenticated()` also accepts browser sessions, so a session caller would get a `500` instead of a `401`. Cover each JWT-only handler with a standalone controller test for "session user, even an admin → `401`". See ADR 0007. Session-aware handlers (browser flows) call `validate(authentication, session, scopes)`; a request without a resolvable session client app gets `403`. Ticket-based flows authorize by the ticket: set a purpose in the ticket context when issuing it and check it when redeeming (ADR 0008).
 - Architecture decisions are recorded in `docs/adr/`. Read the related ADRs before changing authorization, and add a new one when a decision changes.
 - The login workflow (MFA, then mandatory password change) is checked on every `/oauth2/authorize` by `LoginWorkflowFilter`, not only after `POST /login`. A step is a `LoginWorkflowHandler` listed in order in `LoginWorkflowEngine`; a step page records its step as passed through `LoginWorkflowEngine.stepPassed`, and passed steps last for the session. See `docs/login-workflow.md` and ADR 0010.
+- The Failed-Login Lock reuses the account's locked flag; `Account.lockedUntil` marks it temporary (ADR 0011). Change the lock state only through `Account.lock()` (lasting), `lockUntil(end)` (temporary) and `unlock()`, never `copy(accountNonLocked = ...)`, or a stale `lockedUntil` can unlock an admin lock. Failed logins are counted from the exact Spring `AuthenticationFailureBadCredentialsEvent` class (MFA and change-password publish subclasses); an expired lock is lifted in `AccountUserDetailsService`. The PostgreSQL `ACCOUNT.locked_until` column needs a manual `ALTER TABLE` on existing databases (see `docs/failed-login-lock.md`).
 - The logout support is RP-initiated OIDC logout plus session-management state cleanup. Do not describe `/oidc/logout` as OIDC Front-Channel Logout unless the front-channel metadata and iframe fan-out flow are implemented.
 
 ## Files Worth Reading First
@@ -184,6 +185,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - `docs/mfa.md`
 - `docs/login-workflow.md`
 - `docs/password-lifecycle.md`
+- `docs/failed-login-lock.md`
 - `docs/lambda.md`
 - `docs/adr/`
 - `src/main/kotlin/com/vauthenticator/server/config/AuthorizationServerConfig.kt`

@@ -1,6 +1,7 @@
 package com.vauthenticator.server.account.api
 
 import com.vauthenticator.server.account.domain.*
+import com.vauthenticator.server.extentions.clientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity.noContent
 import org.springframework.http.ResponseEntity.ok
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import java.time.Instant
 
 @RestController
 class AdminApiAccountEndPoint(
@@ -27,8 +29,8 @@ class AdminApiAccountEndPoint(
 
     @PutMapping("/api/admin/accounts")
     fun saveAccount(authentication: Authentication?, @RequestBody representation: AdminAccountApiRequest) = run {
-        permissionValidator.validate(authentication, Scopes.from(Scope.SAVE_ACCOUNT))
-        accountUpdateAdminAction.execute(representation)
+        val admin = permissionValidator.validate(authentication, Scopes.from(Scope.SAVE_ACCOUNT))
+        accountUpdateAdminAction.execute(representation, admin.clientAppId())
             .let { noContent().build<Unit>() }
     }
 
@@ -39,7 +41,8 @@ data class AdminApiAccountApiRepresentation(
     val enabled: Boolean = true,
     var email: String = "",
     val authorities: Set<String> = setOf(),
-    val mandatoryAction: String = AccountMandatoryAction.NO_ACTION.name
+    val mandatoryAction: String = AccountMandatoryAction.NO_ACTION.name,
+    val lockedUntil: Instant? = null
 )
 
 object AdminApiAccountApiConverter {
@@ -49,7 +52,8 @@ object AdminApiAccountApiConverter {
             domain.enabled,
             domain.email,
             domain.authorities,
-            domain.mandatoryAction.name
+            domain.mandatoryAction.name,
+            domain.lockedUntil
         )
 
 }

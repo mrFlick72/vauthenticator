@@ -1,7 +1,9 @@
 package com.vauthenticator.server.config
 
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.login.userdetails.AccountUserDetailsService
+import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.MfaLoginWorkflowHandler
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
@@ -172,8 +174,11 @@ class WebSecurityConfig {
     }
 
     @Bean
-    fun accountUserDetailsService(userRepository: AccountRepository) =
-        AccountUserDetailsService(userRepository)
+    fun accountUserDetailsService(
+        userRepository: AccountRepository,
+        failedLoginLock: FailedLoginLock,
+        currentHttpServletRequestService: CurrentHttpServletRequestService
+    ) = AccountUserDetailsService(userRepository, failedLoginLock, currentHttpServletRequestService)
 
     @Bean
     fun successHandler(): AuthenticationSuccessHandler {

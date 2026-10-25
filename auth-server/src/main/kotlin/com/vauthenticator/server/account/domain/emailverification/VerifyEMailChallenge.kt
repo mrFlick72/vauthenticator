@@ -43,6 +43,6 @@ class VerifyEMailChallenge(
 
 
     private fun makeAnAccountEnableForm(account: Account) =
-        account.copy(accountNonLocked = true, enabled = true, emailVerified = true)
+        account.unlock().copy(enabled = true, emailVerified = true)
 
 }

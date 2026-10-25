@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.AdminAccountApiRequest
+import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -27,8 +28,11 @@ import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
+import java.time.Clock
+import java.time.Instant
 
 @ExtendWith(MockKExtension::class)
 internal class AdminApiAccountEndPointTest {
@@ -41,6 +45,9 @@ internal class AdminApiAccountEndPointTest {
     @MockK
     lateinit var clientApplicationRepository: ClientApplicationRepository
 
+    @MockK
+    lateinit var eventsDispatcher: EventsDispatcher
+
     private val objectMapper = ObjectMapper()
 
     @BeforeEach
@@ -48,7 +55,7 @@ internal class AdminApiAccountEndPointTest {
         mokMvc = MockMvcBuilders.standaloneSetup(
             AdminApiAccountEndPoint(
                 accountRepository,
-                AccountUpdateAdminAction(accountRepository),
+                AccountUpdateAdminAction(accountRepository, eventsDispatcher, Clock.systemUTC()),
                 PermissionValidator(clientApplicationRepository)
             )
         ).setControllerAdvice(ExceptionAdviceController()).build()
@@ -67,6 +74,23 @@ internal class AdminApiAccountEndPointTest {
             .andExpect(status().isOk)
 
         verify { accountRepository.accountFor("anemail@domain.com") }
+    }
+
+    @Test
+    internal fun `find an account under a failed-login lock shows when the lock ends`() {
+        val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.READ_ACCOUNT.content))
+        val locked = AccountTestFixture.anAccount()
+            .copy(accountNonLocked = false, lockedUntil = Instant.parse("2026-10-25T10:16:30Z"))
+
+        every { accountRepository.accountFor("anemail@domain.com") } returns locked
+
+        mokMvc.perform(
+            get("/api/admin/accounts/anemail@domain.com/email")
+                .principal(jwtAuthenticationToken)
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.accountLocked").value(true))
+            .andExpect(jsonPath("$.lockedUntil").value("2026-10-25T10:16:30Z"))
     }
 
     @Test

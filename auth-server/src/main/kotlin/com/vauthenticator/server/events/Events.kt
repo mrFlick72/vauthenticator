@@ -1,6 +1,8 @@
 package com.vauthenticator.server.events
 
 import com.vauthenticator.server.account.domain.Email
+import com.vauthenticator.server.login.failedloginlock.FailedLoginLockApplied
+import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRelease
 import com.vauthenticator.server.mfa.domain.MfaDeviceRevoked
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
@@ -92,6 +94,40 @@ class PasswordLifeCycleActionAppliedEvent(
     timeStamp: Instant,
     action: PasswordLifeCycleAction
 ) : VAuthenticatorEvent(userName, clientAppId, timeStamp, action) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
+}
+
+class FailedLoginLockAppliedEvent(
+    userName: Email,
+    clientAppId: ClientAppId,
+    timeStamp: Instant,
+    applied: FailedLoginLockApplied
+) : VAuthenticatorEvent(userName, clientAppId, timeStamp, applied) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
+}
+
+class FailedLoginLockReleasedEvent(
+    userName: Email,
+    clientAppId: ClientAppId,
+    timeStamp: Instant,
+    release: FailedLoginLockRelease
+) : VAuthenticatorEvent(userName, clientAppId, timeStamp, release) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
