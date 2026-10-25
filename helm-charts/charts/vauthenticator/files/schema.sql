@@ -51,7 +51,8 @@ CREATE TABLE ACCOUNT
     birth_date              date,
     phone                   varchar(30)           default '',
     locale                  varchar(10)           default 'en',
-    mandatory_action        varchar(100) not null default 'NO_ACTION'
+    mandatory_action        varchar(100) not null default 'NO_ACTION',
+    locked_until            TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE ACCOUNT_ROLE
