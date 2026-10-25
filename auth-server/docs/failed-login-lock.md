@@ -25,8 +25,10 @@ The lock reuses the account's locked flag, marked as temporary by a lock end (`l
 There is no scheduler: at the first login attempt after the lock end, the account is unlocked before the password is
 checked. Only an account that is unlocked gets a Failed-Login Lock, so locks set by signup (email verification), by an
 admin, or by the `ACCOUNT_LOCK` password lifecycle action never expire on their own. Applying and lifting the lock are
-conditional updates on the `ACCOUNT` row, so concurrent logins never overwrite an admin or lifecycle lock, and only one
-of several logins after expiry releases the lock and publishes the release.
+conditional updates on the `ACCOUNT` row, so applying a lock never overwrites an admin or lifecycle lock, and only one
+of several logins after expiry releases the lock and publishes the release. Other account updates (admin save, password
+reset or change) still save the whole account and the last write wins, so one that races a lock being applied can
+erase it.
 
 - **Admin save** (`PUT /api/admin/accounts`): only a change of `accountLocked` is an explicit lock or unlock. Saving
   `accountLocked: true` for an account under a Failed-Login Lock keeps it temporary; saving `false` ends it at once.
@@ -43,8 +45,8 @@ lock).
 - `FailedLoginLockAppliedEvent`: payload (`FailedLoginLockApplied`) is the lock end. Published when the lock is
   applied.
 - `FailedLoginLockReleasedEvent`: payload (`FailedLoginLockRelease`) is the reason (`EXPIRED` or `ADMIN_UNLOCK`) and
-  the lock end. Published when the lock actually ends. An expired lock is released at the next login attempt, so the event time can be later
-  than the lock end, and no event is published if nobody tries to log in again.
+  the lock end. Published when the lock actually ends. An expired lock is released at the next login attempt, so the
+  event time can be later than the lock end, and no event is published if nobody tries to log in again.
 
 A login with no client app (a direct `/login`) attributes its events to the system client.
 

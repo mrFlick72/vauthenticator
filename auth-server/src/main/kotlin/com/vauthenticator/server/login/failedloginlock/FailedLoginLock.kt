@@ -56,7 +56,7 @@ class FailedLoginLock(
         if (failures >= config.threshold) {
             consecutiveFailedLogins.reset(userName)
             val now = clock.instant()
-            // PostgreSQL keeps microseconds: the applied event must carry the same lock end the release reads back
+            // the store keeps microseconds: the applied event must carry the same lock end the release reads back
             val lockedUntil = now.plus(config.duration).truncatedTo(ChronoUnit.MICROS)
             if (failedLoginLockStore.lockUntilIfUnlocked(userName, lockedUntil)) {
                 eventsDispatcher.dispatch(
