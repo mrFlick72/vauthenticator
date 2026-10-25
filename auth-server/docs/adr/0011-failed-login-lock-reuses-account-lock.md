@@ -8,6 +8,8 @@ For issue [#211](https://github.com/mrFlick72/vauthenticator/issues/211) an acco
 - **While locked, every login is refused**, even with the right password, with the same generic error as any failed login. Those attempts neither count nor extend the lock, so an attacker cannot keep an account locked indefinitely by retrying during the lock.
 - **Storage is split by what losing it costs.** The failure count lives in Redis, keyed by username, with a TTL of one lock duration renewed on each failure (an idle count fades out); losing it only gives an attacker a few extra attempts. The end time lives on the account (PostgreSQL only: DynamoDB support is being removed, and there the field is not stored, so a Failed-Login Lock would be lasting), because losing it while the account is locked would leave the account locked forever.
 
+- **Applying and lifting the lock are conditional updates**, not a save of the whole account read earlier: lock only an account that is still unlocked, release only a lock that still ends at the same time. Concurrent logins, admin saves and lifecycle locks then cannot overwrite each other, and of two logins after expiry only one releases the lock and publishes the release.
+
 **Considered options:**
 - A separate temporary-lockout concept that never touches the locked flag: rejected for simplicity, at the cost of the guard rules above.
 - A scheduled job that unlocks expired accounts: rejected. It needs cluster-safe scheduling and only unlocks as precisely as its polling interval.

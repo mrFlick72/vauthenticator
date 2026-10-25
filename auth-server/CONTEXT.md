@@ -36,7 +36,7 @@ An **Account Lock** applied automatically when **Consecutive Failed Logins** rea
 _Avoid_: block, lockout
 
 **Consecutive Failed Logins**:
-The number of wrong passwords given for an account since its last successful password check. It resets to zero when the password is proven, when a **Failed-Login Lock** is applied, or when no failure has occurred for the lock duration. Only the password step counts: a wrong MFA code is not a failed login. Attempts against usernames with no account count for nothing.
+The number of wrong passwords given for an account since its last successful password check. It resets to zero when the password is proven, when a **Failed-Login Lock** is applied or ends, or when no failure has occurred for the lock duration. Only the password step counts: a wrong MFA code is not a failed login. Attempts against usernames with no account count for nothing.
 _Avoid_: failed attempts (unqualified)
 
 ### Password lifecycle

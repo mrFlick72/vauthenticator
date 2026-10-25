@@ -1,5 +1,6 @@
 package com.vauthenticator.server.login.failedloginlock
 
+import com.vauthenticator.server.extentions.loginClientAppId
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import org.springframework.context.event.EventListener
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -22,7 +23,7 @@ class FailedLoginLockAuthenticationListener(
         if (event.javaClass == AuthenticationFailureBadCredentialsEvent::class.java && event.isPasswordLogin()) {
             failedLoginLock.failedLogin(
                 event.authentication.name,
-                loginClientAppIdOf(currentHttpServletRequestService.getServletRequest())
+                currentHttpServletRequestService.getServletRequest().loginClientAppId()
             )
         }
     }

@@ -13,8 +13,8 @@ end is not stored, so a Failed-Login Lock would be lasting.
 ### What counts
 
 - Only wrong passwords on the login form count. A wrong MFA code or a failed password change does not.
-- The count is per account (username) and consecutive: a successful login resets it, and so does a period of one lock
-  duration without a failure.
+- The count is per account (username) and consecutive: a successful login resets it, and so do applying or ending a
+  lock and a period of one lock duration without a failure.
 - Usernames with no account count for nothing.
 - While the account is locked every login is refused, even with the right password, with the same generic login error
   as any failed login. Those attempts are not counted and do not extend the lock.
@@ -24,7 +24,9 @@ end is not stored, so a Failed-Login Lock would be lasting.
 The lock reuses the account's locked flag, marked as temporary by a lock end (`lockedUntil`) stored on the account.
 There is no scheduler: at the first login attempt after the lock end, the account is unlocked before the password is
 checked. Only an account that is unlocked gets a Failed-Login Lock, so locks set by signup (email verification), by an
-admin, or by the `ACCOUNT_LOCK` password lifecycle action never expire on their own.
+admin, or by the `ACCOUNT_LOCK` password lifecycle action never expire on their own. Applying and lifting the lock are
+conditional updates on the `ACCOUNT` row, so concurrent logins never overwrite an admin or lifecycle lock, and only one
+of several logins after expiry releases the lock and publishes the release.
 
 - **Admin save** (`PUT /api/admin/accounts`): only a change of `accountLocked` is an explicit lock or unlock. Saving
   `accountLocked: true` for an account under a Failed-Login Lock keeps it temporary; saving `false` ends it at once.

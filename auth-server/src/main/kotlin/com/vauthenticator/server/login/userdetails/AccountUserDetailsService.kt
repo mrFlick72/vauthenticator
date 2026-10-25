@@ -2,8 +2,8 @@ package com.vauthenticator.server.login.userdetails
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.extentions.loginClientAppId
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
-import com.vauthenticator.server.login.failedloginlock.loginClientAppIdOf
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -45,7 +45,7 @@ open class AccountUserDetailsService(
         } else {
             failedLoginLock.releaseIfExpired(
                 account,
-                loginClientAppIdOf(currentHttpServletRequestService.getServletRequest())
+                currentHttpServletRequestService.getServletRequest().loginClientAppId()
             )
         }
 }

@@ -6,9 +6,7 @@ import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.FailedLoginLockAppliedEvent
 import com.vauthenticator.server.events.FailedLoginLockReleasedEvent
-import com.vauthenticator.server.extentions.oauth2ClientId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Clock
 import java.time.Duration
@@ -26,16 +24,23 @@ data class FailedLoginLockApplied(val lockedUntil: Instant)
 
 data class FailedLoginLockRelease(val reason: FailedLoginLockReleaseReason, val lockedUntil: Instant)
 
-fun loginClientAppIdOf(request: HttpServletRequest): ClientAppId =
-    request.oauth2ClientId() ?: request.getSession(false)?.oauth2ClientId() ?: ClientAppId.system()
-
 interface ConsecutiveFailedLogins {
     fun increment(userName: String, window: Duration): Long
     fun reset(userName: String)
 }
 
+/**
+ * Applies and lifts a Failed-Login Lock as conditional updates, so that concurrent logins, admin saves and lifecycle
+ * locks never overwrite each other: each method returns true only when this call changed the account.
+ */
+interface FailedLoginLockStore {
+    fun lockUntilIfUnlocked(userName: String, lockedUntil: Instant): Boolean
+    fun releaseIfLockedUntil(userName: String, lockedUntil: Instant): Boolean
+}
+
 class FailedLoginLock(
     private val accountRepository: AccountRepository,
+    private val failedLoginLockStore: FailedLoginLockStore,
     private val consecutiveFailedLogins: ConsecutiveFailedLogins,
     private val eventsDispatcher: EventsDispatcher,
     private val clock: Clock,
@@ -47,14 +52,15 @@ class FailedLoginLock(
         val account = accountRepository.accountFor(userName) ?: return
         if (!account.accountNonLocked) return
         val failures = consecutiveFailedLogins.increment(userName, config.duration)
-        if (failures == config.threshold) {
+        if (failures >= config.threshold) {
             consecutiveFailedLogins.reset(userName)
             val now = clock.instant()
             val lockedUntil = now.plus(config.duration)
-            accountRepository.save(account.lockUntil(lockedUntil))
-            eventsDispatcher.dispatch(
-                FailedLoginLockAppliedEvent(Email(userName), clientAppId, now, FailedLoginLockApplied(lockedUntil))
-            )
+            if (failedLoginLockStore.lockUntilIfUnlocked(userName, lockedUntil)) {
+                eventsDispatcher.dispatch(
+                    FailedLoginLockAppliedEvent(Email(userName), clientAppId, now, FailedLoginLockApplied(lockedUntil))
+                )
+            }
         }
     }
 
@@ -67,8 +73,12 @@ class FailedLoginLock(
         val now = clock.instant()
         if (now.isBefore(lockedUntil)) return account
 
-        val unlocked = account.unlock()
-        accountRepository.save(unlocked)
+        if (!failedLoginLockStore.releaseIfLockedUntil(account.username, lockedUntil)) {
+            // another login released it first, or the lock changed meanwhile: the stored account decides
+            return accountRepository.accountFor(account.username) ?: account
+        }
+        // failures counted while the lock was being applied must not carry into the next window
+        consecutiveFailedLogins.reset(account.username)
         eventsDispatcher.dispatch(
             FailedLoginLockReleasedEvent(
                 Email(account.username),
@@ -77,6 +87,6 @@ class FailedLoginLock(
                 FailedLoginLockRelease(FailedLoginLockReleaseReason.EXPIRED, lockedUntil)
             )
         )
-        return unlocked
+        return account.unlock()
     }
 }

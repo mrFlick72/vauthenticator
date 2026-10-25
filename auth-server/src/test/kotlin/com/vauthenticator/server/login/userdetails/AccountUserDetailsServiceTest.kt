@@ -6,6 +6,7 @@ import com.vauthenticator.server.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.ConsecutiveFailedLogins
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockConfig
+import com.vauthenticator.server.login.failedloginlock.FailedLoginLockStore
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.support.AccountTestFixture
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
@@ -40,6 +41,9 @@ class AccountUserDetailsServiceTest {
     lateinit var accountRepository: AccountRepository
 
     @MockK
+    lateinit var failedLoginLockStore: FailedLoginLockStore
+
+    @MockK
     lateinit var consecutiveFailedLogins: ConsecutiveFailedLogins
 
     @MockK
@@ -56,6 +60,7 @@ class AccountUserDetailsServiceTest {
     fun setUp() {
         val failedLoginLock = FailedLoginLock(
             accountRepository,
+            failedLoginLockStore,
             consecutiveFailedLogins,
             eventsDispatcher,
             Clock.fixed(NOW, ZoneOffset.UTC),
@@ -70,7 +75,8 @@ class AccountUserDetailsServiceTest {
         val event = slot<VAuthenticatorEvent>()
         val request = MockHttpServletRequest().apply { addParameter("client_id", "A_CLIENT_APP_ID") }
         every { accountRepository.accountFor(account.username) } returns locked
-        every { accountRepository.save(any()) } just runs
+        every { failedLoginLockStore.releaseIfLockedUntil(account.username, any()) } returns true
+        every { consecutiveFailedLogins.reset(account.username) } just runs
         every { eventsDispatcher.dispatch(capture(event)) } just runs
         every { currentHttpServletRequestService.getServletRequest() } returns request
 
@@ -96,7 +102,8 @@ class AccountUserDetailsServiceTest {
         val locked = account.copy(accountNonLocked = false, lockedUntil = NOW.minusSeconds(1))
         val event = slot<VAuthenticatorEvent>()
         every { accountRepository.accountFor(account.username) } returns locked
-        every { accountRepository.save(any()) } just runs
+        every { failedLoginLockStore.releaseIfLockedUntil(account.username, any()) } returns true
+        every { consecutiveFailedLogins.reset(account.username) } just runs
         every { eventsDispatcher.dispatch(capture(event)) } just runs
         every { currentHttpServletRequestService.getServletRequest() } returns MockHttpServletRequest()
 
