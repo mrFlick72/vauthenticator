@@ -28,7 +28,7 @@ A session in which the MFA challenge is a **Passed Step**. It counts for every c
 _Avoid_: MFA session, step-up
 
 **Account Lock**:
-A locked account cannot log in. A lock is lasting — it stays until an explicit unlock (email verification, an admin, or a **Lifecycle Action** locking it) — unless it is a **Failed-Login Lock**.
+A locked account cannot log in. A lock is lasting — it comes from signup (until the email is verified), an admin, or the lock **Lifecycle Action**, and stays until an explicit unlock (email verification or an admin) — unless it is a **Failed-Login Lock**.
 _Avoid_: disabled (a separate account state)
 
 **Failed-Login Lock**:
