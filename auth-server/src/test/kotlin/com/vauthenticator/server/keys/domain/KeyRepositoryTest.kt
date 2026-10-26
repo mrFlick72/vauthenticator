@@ -1,18 +1,14 @@
 package com.vauthenticator.server.keys.domain
 
-import com.vauthenticator.server.extentions.asDynamoAttribute
 import com.vauthenticator.server.extentions.encoder
-import com.vauthenticator.server.extentions.valueAsStringFor
-import com.vauthenticator.server.keys.adapter.dynamo.DynamoDbKeyStorage
+import com.vauthenticator.server.keys.adapter.jdbc.JdbcKeyStorage
 import com.vauthenticator.server.keys.adapter.kms.KmsKeyGenerator
 import com.vauthenticator.server.keys.domain.KeyPurpose.MFA
 import com.vauthenticator.server.keys.domain.KeyPurpose.SIGNATURE
 import com.vauthenticator.server.keys.domain.KeyType.ASYMMETRIC
 import com.vauthenticator.server.keys.domain.KeyType.SYMMETRIC
-import com.vauthenticator.server.support.DynamoDbUtils.dynamoDbClient
-import com.vauthenticator.server.support.DynamoDbUtils.dynamoMfaKeysTableName
-import com.vauthenticator.server.support.DynamoDbUtils.dynamoSignatureKeysTableName
-import com.vauthenticator.server.support.DynamoDbUtils.resetDynamoDb
+import com.vauthenticator.server.support.JdbcUtils.jdbcTemplate
+import com.vauthenticator.server.support.JdbcUtils.resetDb
 import com.vauthenticator.server.support.KeysUtils.aMasterKey
 import com.vauthenticator.server.support.KeysUtils.aNewMasterKey
 import com.vauthenticator.server.support.KeysUtils.aSignatureDataKey
@@ -29,12 +25,11 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model.GetItemRequest
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
+import java.util.*
 
 @ExtendWith(MockKExtension::class)
 class KeyRepositoryTest {
@@ -58,19 +53,14 @@ class KeyRepositoryTest {
     @BeforeEach
     fun setUp() {
         uut = KeyRepository(kidGenerator, keyStorage, keyGenerator)
-        resetDynamoDb()
+        resetDb()
 
 
         wrapper = KmsClientWrapper(kmsClient)
         keyRepository =
             KeyRepository(
-                kidGenerator,
-                DynamoDbKeyStorage(
-                    Clock.fixed(now, ZoneId.systemDefault()),
-                    dynamoDbClient,
-                    dynamoSignatureKeysTableName,
-                    dynamoMfaKeysTableName
-                ),
+                { UUID.randomUUID().toString() },
+                JdbcKeyStorage(jdbcTemplate, Clock.fixed(now, ZoneId.systemDefault())),
                 KmsKeyGenerator(wrapper)
             )
     }
@@ -94,12 +84,12 @@ class KeyRepositoryTest {
         val masterKid = aNewMasterKey()
         val kid = keyRepository.createKeyFrom(masterKid, SYMMETRIC)
 
-        val actual = getActual(kid, dynamoSignatureKeysTableName)
-        assertEquals(kid.content(), actual.valueAsStringFor("key_id"))
-        assertEquals(masterKid.content(), actual.valueAsStringFor("master_key_id"))
+        val actual = getActual(kid, SIGNATURE)
+        assertEquals(kid.content(), actual["key_id"])
+        assertEquals(masterKid.content(), actual["master_key_id"])
         assertEquals(
             encoder.encode(wrapper.generateDataKeyRecorder.get().ciphertextBlob().asByteArray())
-                .decodeToString(), actual.valueAsStringFor("encrypted_private_key")
+                .decodeToString(), actual["encrypted_private_key"]
         )
     }
 
@@ -108,12 +98,12 @@ class KeyRepositoryTest {
         val masterKid = aNewMasterKey()
         val kid = keyRepository.createKeyFrom(masterKid, SYMMETRIC, MFA)
 
-        val actual = getActual(kid, dynamoMfaKeysTableName)
-        assertEquals(kid.content(), actual.valueAsStringFor("key_id"))
-        assertEquals(masterKid.content(), actual.valueAsStringFor("master_key_id"))
+        val actual = getActual(kid, MFA)
+        assertEquals(kid.content(), actual["key_id"])
+        assertEquals(masterKid.content(), actual["master_key_id"])
         assertEquals(
             encoder.encode(wrapper.generateDataKeyRecorder.get().ciphertextBlob().asByteArray())
-                .decodeToString(), actual.valueAsStringFor("encrypted_private_key")
+                .decodeToString(), actual["encrypted_private_key"]
         )
     }
 
@@ -125,10 +115,10 @@ class KeyRepositoryTest {
         val ttl = Duration.ofSeconds(1)
         keyRepository.deleteKeyFor(kid, SIGNATURE, ttl)
 
-        val actual = getActual(kid, dynamoSignatureKeysTableName)
+        val actual = getActual(kid, SIGNATURE)
         val expectedTTl = now.epochSecond + 1
-        assertEquals(false, (actual["enabled"] as AttributeValue).bool())
-        assertEquals(expectedTTl, (actual["key_expiration_date_timestamp"] as AttributeValue).n().toLong())
+        assertEquals(false, actual["enabled"])
+        assertEquals(expectedTTl, actual["key_expiration_date_timestamp"])
     }
 
     @Test
@@ -142,10 +132,10 @@ class KeyRepositoryTest {
         val ttl = Duration.ofSeconds(1)
         keyRepository.deleteKeyFor(kid, SIGNATURE, ttl)
 
-        val actual = getActual(kid, dynamoSignatureKeysTableName)
+        val actual = getActual(kid, SIGNATURE)
         val expectedTTl = now.epochSecond + 1
-        assertEquals(false, (actual["enabled"] as AttributeValue).bool())
-        assertEquals(expectedTTl, (actual["key_expiration_date_timestamp"] as AttributeValue).n().toLong())
+        assertEquals(false, actual["enabled"])
+        assertEquals(expectedTTl, actual["key_expiration_date_timestamp"])
 
         assertThrows(KeyDeletionException::class.java) {
             keyRepository.deleteKeyFor(kid, SIGNATURE)
@@ -181,21 +171,24 @@ class KeyRepositoryTest {
         val kid = keyRepository.createKeyFrom(masterKid = masterKid, keyPurpose = MFA)
         keyRepository.deleteKeyFor(kid, MFA)
 
-        val actual = getActual(kid, dynamoMfaKeysTableName)
-        assertEquals(emptyMap<String, AttributeValue>(), actual)
+        val actual = getActual(kid, MFA)
+        assertEquals(emptyMap<String, Any>(), actual)
     }
 
 
-    private fun getActual(kid: Kid, tableName: String): MutableMap<String, AttributeValue> =
-        dynamoDbClient.getItem(
-            GetItemRequest.builder().tableName(tableName)
-                .key(
-                    mapOf(
-                        "key_id" to kid.content().asDynamoAttribute()
-                    )
+    private fun getActual(kid: Kid, keyPurpose: KeyPurpose): Map<String, Any> =
+        jdbcTemplate.query(
+            "SELECT * FROM KEYS WHERE key_id = ? AND key_purpose = ?;", { rs, _ ->
+                mapOf(
+                    "key_id" to rs.getString("key_id"),
+                    "master_key_id" to rs.getString("master_key_id"),
+                    "encrypted_private_key" to rs.getString("encrypted_private_key"),
+                    "key_expiration_date_timestamp" to rs.getLong("key_expiration_date_timestamp"),
+                    "enabled" to rs.getBoolean("enabled"),
                 )
-                .build()
-        ).item()
+            },
+            kid.content(), keyPurpose.name
+        ).firstOrNull() ?: emptyMap()
 
     @Test
     fun `when a key is found by id and purpose`() {

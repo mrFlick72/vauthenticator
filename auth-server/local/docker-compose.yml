@@ -18,7 +18,7 @@ services:
       - "${PORT_WEB_UI-8050}:${PORT_WEB_UI-8080}"
     environment:
       - PERSISTENCE=1
-      - SERVICES=s3,kms,dynamodb,iam,sts,sns
+      - SERVICES=s3,kms,iam,sts,sns
     volumes:
       - ./localstack:/var/lib/localstack
   redis:

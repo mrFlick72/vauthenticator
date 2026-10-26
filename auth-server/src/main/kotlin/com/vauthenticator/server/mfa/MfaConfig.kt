@@ -15,7 +15,6 @@ import com.vauthenticator.server.keys.domain.MasterKid
 import com.vauthenticator.server.mask.SensitiveDataMaskerResolver
 import com.vauthenticator.server.mask.SensitiveEmailMasker
 import com.vauthenticator.server.mask.SensitivePhoneMasker
-import com.vauthenticator.server.mfa.adapter.dynamodb.DynamoMfaAccountMethodsRepository
 import com.vauthenticator.server.mfa.adapter.jdbc.JdbcMfaAccountMethodsRepository
 import com.vauthenticator.server.mfa.domain.*
 import com.vauthenticator.server.ticket.domain.TicketCreator
@@ -24,10 +23,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sns.SnsClient
 import java.util.*
 
@@ -35,24 +32,6 @@ import java.util.*
 class MfaConfig {
 
     @Bean("mfaAccountMethodsRepository")
-    @Profile("dynamo")
-    fun dynamoDbMfaAccountMethodsRepository(
-        keyRepository: KeyRepository,
-        dynamoDbClient: DynamoDbClient,
-        @Value("\${key.master-key.id}") masterKey: String,
-        @Value("\${vauthenticator.dynamo-db.mfa-account-methods.table-name}") mfaAccountMethodTableName: String,
-        @Value("\${vauthenticator.dynamo-db.default-mfa-account-methods.table-name}") defaultMfaAccountMethodTableName: String
-    ): MfaAccountMethodsRepository =
-        DynamoMfaAccountMethodsRepository(
-            mfaAccountMethodTableName,
-            defaultMfaAccountMethodTableName,
-            dynamoDbClient,
-            keyRepository,
-            MasterKid(masterKey)
-        ) { MfaDeviceId(UUID.randomUUID().toString()) }
-
-    @Bean("mfaAccountMethodsRepository")
-    @Profile("database")
     fun jdbcMfaAccountMethodsRepository(
         keyRepository: KeyRepository,
         jdbcTemplate: JdbcTemplate,

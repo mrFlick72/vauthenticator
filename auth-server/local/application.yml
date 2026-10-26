@@ -94,59 +94,19 @@ password:
 vauthenticator:
   host: http://local.api.vauthenticator.com:9090
 
-  dynamo-db:
-    account:
-      table-name: VAuthenticator_Account_Local_Staging
-      cache:
-        enabled: false
-        ttl: 10s
-        name: account
-      role.table-name: VAuthenticator_Account_Role_Local_Staging
-    role:
-      table-name: VAuthenticator_Role_Local_Staging
-      cache:
-        enabled: false
-        name: role
-        ttl: 1m
-      protected-from-delete: ROLE_USER,VAUTHENTICATOR_ADMIN
-    client-application:
-      table-name: VAuthenticator_ClientApplication_Local_Staging
-      cache:
-        enabled: false
-        ttl: 10s
-        name: client-application
-    password-history:
-      table-name: VAuthenticator_Password_History_Local_Staging
-    keys:
-      signature:
-        table-name: VAuthenticator_Signature_Keys_Local_Staging
-      mfa:
-        table-name: VAuthenticator_Mfa_Keys_Local_Staging
-    ticket:
-      table-name: VAuthenticator_Ticket_Local_Staging
-    mfa_account_methods:
-      table-name: VAuthenticator_Mfa_Account_Methods_Local_Staging
-    default-mfa-account-methods:
-      table-name: VAuthenticator_Default_Mfa_Account_Methods_Local_Staging
+  role:
+    protected-from-delete: ROLE_USER,VAUTHENTICATOR_ADMIN
 
 iamUserAwsCredentialsProvider: true
 
 aws:
   kms:
     endpointOverride: "http://localhost:4566"
-  dynamodb:
-    endpointOverride: "http://localhost:4566"
   sns:
     endpointOverride: "http://localhost:4566"
-
-
----
 
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/
     username: postgres
     password: postgres
-  config:
-    activate:
-      on-profile: database
