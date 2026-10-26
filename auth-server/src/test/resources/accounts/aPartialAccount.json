@@ -14,5 +14,6 @@
   "birthDate": "",
   "phone": "",
   "locale": "",
-  "mandatory_action": "NO_ACTION"
+  "mandatory_action": "NO_ACTION",
+  "lockedUntil": null
 }

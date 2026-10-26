@@ -59,4 +59,18 @@ class RedisCacheOperationTest {
 
         Assertions.assertEquals(Optional.empty<String>(), actual)
     }
+
+    @Test
+    fun `when all the objects of a cache are evicted the other caches are untouched`() {
+        val anotherCache = RedisCacheOperation<String, String>("another_cache", ttl, redisTemplate)
+        underTest.put("a_key", "a_value")
+        underTest.put("another_key", "another_value")
+        anotherCache.put("a_key", "a_value_in_another_cache")
+
+        underTest.evictAll()
+
+        Assertions.assertNull(underTest.get("a_key"))
+        Assertions.assertNull(underTest.get("another_key"))
+        Assertions.assertEquals("a_value_in_another_cache", anotherCache.get("a_key"))
+    }
 }
