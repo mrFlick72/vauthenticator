@@ -186,6 +186,11 @@ Password login is likewise unthrottled.
 **Fix:** per-account + per-IP throttling and lockout on `/login`, `/mfa-challenge`, `/api/mfa/*`,
 and reset endpoints; shorten OTP TTL to 30–120s; cap OTP verification attempts per challenge.
 
+**2026-10-26 update — partially addressed (#211, ADR 0011):** the password step of `/login` now has a per-account
+lockout: after `login.failed-login-lock.threshold` (default 5) consecutive wrong passwords the account gets a
+Failed-Login Lock for `login.failed-login-lock.duration` (default 1m), see `docs/failed-login-lock.md`. Still open:
+per-IP throttling, the MFA OTP (TTL and attempt cap), `/api/mfa/*` and the reset endpoints, so the finding stays open.
+
 ---
 
 ### VA-SEC-04 — AES/ECB unauthenticated key wrapping (non-KMS)

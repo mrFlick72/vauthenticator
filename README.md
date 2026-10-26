@@ -7,7 +7,7 @@ VAuthenticator is an OpenID Connect and OAuth2 authorization server ecosystem. T
 | Project | Purpose |
 | --- | --- |
 | `auth-server` | Kotlin/Spring Boot authorization server with OAuth2, OIDC, MFA, account lifecycle, roles, keys, templates, and management APIs. |
-| `management-ui` | Standalone React/TypeScript admin UI for managing clients, accounts, roles, keys, email templates, and password lifecycle rules. |
+| `management-ui` | Standalone React/TypeScript admin UI for managing clients, accounts, roles, keys, email and SMS templates, and password lifecycle rules. |
 | `helm-charts` | Helm chart and chart repository docs for Kubernetes deployment. |
 
 ## Architecture
@@ -22,8 +22,9 @@ Backend capabilities include:
 - JWT access token and ID token customization through Lambda integration
 - Client application, role, account, and key management APIs
 - Signup, welcome email, email verification, password reset, and password change flows
-- MFA with email, SMS, and OTP support
-- Post-login workflows, including forced password reset
+- MFA with one-time codes sent by email or SMS, with self-service device management (enrol, associate, choose the default, revoke)
+- Post-login workflow (MFA, then a mandatory password change), checked at every authorization request
+- Failed-Login Lock: after too many consecutive wrong passwords (default 5) an account is locked for a while (default 1 minute) (see [auth-server/docs/failed-login-lock.md](auth-server/docs/failed-login-lock.md))
 - Password lifecycle rules (PostgreSQL profile): force a password reset every N seconds (recurring) or lock an account once N seconds have passed (one-shot), for a single account or in bulk for every account matching a pattern such as `*@gmail.com` (see [auth-server/docs/password-lifecycle.md](auth-server/docs/password-lifecycle.md))
 - RP-initiated logout and OIDC Session Management
 - Custom actuator management endpoints for setup and cleanup
@@ -31,7 +32,7 @@ Backend capabilities include:
 Storage and infrastructure options include:
 
 - DynamoDB or PostgreSQL persistence profiles
-- Redis for authorization code storage, distributed session storage, and cache
+- Redis for distributed session storage, cache, failed-login counts, and authorization storage when PostgreSQL is not used
 - AWS KMS-backed keys or local/plain Java key management
 - S3 or filesystem-backed document/static asset loading
 
@@ -75,7 +76,10 @@ Runtime auth/API settings are loaded from a static `GET /config.json`, generated
 
 - [Auth server profiles](auth-server/docs/profiles.md)
 - [Auth server MFA](auth-server/docs/mfa.md)
+- [Auth server MFA sequence diagrams](auth-server/docs/mfa-sequence-diagrams.md)
 - [Auth server login workflow](auth-server/docs/login-workflow.md)
+- [Auth server Failed-Login Lock](auth-server/docs/failed-login-lock.md)
+- [Auth server password lifecycle](auth-server/docs/password-lifecycle.md)
 - [Auth server Lambda token customization](auth-server/docs/lambda.md)
 - [Auth server management endpoints](auth-server/docs/management.md)
 - [Auth server security assessment](auth-server/docs/security-assessment.md)
