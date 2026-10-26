@@ -10,8 +10,6 @@ data:
         endpointOverride: {{ .Values.application.aws.s3.endpointOverride }}
       kms:
         endpointOverride: {{ .Values.application.aws.kms.endpointOverride }}
-      dynamodb:
-        endpointOverride: {{ .Values.application.aws.dynamodb.endpointOverride }}
       sns:
         endpointOverride: {{ .Values.application.aws.sns.endpointOverride }}
       lambda:
@@ -82,16 +80,13 @@ data:
         length: {{ .Values.application.mfa.otp.otpLength }}
         timeToLiveInSeconds: {{ .Values.application.mfa.otp.otpTimeToLiveInSeconds }}
 
-    {{- $databaseProfileEnabled := regexMatch "(^|.*,\\s*)database(\\s*,.*|\\s*$)" .Values.application.profiles }}
     spring:
       profiles:
         active: {{ .Values.application.profiles }}
-      {{- if $databaseProfileEnabled }}
       datasource:
-        url: {{ required "application.datasource.url must be set when application.profiles includes database" .Values.application.datasource.url | quote }}
+        url: {{ required "application.datasource.url must be set: PostgreSQL is the only persistence" .Values.application.datasource.url | quote }}
         username: {{ .Values.application.datasource.username | quote }}
         password: {{ .Values.application.datasource.password | quote }}
-      {{- end }}
 
       main:
         lazy-initialization: false
@@ -142,42 +137,21 @@ data:
           show-details: ALWAYS
 
     vauthenticator:
-      dynamo-db:
+      role:
+        protected-from-delete: {{ .Values.application.role.protectedFromDelete }}
+      cache:
         account:
-          table-name: {{ .Values.application.dynamoDb.account.tableName }}
-          cache:
-            ttl: {{ .Values.application.dynamoDb.account.cache.ttl }}
-            name: {{ .Values.application.dynamoDb.account.cache.name }}
-        group:
-          table-name: {{ .Values.application.dynamoDb.group.tableName }}
-        group-to-role:
-          table-name: {{ .Values.application.dynamoDb.groupToRole.tableName }}
+          enabled: {{ .Values.application.cache.account.enabled }}
+          ttl: {{ .Values.application.cache.account.ttl }}
+          name: {{ .Values.application.cache.account.name }}
         role:
-          table-name: {{ .Values.application.dynamoDb.role.tableName }}
-          cache:
-            ttl: {{ .Values.application.dynamoDb.role.cache.ttl }}
-            name: {{ .Values.application.dynamoDb.role.cache.name }}
-          protected-from-delete: {{ .Values.application.dynamoDb.role.protectedFromDelete }}
+          enabled: {{ .Values.application.cache.role.enabled }}
+          ttl: {{ .Values.application.cache.role.ttl }}
+          name: {{ .Values.application.cache.role.name }}
         client-application:
-          table-name: {{ .Values.application.dynamoDb.clientApplication.tableName }}
-          cache:
-            ttl: {{ .Values.application.dynamoDb.clientApplication.cache.ttl }}
-            name: {{ .Values.application.dynamoDb.clientApplication.cache.name }}
-        password-history:
-          table-name:  {{ .Values.application.dynamoDb.passwordHistory.tableName }}
-          history-evaluation-limit: {{ .Values.application.dynamoDb.passwordHistory.historyEvaluationLimit }}
-          max-history-allowed-size: {{ .Values.application.dynamoDb.passwordHistory.maxHistoryAllowedSize }}
-        keys:
-          mfa:
-            table-name: {{ .Values.application.dynamoDb.keys.mfa.tableName }}
-          signature:
-            table-name: {{ .Values.application.dynamoDb.keys.signature.tableName }}
-        ticket:
-          table-name:  {{ .Values.application.dynamoDb.ticket.tableName }}
-        mfa-account-methods:
-          table-name: {{ .Values.application.dynamoDb.mfaAccountMethods.tableName  }}
-        default-mfa-account-methods:
-          table-name: {{ .Values.application.dynamoDb.defaultMfaAccountMethods.tableName  }}
+          enabled: {{ .Values.application.cache.clientApplication.enabled }}
+          ttl: {{ .Values.application.cache.clientApplication.ttl }}
+          name: {{ .Values.application.cache.clientApplication.name }}
 
       host: {{ .Values.application.baseUrl }}
       lambda:

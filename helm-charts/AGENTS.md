@@ -49,8 +49,8 @@ envsubst's them into a static `/config.json` at container start (see
 From `helm-charts`:
 
 - `helm dependency update charts/vauthenticator`
-- `helm lint charts/vauthenticator --set ingress.host=localhost`
-- `helm template vauthenticator charts/vauthenticator --set ingress.host=localhost`
+- `helm lint charts/vauthenticator --set ingress.host=localhost --set application.datasource.url=jdbc:postgresql://localhost:5432/`
+- `helm template vauthenticator charts/vauthenticator --set ingress.host=localhost --set application.datasource.url=jdbc:postgresql://localhost:5432/`
 - `helm lint charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.authenticationCheckInterval=15000 --set application.apiBaseUrl=http://localhost/api`
 - `helm template management-ui charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.authenticationCheckInterval=15000 --set application.apiBaseUrl=http://localhost/api`
 
