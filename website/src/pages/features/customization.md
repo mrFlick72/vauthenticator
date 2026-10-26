@@ -18,7 +18,7 @@ For example, your integration can add application-specific claims based on the a
 - **Persistence:** PostgreSQL with the `database` profile, or DynamoDB with `dynamo`.
 - **Key management:** AWS KMS with the `kms` profile, or plain Java cryptography with master-key configuration.
 - **Documents and assets:** filesystem or Amazon S3 storage.
-- **Sessions and cache:** Redis.
+- **Sessions, cache, and failed sign-in counts:** Redis. Authorizations are stored in PostgreSQL with the `database` profile, and in Redis otherwise.
 
 These options let you choose a PostgreSQL-based installation or an installation integrated with AWS services. Each option requires its corresponding configuration and dependencies.
 
