@@ -7,8 +7,8 @@ When an account's **Consecutive Failed Logins** reach a configured threshold, VA
 vocabulary is defined in [CONTEXT.md](../CONTEXT.md), and the design decision in
 [ADR 0011](adr/0011-failed-login-lock-reuses-account-lock.md).
 
-The feature works with the `database` profile (PostgreSQL). With the `dynamo` profile, which is being removed, the lock
-end is not stored, so a Failed-Login Lock would be lasting.
+The lock end is stored on the PostgreSQL `ACCOUNT` row. With the account cache enabled, applying and lifting the lock
+evict the cached account ([ADR 0012](adr/0012-postgresql-only-persistence-with-evict-on-write-caches.md)).
 
 ### What counts
 
@@ -57,7 +57,7 @@ A login with no client app (a direct `/login`) attributes its events to the syst
 | `FailedLoginLockAuthenticationListener` | Listens to the Spring authentication events of the login form. Only the exact `AuthenticationFailureBadCredentialsEvent` is a failed login, and only the exact `AuthenticationSuccessEvent` proves the password: MFA and change-password publish subclasses of their own, which are ignored. |
 | `FailedLoginLock` | The domain rules: count a failed login, apply the lock at the threshold, reset the count when the password is proven, release an expired lock. |
 | `ConsecutiveFailedLogins` | Port for the failure count. `RedisConsecutiveFailedLogins` increments it and renews its expiry in one Lua script. |
-| `FailedLoginLockRepository` | Port for applying and lifting the lock as conditional updates. `JdbcFailedLoginLockRepository` (`database` profile) runs them as `UPDATE ... WHERE` statements on the `ACCOUNT` row. |
+| `FailedLoginLockRepository` | Port for applying and lifting the lock as conditional updates. `JdbcFailedLoginLockRepository` runs them as `UPDATE ... WHERE` statements on the `ACCOUNT` row. |
 | `AccountUserDetailsService` | Loads the account for the login form and releases an expired lock before Spring checks the lock. |
 | `AccountUpdateAdminAction` | The admin save: applies the lock rules for `accountLocked` and publishes `ADMIN_UNLOCK`. |
 

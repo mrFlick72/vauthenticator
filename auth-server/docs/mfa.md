@@ -176,7 +176,7 @@ An account has an email device (the default) and a phone device, and wants to dr
 
    Revoking the phone device afterwards would return ```409``` with ```LAST_ASSOCIATED_DEVICE```, since it is now the account's only associated device.
 
-On the ```database``` profile the check and the delete hold the account's devices locked. On the ```dynamo``` profile they do not: two concurrent revocations on the same account can both pass the check and leave it without an associated device. Such an account cannot complete an MFA login until its devices are repaired.
+The check and the delete hold the account's devices locked, so two concurrent revocations on the same account cannot both pass the check and leave it without an associated device.
 
 ### Challenge
 

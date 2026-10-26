@@ -16,7 +16,7 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 
 - Backend: Spring Boot 4.0.x, Kotlin 2.3, Java 25
 - Security: Spring Security, Spring Authorization Server, OAuth2 Resource Server
-- Persistence: PostgreSQL or DynamoDB depending on active profile
+- Persistence: PostgreSQL (DynamoDB was removed in 0.10, ADR 0012)
 - Cache/session: Redis, Spring Session
 - Key management: AWS KMS or plain Java crypto depending on profile
 - Templating: Thymeleaf for pages, Jinjava for communication templates
@@ -82,8 +82,6 @@ Webpack entry points are defined in `src/main/frontend/webpack.config.js`. The l
 
 Profile behavior is documented in `docs/profiles.md`.
 
-- `database`: use PostgreSQL persistence
-- `dynamo`: use DynamoDB persistence
 - `kms`: use AWS KMS for key management
 - omit `kms`: use plain Java crypto-based key management
 
@@ -91,7 +89,7 @@ When KMS is not enabled, the application expects a master-key storage configurat
 
 ## Local Development
 
-The local environment depends on multiple services: PostgreSQL, DynamoDB/LocalStack, KMS emulation, Redis, and an email server. See `local/readme.md` and `local/docker-compose.yml`.
+The local environment depends on multiple services: PostgreSQL, LocalStack (KMS and SNS emulation), Redis, and an email server. See `local/readme.md` and `local/docker-compose.yml`.
 
 Local hostnames expected by the project:
 
@@ -150,7 +148,7 @@ Documented MFA endpoints (see `docs/mfa.md`):
 - `PUT /api/mfa/challenge` (also used by the login MFA page via the session)
 - `GET /api/sms-template/{smsType}` / `PUT /api/sms-template` (MFA SMS text, scopes `admin:sms-template-reader` / `admin:sms-template-writer`; mirrors `/api/email-template`)
 
-Documented password lifecycle endpoints (`database` profile only, scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):
+Documented password lifecycle endpoints (scope `admin:password-lifecycle-editor`, see `docs/password-lifecycle.md`):
 
 - `PUT /api/admin/accounts/{userName}/password/lifecycle/{action}`
 - `GET /api/admin/accounts/{userName}/password/lifecycle`
@@ -168,7 +166,8 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - Prefer existing package patterns: `api` for HTTP endpoints, `domain` for business logic and contracts, `adapter` for integrations, `web` for MVC/page concerns.
 - Check both backend and frontend paths when changing user flows like login, signup, password reset, MFA, or error pages.
 - If a change affects templates or frontend bundles, verify whether frontend assets or communication templates must be rebuilt or copied for the local filesystem-based setup.
-- Be careful with profile-specific behavior. Repository, key, and infrastructure code may have both AWS-backed and local/database-backed implementations.
+- Be careful with profile-specific behavior. Key management has both an AWS KMS and a plain-Java implementation; persistence is PostgreSQL only.
+- The account, role and client-application Redis caches are opt-in (`vauthenticator.cache.<region>.enabled`) and wired by the `*RepositoryConfig` classes. Any code that writes account tables without going through `CachedAccountRepository` must evict the account cache (a decorator such as `AccountCacheEvictingFailedLoginLockRepository`) and have a test that a cached account reflects the write. See ADR 0012.
 - Tests are organized near the same domain names in `src/test/kotlin/com/vauthenticator/server`.
 - `/api/**` authorization lives in the controllers, not in `WebSecurityConfig`. A JWT-only handler binds `Authentication?` and calls `PermissionValidator.validate(authentication, scopes)` (or `jwtAuthenticationOf(authentication)` when there is no scope to check), which returns the validated `JwtAuthenticationToken`. Never bind `JwtAuthenticationToken` directly: `/api/**` `.authenticated()` also accepts browser sessions, so a session caller would get a `500` instead of a `401`. Cover each JWT-only handler with a standalone controller test for "session user, even an admin → `401`". See ADR 0007. Session-aware handlers (browser flows) call `validate(authentication, session, scopes)`; a request without a resolvable session client app gets `403`. Ticket-based flows authorize by the ticket: set a purpose in the ticket context when issuing it and check it when redeeming (ADR 0008).
 - Architecture decisions are recorded in `docs/adr/`. Read the related ADRs before changing authorization, and add a new one when a decision changes.

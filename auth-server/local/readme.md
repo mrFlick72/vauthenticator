@@ -1,6 +1,6 @@
 # Local Tenant Installer
 
-VAuthenticator needs of a lot of infrastructure to run: postgres, dynamo, kms, redis and an email server. It can be a barrier to adopt VAuthenticator.
+VAuthenticator needs of a lot of infrastructure to run: postgres, redis, kms, sns and an email server. It can be a barrier to adopt VAuthenticator.
 That's way we provide one docker compose with all the needed infrastructure and an actuator endpoint to provision a new tenant, the default credentials are below:
 
 - default admin client application for M2M:
@@ -48,7 +48,7 @@ in order to be sure to have the assets and the default email and SMS templates y
 
 Postgres and plain java key management is an available option
 
-The available profile are
-- dynamo to let to use dynamo as persistence 
+Postgres is always the persistence. The only available profile is
 - kms to let to use kms as kay manager a plain java implementation is used otherwise
-- database to let to use postgres as persistence
+
+See [profiles.md](../docs/profiles.md) for the datasource, protected roles and the optional caches.

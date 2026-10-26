@@ -4,7 +4,7 @@ Custom Actuator Endpoint
 
 ## Clean Database Entry with TTL
 
-Actuator Clean Database enabled for database profile activated 
+Actuator Clean Database
 
 *URI:* ```Post /actuator/database-clean-up```
 
