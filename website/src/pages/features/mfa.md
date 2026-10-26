@@ -7,7 +7,7 @@ section: Features · Authentication
 
 ## What it provides
 
-VAuthenticator includes MFA support with email, SMS, and OTP methods. The login workflow integrates MFA challenges, while enrollment APIs support registering and associating devices.
+VAuthenticator includes MFA with one-time codes sent by email or SMS. The login workflow integrates MFA challenges, while enrollment APIs support registering and associating devices.
 
 An MFA device is one method (email or SMS) on one channel: an email address or a phone number. A device is enrolled when it is registered, and associated once the account holder confirms the code sent to it. Only associated devices count as a second factor. One associated device is the default device, which receives the login challenge unless the sign-in page picks another one.
 

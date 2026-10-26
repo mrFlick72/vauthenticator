@@ -3,6 +3,7 @@ package com.vauthenticator.server.account.domain
 import com.vauthenticator.server.cache.CacheContentConverter
 import com.vauthenticator.server.extentions.toSha256
 import tools.jackson.databind.ObjectMapper
+import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -27,10 +28,19 @@ data class Account(
     val birthDate: Date?,
     val phone: Phone?,
     val locale: UserLocale?,
-    val mandatoryAction: AccountMandatoryAction
+    val mandatoryAction: AccountMandatoryAction,
+    val lockedUntil: Instant? = null
 ) {
     val sub: String
         get() = email.toSha256()
+
+    /** A lasting lock: it stays until an explicit unlock. */
+    fun lock(): Account = copy(accountNonLocked = false, lockedUntil = null)
+
+    /** A Failed-Login Lock: it ends on its own at [end]. */
+    fun lockUntil(end: Instant): Account = copy(accountNonLocked = false, lockedUntil = end)
+
+    fun unlock(): Account = copy(accountNonLocked = true, lockedUntil = null)
 }
 
 enum class AccountMandatoryAction {

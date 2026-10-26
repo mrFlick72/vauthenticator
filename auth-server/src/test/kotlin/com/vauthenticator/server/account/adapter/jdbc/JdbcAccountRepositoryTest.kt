@@ -11,6 +11,7 @@ import com.vauthenticator.server.support.JdbcUtils.resetDb
 import com.vauthenticator.server.support.protectedRoleNames
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.time.Instant
 
 class JdbcAccountRepositoryTest : AbstractAccountRepositoryTest() {
 
@@ -35,6 +36,29 @@ class JdbcAccountRepositoryTest : AbstractAccountRepositoryTest() {
         uut.save(account.copy(firstName = "A_NEW_FIRSTNAME"))
 
         assertEquals(anotherAccount, uut.accountFor(anotherAccount.username))
+    }
+
+    @Test
+    fun `when an account under a failed-login lock is saved the lock end is stored and can be cleared`() {
+        val uut = JdbcAccountRepository(jdbcTemplate)
+        val locked = anAccount().lockUntil(Instant.parse("2026-10-25T10:16:30Z"))
+
+        uut.save(locked)
+        assertEquals(locked, uut.accountFor(locked.username))
+
+        val unlocked = locked.unlock()
+        uut.save(unlocked)
+        assertEquals(unlocked, uut.accountFor(locked.username))
+    }
+
+    @Test
+    fun `when an account under a failed-login lock is created the lock end is stored`() {
+        val uut = JdbcAccountRepository(jdbcTemplate)
+        val locked = anAccount().lockUntil(Instant.parse("2026-10-25T10:16:30Z"))
+
+        uut.create(locked)
+
+        assertEquals(locked, uut.accountFor(locked.username))
     }
 
     @Test

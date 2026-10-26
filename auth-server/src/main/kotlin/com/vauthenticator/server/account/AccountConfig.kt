@@ -41,14 +41,19 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import tools.jackson.databind.ObjectMapper
+import java.time.Clock
 import java.time.Duration
 
 @Configuration(proxyBeanMethods = false)
 class AccountConfig {
 
     @Bean
-    fun changeAccountEnabling(accountRepository: AccountRepository): AccountUpdateAdminAction =
-        AccountUpdateAdminAction(accountRepository)
+    fun changeAccountEnabling(
+        accountRepository: AccountRepository,
+        eventsDispatcher: VAuthenticatorEventsDispatcher,
+        clock: Clock
+    ): AccountUpdateAdminAction =
+        AccountUpdateAdminAction(accountRepository, eventsDispatcher, clock)
 
     @Bean
     fun saveAccount(accountRepository: AccountRepository): SaveAccount =

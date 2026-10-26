@@ -97,8 +97,8 @@ class PasswordResetPasswordLifeCycleStrategyImplementation : PasswordLifeCycleSt
 
 class AccountLockPasswordLifeCycleStrategyImplementation : PasswordLifeCycleStrategyImplementation {
     override fun apply(account: Account): Account? =
-        if (account.accountNonLocked) {
-            account.copy(accountNonLocked = false)
+        if (account.accountNonLocked || account.lockedUntil != null) {
+            account.lock()
         } else {
             null
         }

@@ -13,13 +13,13 @@ export const features = [
   {
     title: 'Accounts & passwords',
     href: sitePath('features/accounts-passwords/'),
-    description: 'Support signup, email verification, password recovery, and account lifecycle rules.',
+    description: 'Support signup, email verification, password recovery, a lock after repeated failed sign-ins, and account lifecycle rules.',
     label: '02 · Account lifecycle',
   },
   {
     title: 'Multi-factor authentication',
     href: sitePath('features/mfa/'),
-    description: 'Add an extra verification step with email, SMS, and OTP, and let account holders manage their devices.',
+    description: 'Add an extra verification step with one-time codes by email or SMS, and let account holders manage their devices.',
     label: '03 · Authentication',
   },
   {

@@ -5,6 +5,7 @@ import com.vauthenticator.server.account.domain.Date
 import org.springframework.dao.DuplicateKeyException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
 
 private const val SAVE_QUERY: String = """
         INSERT INTO Account (
@@ -21,8 +22,9 @@ private const val SAVE_QUERY: String = """
             birth_date,
             phone,
             locale,
-            mandatory_action
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)  ON CONFLICT(username) DO UPDATE SET account_non_expired=?,
+            mandatory_action,
+            locked_until
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)  ON CONFLICT(username) DO UPDATE SET account_non_expired=?,
             account_non_locked=?,
             credentials_non_expired=?,
             enabled=?,
@@ -34,7 +36,8 @@ private const val SAVE_QUERY: String = """
             birth_date=?,
             phone=?,
             locale=?,
-            mandatory_action=?
+            mandatory_action=?,
+            locked_until=?
     """
 private const val CREATE_QUERY: String = """
         INSERT INTO Account (
@@ -51,8 +54,9 @@ private const val CREATE_QUERY: String = """
             birth_date,
             phone,
             locale,
-            mandatory_action
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) 
+            mandatory_action,
+            locked_until
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) 
     """
 
 private const val FIND_ONE_QUERY: String = """
@@ -69,7 +73,8 @@ private const val FIND_ONE_QUERY: String = """
            birth_date,
            phone,
            locale,
-           mandatory_action
+           mandatory_action,
+           locked_until
      FROM Account
      WHERE username=?
     """
@@ -134,8 +139,8 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
                 mandatoryAction = AccountMandatoryAction.valueOf(
                     rs.getString("mandatory_action")
                 ),
-                groups = groups
-
+                groups = groups,
+                lockedUntil = rs.getTimestamp("locked_until")?.toInstant()
             )
         }, username)
         return queryResult.firstOrNull()
@@ -164,6 +169,7 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
             account.phone?.formattedPhone().orEmpty(),
             account.locale?.formattedLocale().orEmpty(),
             account.mandatoryAction.name,
+            account.lockedUntil?.let { Timestamp.from(it) },
 
 
             account.accountNonExpired,
@@ -178,7 +184,8 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
             account.birthDate?.localDate,
             account.phone?.formattedPhone().orEmpty(),
             account.locale?.formattedLocale().orEmpty(),
-            account.mandatoryAction.name
+            account.mandatoryAction.name,
+            account.lockedUntil?.let { Timestamp.from(it) }
         )
 
         saveRoleFor(account.username, account.authorities)
@@ -202,7 +209,8 @@ class JdbcAccountRepository(private val jdbcTemplate: JdbcTemplate) : AccountRep
                 account.birthDate?.localDate,
                 account.phone?.formattedPhone().orEmpty(),
                 account.locale?.formattedLocale().orEmpty(),
-                account.mandatoryAction.name
+                account.mandatoryAction.name,
+                account.lockedUntil?.let { Timestamp.from(it) }
             )
             saveRoleFor(account.username, account.authorities)
             saveGroupFor(account.username, account.groups)

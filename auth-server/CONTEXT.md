@@ -27,6 +27,18 @@ _Avoid_: logged in (when the workflow is not complete), fully authenticated
 A session in which the MFA challenge is a **Passed Step**. It counts for every client app that requires MFA for the rest of the session, so MFA is not presented again; a session that is login-complete only for an app without MFA is not second-factor-verified.
 _Avoid_: MFA session, step-up
 
+**Account Lock**:
+A locked account cannot log in. A lock is lasting — it comes from signup (until the email is verified), an admin, or the lock **Lifecycle Action**, and stays until an explicit unlock (email verification or an admin) — unless it is a **Failed-Login Lock**.
+_Avoid_: disabled (a separate account state)
+
+**Failed-Login Lock**:
+An **Account Lock** applied automatically when **Consecutive Failed Logins** reach the configured threshold, which ends on its own once the configured lock duration has passed. Only an unlocked account gets one: failed logins against an already-locked account never turn its lasting lock into one that expires. An explicit unlock ends it at once; an explicit lock of an account that is unlocked is lasting, while re-stating "locked" for an account already under a **Failed-Login Lock** leaves it temporary. A **Lifecycle Action** that locks an account under a **Failed-Login Lock** makes the lock lasting. While it lasts, every login is refused, even with the right password; those attempts are not **Consecutive Failed Logins** and do not extend the lock. It only stops new logins: sessions and tokens issued before it keep working, and a password reset neither lifts it nor is blocked by it.
+_Avoid_: block, lockout
+
+**Consecutive Failed Logins**:
+The number of wrong passwords given for an account since its last successful password check. It resets to zero when the password is proven, when a **Failed-Login Lock** is applied or ends, or when no failure has occurred for the lock duration. Only the password step counts: a wrong MFA code is not a failed login. Attempts against usernames with no account count for nothing.
+_Avoid_: failed attempts (unqualified)
+
 ### Password lifecycle
 
 **Password Lifecycle Rule**:
