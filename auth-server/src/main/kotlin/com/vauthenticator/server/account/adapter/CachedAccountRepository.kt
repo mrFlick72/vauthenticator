@@ -22,8 +22,8 @@ class CachedAccountRepository(
             }
 
     override fun save(account: Account) {
-        cacheOperation.evict(account.email)
         delegate.save(account)
+        cacheOperation.evict(account.email)
     }
 
 }

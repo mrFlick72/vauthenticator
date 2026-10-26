@@ -1,7 +1,9 @@
 package com.vauthenticator.server.account.adapter
 
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
+import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
+import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.cache.RedisCacheOperation
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.JdbcUtils.jdbcTemplate
@@ -46,5 +48,23 @@ class CachedJdbcAccountRepositoryTest {
         uut.accountFor(account.username)
 
         assertEquals(account.lockUntil(LOCKED_UNTIL), uut.accountFor(account.username))
+    }
+
+    @Test
+    fun `when an account is read while it is being saved the saved account is read afterwards`() {
+        val jdbcAccountRepository = JdbcAccountRepository(jdbcTemplate)
+        lateinit var cachedAccountRepository: AccountRepository
+        val readWhileSaving = object : AccountRepository by jdbcAccountRepository {
+            override fun save(account: Account) {
+                cachedAccountRepository.accountFor(account.username)
+                jdbcAccountRepository.save(account)
+            }
+        }
+        cachedAccountRepository = CachedAccountRepository(AccountCacheContentConverter(ObjectMapper()), accountCache, readWhileSaving)
+        cachedAccountRepository.create(account.unlock())
+
+        cachedAccountRepository.save(account.lock())
+
+        assertEquals(account.lock(), cachedAccountRepository.accountFor(account.username))
     }
 }
