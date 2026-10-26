@@ -29,8 +29,8 @@ class AdminApiAccountEndPoint(
 
     @PutMapping("/api/admin/accounts")
     fun saveAccount(authentication: Authentication?, @RequestBody representation: AdminAccountApiRequest) = run {
-        val admin = permissionValidator.validate(authentication, Scopes.from(Scope.SAVE_ACCOUNT))
-        accountUpdateAdminAction.execute(representation, admin.clientAppId())
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.SAVE_ACCOUNT))
+        accountUpdateAdminAction.execute(representation, principal.clientAppId())
             .let { noContent().build<Unit>() }
     }
 
