@@ -2,8 +2,8 @@ package com.vauthenticator.server.login.failedloginlock
 
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
-import com.vauthenticator.server.login.failedloginlock.adapter.AccountRepositoryFailedLoginLockStore
-import com.vauthenticator.server.login.failedloginlock.adapter.jdbc.JdbcFailedLoginLockStore
+import com.vauthenticator.server.login.failedloginlock.adapter.AccountRepositoryFailedLoginLockRepository
+import com.vauthenticator.server.login.failedloginlock.adapter.jdbc.JdbcFailedLoginLockRepository
 import com.vauthenticator.server.login.failedloginlock.adapter.redis.RedisConsecutiveFailedLogins
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -22,27 +22,27 @@ class FailedLoginLockConfiguration {
     fun consecutiveFailedLogins(redisTemplate: StringRedisTemplate): ConsecutiveFailedLogins =
         RedisConsecutiveFailedLogins(redisTemplate)
 
-    @Bean("failedLoginLockStore")
+    @Bean("failedLoginLockRepository")
     @Profile("database")
-    fun jdbcFailedLoginLockStore(jdbcTemplate: JdbcTemplate): FailedLoginLockStore =
-        JdbcFailedLoginLockStore(jdbcTemplate)
+    fun jdbcFailedLoginLockRepository(jdbcTemplate: JdbcTemplate): FailedLoginLockRepository =
+        JdbcFailedLoginLockRepository(jdbcTemplate)
 
-    @Bean("failedLoginLockStore")
+    @Bean("failedLoginLockRepository")
     @Profile("dynamo")
-    fun accountRepositoryFailedLoginLockStore(accountRepository: AccountRepository): FailedLoginLockStore =
-        AccountRepositoryFailedLoginLockStore(accountRepository)
+    fun accountRepositoryFailedLoginLockRepository(accountRepository: AccountRepository): FailedLoginLockRepository =
+        AccountRepositoryFailedLoginLockRepository(accountRepository)
 
     @Bean
     fun failedLoginLock(
         accountRepository: AccountRepository,
-        failedLoginLockStore: FailedLoginLockStore,
+        failedLoginLockRepository: FailedLoginLockRepository,
         consecutiveFailedLogins: ConsecutiveFailedLogins,
         eventsDispatcher: VAuthenticatorEventsDispatcher,
         clock: Clock,
         failedLoginLockConfig: FailedLoginLockConfig
     ) = FailedLoginLock(
         accountRepository,
-        failedLoginLockStore,
+        failedLoginLockRepository,
         consecutiveFailedLogins,
         eventsDispatcher,
         clock,

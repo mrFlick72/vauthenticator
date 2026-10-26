@@ -35,14 +35,14 @@ interface ConsecutiveFailedLogins {
  * lock, and of several logins after expiry only one releases it. Each method returns true only when this call changed
  * the account. Other account updates still save the whole account, and there the last write wins.
  */
-interface FailedLoginLockStore {
+interface FailedLoginLockRepository {
     fun lockUntilIfUnlocked(userName: String, lockedUntil: Instant): Boolean
     fun releaseIfLockedUntil(userName: String, lockedUntil: Instant): Boolean
 }
 
 class FailedLoginLock(
     private val accountRepository: AccountRepository,
-    private val failedLoginLockStore: FailedLoginLockStore,
+    private val failedLoginLockRepository: FailedLoginLockRepository,
     private val consecutiveFailedLogins: ConsecutiveFailedLogins,
     private val eventsDispatcher: EventsDispatcher,
     private val clock: Clock,
@@ -57,9 +57,9 @@ class FailedLoginLock(
         if (failures >= config.threshold) {
             consecutiveFailedLogins.reset(userName)
             val now = clock.instant()
-            // the store keeps microseconds: the applied event must carry the same lock end the release reads back
+            // the repository keeps microseconds: the applied event must carry the same lock end the release reads back
             val lockedUntil = now.plus(config.duration).truncatedTo(ChronoUnit.MICROS)
-            if (failedLoginLockStore.lockUntilIfUnlocked(userName, lockedUntil)) {
+            if (failedLoginLockRepository.lockUntilIfUnlocked(userName, lockedUntil)) {
                 eventsDispatcher.dispatch(
                     FailedLoginLockAppliedEvent(Email(userName), clientAppId, now, FailedLoginLockApplied(lockedUntil))
                 )
@@ -76,7 +76,7 @@ class FailedLoginLock(
         val now = clock.instant()
         if (now.isBefore(lockedUntil)) return account
 
-        if (!failedLoginLockStore.releaseIfLockedUntil(account.username, lockedUntil)) {
+        if (!failedLoginLockRepository.releaseIfLockedUntil(account.username, lockedUntil)) {
             // another login released it first, or the lock changed meanwhile: the stored account decides
             return accountRepository.accountFor(account.username) ?: account
         }

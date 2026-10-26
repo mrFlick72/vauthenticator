@@ -13,10 +13,10 @@ import java.time.Instant
 
 private val LOCKED_UNTIL: Instant = Instant.parse("2026-10-25T10:16:30Z")
 
-class JdbcFailedLoginLockStoreTest {
+class JdbcFailedLoginLockRepositoryTest {
 
     private val accountRepository = JdbcAccountRepository(jdbcTemplate)
-    private val uut = JdbcFailedLoginLockStore(jdbcTemplate)
+    private val uut = JdbcFailedLoginLockRepository(jdbcTemplate)
     private val account = anAccount()
 
     @BeforeEach

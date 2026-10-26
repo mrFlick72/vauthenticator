@@ -1,6 +1,6 @@
 package com.vauthenticator.server.login.failedloginlock.adapter.jdbc
 
-import com.vauthenticator.server.login.failedloginlock.FailedLoginLockStore
+import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRepository
 import org.springframework.jdbc.core.JdbcTemplate
 import java.sql.Timestamp
 import java.time.Instant
@@ -15,7 +15,7 @@ private const val RELEASE_IF_LOCKED_UNTIL_QUERY = """
      WHERE username = ? AND account_non_locked = false AND locked_until = ?
     """
 
-class JdbcFailedLoginLockStore(private val jdbcTemplate: JdbcTemplate) : FailedLoginLockStore {
+class JdbcFailedLoginLockRepository(private val jdbcTemplate: JdbcTemplate) : FailedLoginLockRepository {
 
     override fun lockUntilIfUnlocked(userName: String, lockedUntil: Instant): Boolean =
         jdbcTemplate.update(LOCK_UNTIL_IF_UNLOCKED_QUERY, Timestamp.from(lockedUntil), userName) == 1
