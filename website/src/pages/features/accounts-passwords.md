@@ -27,7 +27,7 @@ login:
 - The lock never replaces a lock an administrator set: only an unlocked account gets one, and an administrator can unlock it at any time from the management UI or API.
 - Sessions and tokens issued before the lock keep working, and password reset is not affected.
 
-This protection requires the `database` profile. Existing PostgreSQL databases need a new column before upgrading; the reference below gives the statement.
+Existing PostgreSQL databases need a new column before upgrading; the reference below gives the statement.
 
 [Read the failed-login lock reference, with sequence diagrams of each flow](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/failed-login-lock.md).
 
@@ -39,6 +39,6 @@ The timer is counted from rule registration or its previous firing, rather than 
 
 ## A concrete example
 
-A recurring reset rule can require an account to reset its password at its next sign-in after each configured interval. This capability requires the `database` profile.
+A recurring reset rule can require an account to reset its password at its next sign-in after each configured interval.
 
 [Read the password lifecycle reference](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/password-lifecycle.md).
