@@ -2,14 +2,12 @@ package com.vauthenticator.server.login.failedloginlock
 
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
-import com.vauthenticator.server.login.failedloginlock.adapter.jdbc.JdbcFailedLoginLockRepository
 import com.vauthenticator.server.login.failedloginlock.adapter.redis.RedisConsecutiveFailedLogins
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.jdbc.core.JdbcTemplate
 import java.time.Clock
 
 @Configuration(proxyBeanMethods = false)
@@ -19,10 +17,6 @@ class FailedLoginLockConfiguration {
     @Bean
     fun consecutiveFailedLogins(redisTemplate: StringRedisTemplate): ConsecutiveFailedLogins =
         RedisConsecutiveFailedLogins(redisTemplate)
-
-    @Bean("failedLoginLockRepository")
-    fun jdbcFailedLoginLockRepository(jdbcTemplate: JdbcTemplate): FailedLoginLockRepository =
-        JdbcFailedLoginLockRepository(jdbcTemplate)
 
     @Bean
     fun failedLoginLock(

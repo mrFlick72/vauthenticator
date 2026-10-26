@@ -2,7 +2,6 @@ package com.vauthenticator.server.account
 
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.SaveAccount
@@ -28,7 +27,6 @@ import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
 import java.time.Clock
 
@@ -47,11 +45,6 @@ class AccountConfig {
     fun saveAccount(accountRepository: AccountRepository): SaveAccount =
         SaveAccount(accountRepository)
 
-
-    @Bean("accountRepository")
-    fun jdbcAccountRepository(
-        jdbcTemplate: JdbcTemplate
-    ) = JdbcAccountRepository(jdbcTemplate)
 }
 
 

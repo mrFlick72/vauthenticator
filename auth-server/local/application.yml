@@ -31,6 +31,11 @@ document:
   fs-base-path: dist
 
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/
+    username: postgres
+    password: postgres
+
   mail:
     host: localhost
     port: 1025
@@ -97,6 +102,20 @@ vauthenticator:
   role:
     protected-from-delete: ROLE_USER,VAUTHENTICATOR_ADMIN
 
+  cache:
+    account:
+      enabled: false
+      ttl: 10s
+      name: account
+    role:
+      enabled: false
+      ttl: 1m
+      name: role
+    client-application:
+      enabled: false
+      ttl: 10s
+      name: client-application
+
 iamUserAwsCredentialsProvider: true
 
 aws:
@@ -104,9 +123,3 @@ aws:
     endpointOverride: "http://localhost:4566"
   sns:
     endpointOverride: "http://localhost:4566"
-
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/
-    username: postgres
-    password: postgres
