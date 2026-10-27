@@ -1,0 +1,119 @@
+# auth-server configuration for the e2e stack (e2e/docker-compose.yml).
+# Same shape as auth-server/local/application.yml, with infrastructure
+# reached by compose service name instead of localhost.
+endSessionWithoutDiscovery: true
+oidcEndSessionUrl: ${vauthenticator.host}/oidc/logout
+auth.oidcIss: ${vauthenticator.host}
+
+event:
+  consumer:
+    enable:
+      logger-event-consumer: true
+
+no-reply:
+  email:
+    from: "no-reply@local.com"
+    welcomeEMailSubject: "welcome mail"
+    verificationEMailSubject: "verification mail"
+    resetPasswordEMailSubject: "reset password mail"
+    mfaEMailSubject: "mfa code"
+
+mfa:
+  otp:
+    length: 6
+    timeToLiveInSeconds: 600
+key:
+  master-key:
+    id: key
+    storage:
+      content:
+        key : "CrZKwm8YWGN5xYeKlaC9vXUBAFFzKYsqfaOFSrrqQgA="
+
+document:
+  engine: file-system
+  fs-base-path: dist
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/
+    username: postgres
+    password: postgres
+
+  mail:
+    host: mail-server
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      smtp:
+        port: 1025
+        auth: false
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:${server.port}/oauth2/jwks
+
+  data:
+    redis:
+      database: 0
+      host: redis
+
+server:
+  port: 9090
+  forward-headers-strategy: framework
+  servlet:
+    context-path: /
+
+management:
+  server:
+    port: 9091
+    servlet:
+      context-path: /
+  endpoints:
+    web:
+      exposure:
+        include: "health,tenant-setup"
+
+password:
+  password-history:
+    history-evaluation-limit: 1
+    max-history-allowed-size: 3
+  generator-criteria:
+    upperCaseCharactersSize: 2
+    lowerCaseCharactersSize: 2
+    specialCharactersSize: 2
+    numberCharactersSize: 2
+  policy:
+    minSize: 1
+    minSpecialSymbol: 1
+    enablePasswordReusePrevention: true
+
+vauthenticator:
+  host: http://local.api.vauthenticator.com:9090
+
+  role:
+    protected-from-delete: ROLE_USER,VAUTHENTICATOR_ADMIN
+
+  cache:
+    account:
+      enabled: false
+      ttl: 10s
+      name: account
+    role:
+      enabled: false
+      ttl: 1m
+      name: role
+    client-application:
+      enabled: false
+      ttl: 10s
+      name: client-application
+
+iamUserAwsCredentialsProvider: true
+
+aws:
+  kms:
+    endpointOverride: "http://localstack:4566"
+  sns:
+    endpointOverride: "http://localstack:4566"
