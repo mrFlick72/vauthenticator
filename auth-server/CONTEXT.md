@@ -92,3 +92,9 @@ The purpose an SMS is sent for; each type has exactly one **SMS Template**. Toda
 **SMS Template**:
 The admin-editable text an SMS of a given **SMS Type** is rendered from. It mirrors the email template of an email type: an SMS whose template has not been set up cannot be sent.
 _Avoid_: SMS message (for the template)
+
+### Roles
+
+**Protected Role**:
+A role that cannot be deleted because the system depends on it, such as the administrator role. Which roles are protected is set by configuration, not by an admin.
+_Avoid_: system role, default role

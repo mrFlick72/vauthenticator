@@ -156,8 +156,8 @@ class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : Cac
         objectMapper.readValue(cacheContent, Map::class.java)
             .let {
                 Account(
-                    accountNonExpired = it["credentialsNonExpired"] as Boolean,
-                    accountNonLocked = it["credentialsNonExpired"] as Boolean,
+                    accountNonExpired = it["accountNonExpired"] as Boolean,
+                    accountNonLocked = it["accountNonLocked"] as Boolean,
                     credentialsNonExpired = it["credentialsNonExpired"] as Boolean,
                     enabled = it["enabled"] as Boolean,
                     username = it["username"] as String,
@@ -175,7 +175,8 @@ class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : Cac
                     ),
                     mandatoryAction = AccountMandatoryAction.valueOf(
                         it["mandatory_action"] as String
-                    )
+                    ),
+                    lockedUntil = (it["lockedUntil"] as String?)?.let { lockedUntil -> Instant.parse(lockedUntil) }
                 )
             }
 
@@ -198,7 +199,8 @@ class AccountCacheContentConverter(private val objectMapper: ObjectMapper) : Cac
                 "birthDate" to source.birthDate?.iso8601FormattedDate().orEmpty(),
                 "phone" to source.phone?.formattedPhone().orEmpty(),
                 "locale" to source.locale?.formattedLocale().orEmpty(),
-                "mandatory_action" to source.mandatoryAction.name
+                "mandatory_action" to source.mandatoryAction.name,
+                "lockedUntil" to source.lockedUntil?.toString()
             )
         )
 

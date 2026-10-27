@@ -1,11 +1,10 @@
 package com.vauthenticator.server.account
 
 import com.hubspot.jinjava.Jinjava
-import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.account.adapter.CachedAccountRepository
-import com.vauthenticator.server.account.adapter.dynamodb.DynamoDbAccountRepository
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
+import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.SaveAccount
@@ -16,7 +15,6 @@ import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.account.domain.welcome.SayWelcome
 import com.vauthenticator.server.account.domain.welcome.SendWelcomeMailUponSignUpEventConsumer
 import com.vauthenticator.server.cache.CacheOperation
-import com.vauthenticator.server.cache.RedisCacheOperation
 import com.vauthenticator.server.communication.NoReplyEMailConfiguration
 import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderService
@@ -29,20 +27,16 @@ import com.vauthenticator.server.mfa.domain.MfaMethodsEnrollmentAssociation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
-import com.vauthenticator.server.role.domain.RoleRepository
 import com.vauthenticator.server.ticket.domain.TicketRepository
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
-import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import tools.jackson.databind.ObjectMapper
 import java.time.Clock
-import java.time.Duration
 
 @Configuration(proxyBeanMethods = false)
 class AccountConfig {
@@ -59,65 +53,22 @@ class AccountConfig {
     fun saveAccount(accountRepository: AccountRepository): SaveAccount =
         SaveAccount(accountRepository)
 
+}
+
+@Configuration(proxyBeanMethods = false)
+class AccountRepositoryConfig {
 
     @Bean("accountRepository")
-    @Profile("database")
-    fun jdbcAccountRepository(
-        jdbcTemplate: JdbcTemplate
-    ) = JdbcAccountRepository(jdbcTemplate)
-
-
-    @Bean("accountRepository")
-    @ConditionalOnProperty(
-        name = ["vauthenticator.dynamo-db.account.cache.enabled"],
-        havingValue = "false",
-        matchIfMissing = true
-    )
-    @Profile("dynamo")
-    fun dynamoDbAccountRepository(
-        dynamoDbClient: DynamoDbClient,
-        roleRepository: RoleRepository,
-        @Value("\${vauthenticator.dynamo-db.account.table-name}") accountTableName: String
-    ) =
-        DynamoDbAccountRepository(dynamoDbClient, accountTableName, roleRepository)
-
-
-    @Bean("accountRepository")
-    @ConditionalOnProperty(
-        name = ["vauthenticator.dynamo-db.account.cache.enabled"],
-        havingValue = "true",
-        matchIfMissing = false
-    )
-    @Profile("dynamo")
-    fun cachedDynamoDbAccountRepository(
-        mapper: ObjectMapper,
-        dynamoDbClient: DynamoDbClient,
-        accountCacheOperation: CacheOperation<String, String>,
-        roleRepository: RoleRepository,
-        @Value("\${vauthenticator.dynamo-db.account.table-name}") accountTableName: String
-    ) =
-        CachedAccountRepository(
-            AccountCacheContentConverter(mapper),
-            accountCacheOperation,
-            DynamoDbAccountRepository(dynamoDbClient, accountTableName, roleRepository),
-        )
-
-    @Bean
-    @ConditionalOnProperty(
-        name = ["vauthenticator.dynamo-db.account.cache.enabled"],
-        havingValue = "true",
-        matchIfMissing = false
-    )
-    @Profile("dynamo")
-    fun accountCacheOperation(
-        redisTemplate: RedisTemplate<*, *>,
-        @Value("\${vauthenticator.dynamo-db.account.cache.ttl}") ttl: Duration,
-        @Value("\${vauthenticator.dynamo-db.account.cache.name}") cacheRegionName: String,
-    ) = RedisCacheOperation<String, String>(
-        cacheName = cacheRegionName,
-        ttl = ttl,
-        redisTemplate = redisTemplate as RedisTemplate<String, String>
-    )
+    fun accountRepository(
+        jdbcTemplate: JdbcTemplate,
+        objectMapper: ObjectMapper,
+        @Qualifier("accountCacheOperation") accountCacheOperation: ObjectProvider<CacheOperation<String, String>>
+    ): AccountRepository {
+        val jdbcAccountRepository = JdbcAccountRepository(jdbcTemplate)
+        return accountCacheOperation.ifAvailable
+            ?.let { CachedAccountRepository(AccountCacheContentConverter(objectMapper), it, jdbcAccountRepository) }
+            ?: jdbcAccountRepository
+    }
 }
 
 

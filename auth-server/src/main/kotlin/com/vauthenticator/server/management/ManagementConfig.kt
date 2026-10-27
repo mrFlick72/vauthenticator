@@ -1,6 +1,5 @@
 package com.vauthenticator.server.management
 
-import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.KeyStorage
@@ -8,7 +7,6 @@ import com.vauthenticator.server.management.cleanup.DatabaseTtlEntryCleanJob
 import com.vauthenticator.server.management.cleanup.DatabaseTtlEntryCleanJobEndPoint
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.JdbcTemplate
 import com.vauthenticator.server.management.init.*
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
@@ -55,12 +53,6 @@ class TenantInitConfig {
             clientApplicationSetUpJob,
             keySetUpJob
         )
-
-}
-
-@Profile("database")
-@Configuration(proxyBeanMethods = false)
-class DatabaseTtlEntryCleanJobConfig {
 
     @Bean
     fun databaseTtlEntryCleanJob(

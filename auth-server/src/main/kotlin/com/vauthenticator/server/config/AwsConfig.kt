@@ -8,7 +8,6 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider
 import software.amazon.awssdk.core.client.builder.SdkClientBuilder
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.kms.KmsClient
 import software.amazon.awssdk.services.lambda.LambdaClient
 import software.amazon.awssdk.services.s3.S3Client
@@ -59,15 +58,6 @@ class AwsConfig {
         .applyMutation { setEndPoint(endpointOverride, it) }
         .build()
 
-
-    @Bean
-    fun dynamoDbClient(
-        awsCredentialsProvider: AwsCredentialsProvider,
-        @Value("\${aws.dynamodb.endpointOverride:}") endpointOverride: String
-    ) = DynamoDbClient.builder()
-        .credentialsProvider(awsCredentialsProvider)
-        .applyMutation { setEndPoint(endpointOverride, it) }
-        .build()
 
     @Bean
     fun lambdaClient(

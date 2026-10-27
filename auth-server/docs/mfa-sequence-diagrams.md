@@ -2,7 +2,7 @@
 
 The MFA use cases from the HTTP entry point down to the stores. The endpoints are described in [mfa.md](mfa.md), the vocabulary (MFA Device, Enrolled, Associated, Default Device, Revoke) in [CONTEXT.md](../CONTEXT.md).
 
-Every adapter appears only as the port it implements (`«interface»`): the JDBC and DynamoDB repositories, the KMS and plain-Java key components, and the email and SMS senders are interchangeable behind them (see [profiles.md](profiles.md)). Domain classes appear by name. Stores are marked `(database)`.
+Every adapter appears only as the port it implements (`«interface»`): the JDBC repositories, the KMS and plain-Java key components, and the email and SMS senders are interchangeable behind them (see [profiles.md](profiles.md)). Domain classes appear by name. Stores are marked `(database)`.
 
 The diagrams are Mermaid, so GitHub renders them in place.
 

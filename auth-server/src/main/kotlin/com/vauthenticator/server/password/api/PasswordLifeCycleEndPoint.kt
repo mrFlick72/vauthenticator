@@ -10,7 +10,6 @@ import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleActi
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
-import org.springframework.context.annotation.Profile
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -20,7 +19,6 @@ private const val ACCOUNT_RULES_PATH = "/api/admin/accounts/{userName}/password/
 private const val ACCOUNT_RULE_PATH = "$ACCOUNT_RULES_PATH/{action}"
 private const val BULK_RULES_PATH = "/api/admin/accounts/password/lifecycle/{action}/bulk"
 
-@Profile("database")
 @RestController
 class PasswordLifeCycleEndPoint(
     private val permissionValidator: PermissionValidator,

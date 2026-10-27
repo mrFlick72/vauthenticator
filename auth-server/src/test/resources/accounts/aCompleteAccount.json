@@ -14,5 +14,6 @@
   "birthDate": "2023-01-01",
   "phone": "+23 333 2323233",
   "locale": "en-US",
-  "mandatory_action": "NO_ACTION"
+  "mandatory_action": "NO_ACTION",
+  "lockedUntil": null
 }

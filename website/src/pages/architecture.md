@@ -15,7 +15,7 @@ A separate React and TypeScript application lets administrators manage clients, 
 
 ## Infrastructure
 
-Persistence can use PostgreSQL or DynamoDB. Redis supports distributed sessions, caching, and failed sign-in counts, and stores authorizations when PostgreSQL is not used. Key management can use plain Java cryptography or AWS KMS. Documents and static assets can be loaded from the filesystem or Amazon S3.
+Persistence uses PostgreSQL, which also stores authorizations. Redis supports distributed sessions, optional caching, and failed sign-in counts. Key management can use plain Java cryptography or AWS KMS. Documents and static assets can be loaded from the filesystem or Amazon S3.
 
 ## Deployment
 

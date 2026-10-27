@@ -1,7 +1,6 @@
 package com.vauthenticator.server.extentions
 
 import org.slf4j.LoggerFactory
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -23,4 +22,3 @@ fun String.toSha256(): String {
 
 class Sha255CodingException(message: String) : RuntimeException(message)
 
-fun String.asDynamoAttribute(): AttributeValue = AttributeValue.builder().s(this).build()

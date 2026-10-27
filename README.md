@@ -31,8 +31,8 @@ Backend capabilities include:
 
 Storage and infrastructure options include:
 
-- DynamoDB or PostgreSQL persistence profiles
-- Redis for distributed session storage, cache, failed-login counts, and authorization storage when PostgreSQL is not used
+- PostgreSQL persistence
+- Redis for distributed session storage, opt-in account/role/client application caches, and failed-login counts
 - AWS KMS-backed keys or local/plain Java key management
 - S3 or filesystem-backed document/static asset loading
 

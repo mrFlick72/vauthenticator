@@ -3,6 +3,7 @@ package com.vauthenticator.server.cache
 import com.vauthenticator.server.extentions.toSha256
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ScanOptions
 import java.time.Duration
 
 class RedisCacheOperation<K, O>(
@@ -33,6 +34,15 @@ class RedisCacheOperation<K, O>(
         val keyAsString = getKeyAsStringFor(key)
         redisTemplate.opsForHash<String, O>().delete(keyAsString, keyAsString.toSha256())
         logger.debug("cache evicted for {}", key)
+    }
+
+    override fun evictAll() {
+        val keys = redisTemplate.scan(ScanOptions.scanOptions().match("${cacheName}_*").build())
+            .use { it.asSequence().toList() }
+        if (keys.isNotEmpty()) {
+            redisTemplate.unlink(keys)
+        }
+        logger.debug("cache {} evicted", cacheName)
     }
 
     private fun getKeyAsStringFor(key: K) = "${cacheName}_${key.toString()}"

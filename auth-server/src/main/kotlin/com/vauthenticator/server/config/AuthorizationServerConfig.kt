@@ -10,7 +10,6 @@ import com.vauthenticator.server.keys.domain.Kid
 import com.vauthenticator.server.lambdas.AwsLambdaFunctionContextFactory
 import com.vauthenticator.server.lambdas.LambdaFunction
 import com.vauthenticator.server.lambdas.LambdaTokenEnhancer
-import com.vauthenticator.server.oauth2.authorizationservice.RedisOAuth2AuthorizationService
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.AVAILABLE_SCOPES
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.OPEN_ID
@@ -28,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.data.redis.core.RedisTemplate
@@ -126,14 +124,6 @@ class AuthorizationServerConfig {
     }
 
     @Bean("oAuth2AuthorizationService")
-    @Profile("!database")
-    fun redisOAuth2AuthorizationService(redisTemplate: RedisTemplate<Any, Any>): OAuth2AuthorizationService {
-        return RedisOAuth2AuthorizationService(redisTemplate)
-    }
-
-
-    @Bean("oAuth2AuthorizationService")
-    @Profile("database")
     fun jdbcOAuth2AuthorizationService(
         jdbcTemplate: JdbcTemplate,
         registeredClientRepository: RegisteredClientRepository

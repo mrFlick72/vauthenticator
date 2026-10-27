@@ -119,9 +119,9 @@ selectorLabels:
 
 application:
   sessionTimeout: 24h
-  profiles: dynamo,kms
+  profiles: kms
   datasource:
-    # Rendered only when application.profiles includes database.
+    # Required: PostgreSQL is the only persistence.
     # Example:
     # url: jdbc:postgresql://db.local.vauthenticator.com:5432/
     # username: postgres
@@ -143,7 +143,7 @@ application:
       minSpecialSymbol: 1
       enablePasswordReusePrevention: true
     lifeCycle:
-      # Spring cron expression (six fields, seconds first) for the password lifecycle job, database profile only.
+      # Spring cron expression (six fields, seconds first) for the password lifecycle job.
       cron: "0 0 * * * *"
 
   masterKey: ACCOUNT_KMS_KEY
@@ -172,42 +172,23 @@ application:
     resetPasswordEMailSubject: ""
     mfaEMailSubject: ""
 
-  dynamoDb:
+  role:
+    protectedFromDelete: ROLE_USER,VAUTHENTICATOR_ADMIN
+
+  # Opt-in Redis read-through caches; every account write evicts the account cache.
+  cache:
     account:
-      tableName: your_VAuthenticator_Account_table_name
-      cache:
-        ttl: 1h
-        name: account_cache
-    group:
-      tableName: your_VAuthenticator_Group_table_name
-    groupToRole:
-      tableName: your_VAuthenticator_GroupToRole_table_name
+      enabled: false
+      ttl: 1h
+      name: account_cache
     role:
-      tableName: your_VAuthenticator_Role_table_name
-      cache:
-        ttl: 1h
-        name: role_cache
-      protectedFromDelete: ROLE_USER,VAUTHENTICATOR_ADMIN
+      enabled: false
+      ttl: 1h
+      name: role_cache
     clientApplication:
-      tableName: your_VAuthenticator_ClientApplication_table_name
-      cache:
-        ttl: 1h
-        name: client_application
-    mfaAccountMethods:
-      tableName: your_VAuthenticator_mfaAccountMethods_table_name
-    defaultMfaAccountMethods:
-      tableName: your_VAuthenticator_defaultMfaAccountMethods_table_name
-    keys:
-      mfa:
-        tableName: your_VAuthenticator_Mfa_Keys_table_name
-      signature:
-        tableName: your_VAuthenticator_Signature_Keys_table_name
-    ticket:
-      tableName: your_VAuthenticator_Ticket_table_name
-    passwordHistory:
-      tableName: your_VAuthenticator_Password_History_table_name
-      historyEvaluationLimit: 1
-      maxHistoryAllowedSize: 3
+      enabled: false
+      ttl: 1h
+      name: client_application_cache
 
   documentRepository:
     engine: s3
@@ -239,8 +220,6 @@ application:
     s3:
       endpointOverride:
     kms:
-      endpointOverride:
-    dynamodb:
       endpointOverride:
     sns:
       endpointOverride:

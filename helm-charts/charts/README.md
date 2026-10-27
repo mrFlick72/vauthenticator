@@ -6,8 +6,8 @@ The chart currently renders:
 
 - `application`: the VAuthenticator authorization server
 - optional Redis dependency when `in-namespace.redis.enabled=true`
-- optional PostgreSQL dependency when `in-namespace.db.enabled=true`, used when
-  `application.profiles` includes `database`
+- optional PostgreSQL dependency when `in-namespace.db.enabled=true`; PostgreSQL is
+  the only persistence, so a datasource is always required
 
 The management UI is not part of this chart. It is distributed by the separate
 `charts/management-ui` chart — see
@@ -19,8 +19,8 @@ Run these commands from `helm-charts`:
 
 ```bash
 helm dependency update charts/vauthenticator
-helm lint charts/vauthenticator --set ingress.host=localhost
-helm template vauthenticator charts/vauthenticator --set ingress.host=localhost
+helm lint charts/vauthenticator --set ingress.host=localhost --set application.datasource.url=jdbc:postgresql://localhost:5432/
+helm template vauthenticator charts/vauthenticator --set ingress.host=localhost --set application.datasource.url=jdbc:postgresql://localhost:5432/
 ```
 
 ## Redis Dependency
@@ -44,9 +44,9 @@ redis:
 
 ## PostgreSQL Dependency
 
-Rendered only when `application.profiles` includes `database`. The chart's
-`spring.datasource` block (in the `application` ConfigMap) requires
-`application.datasource.url` in that case — rendering fails without it.
+PostgreSQL is the only persistence (DynamoDB was removed in 0.10). The chart's
+`spring.datasource` block (in the `application` ConfigMap) is always rendered and
+requires `application.datasource.url` — rendering fails without it.
 
 ```yaml
 in-namespace:
@@ -59,7 +59,6 @@ postgresql:
       scriptsConfigMap: vauthenticator-postgres-initdb
 
 application:
-  profiles: dynamo,kms,database
   datasource:
     url: jdbc:postgresql://db.local.vauthenticator.com:5432/
     username: postgres
@@ -71,7 +70,7 @@ application:
 | `in-namespace.db.enabled` | Install the Bitnami PostgreSQL dependency in the release namespace. | `true` |
 | `postgresql.*` | Values passed to the Bitnami PostgreSQL subchart. | See `values.yaml` |
 | `postgresql.primary.initdb.scriptsConfigMap` | Name of the ConfigMap the subchart mounts for `initdb` bootstrap scripts. Must match the ConfigMap the chart renders from `files/schema.sql`. | `vauthenticator-postgres-initdb` |
-| `application.datasource.url` | JDBC URL for the Spring datasource. Required (rendering fails if unset) when `application.profiles` includes `database`. | `""` |
+| `application.datasource.url` | JDBC URL for the Spring datasource. Required: rendering fails if unset. | `""` |
 | `application.datasource.username` | Spring datasource username. | `""` |
 | `application.datasource.password` | Spring datasource password. | `""` |
 
@@ -238,7 +237,7 @@ httpRoute:
 ```yaml
 application:
   sessionTimeout: 24h
-  profiles: dynamo,kms
+  profiles: kms
   masterKey: ACCOUNT_KMS_KEY
   baseUrl: http://application-example-host.com
   backChannelBaseUrl: http://vauthenticator:8080
@@ -252,7 +251,7 @@ application:
 | Name | Description | Default |
 | --- | --- | --- |
 | `application.sessionTimeout` | Server session timeout as a Spring duration. | `24h` |
-| `application.profiles` | Active Spring profiles, for example `dynamo,kms` or `dynamo,kms,database`. Including `database` renders `spring.datasource` — see [PostgreSQL Dependency](#postgresql-dependency). | `dynamo,kms` |
+| `application.profiles` | Active Spring profiles: `kms` for AWS KMS key management, empty for plain-Java key management. | `kms` |
 | `application.masterKey` | Master key identifier used by key management configuration. | `ACCOUNT_KMS_KEY` |
 | `application.baseUrl` | Public authorization server base URL. | `http://application-example-host.com` |
 | `application.backChannelBaseUrl` | Internal service URL used for back-channel calls. | `http://vauthenticator:8080` |
@@ -268,8 +267,6 @@ application:
     s3:
       endpointOverride:
     kms:
-      endpointOverride:
-    dynamodb:
       endpointOverride:
     sns:
       endpointOverride:
@@ -319,7 +316,7 @@ application:
 
 | Key | Description | Default |
 | --- | --- | --- |
-| `application.password.lifeCycle.cron` | Spring cron expression (six fields, seconds first) for the password lifecycle job. Used only when `application.profiles` includes `database`. | `"0 0 * * * *"` |
+| `application.password.lifeCycle.cron` | Spring cron expression (six fields, seconds first) for the password lifecycle job. | `"0 0 * * * *"` |
 
 ### Email
 
@@ -342,54 +339,39 @@ application:
 
 `emailProvider` controls Spring mail configuration. The `email` block provides default sender and subject values used by communication flows when email is enabled.
 
-### DynamoDB Tables
+### Roles and Caches
 
 ```yaml
 application:
-  dynamoDb:
+  role:
+    protectedFromDelete: ROLE_USER,VAUTHENTICATOR_ADMIN
+  cache:
     account:
-      tableName: your_VAuthenticator_Account_table_name
-      cache:
-        ttl: 1h
-        name: account_cache
-    group:
-      tableName: your_VAuthenticator_Group_table_name
-    groupToRole:
-      tableName: your_VAuthenticator_GroupToRole_table_name
+      enabled: false
+      ttl: 1h
+      name: account_cache
     role:
-      tableName: your_VAuthenticator_Role_table_name
-      cache:
-        ttl: 1h
-        name: role_cache
-      protectedFromDelete: ROLE_USER,VAUTHENTICATOR_ADMIN
+      enabled: false
+      ttl: 1h
+      name: role_cache
     clientApplication:
-      tableName: your_VAuthenticator_ClientApplication_table_name
-      cache:
-        ttl: 1h
-        name: client_application
-    mfaAccountMethods:
-      tableName: your_VAuthenticator_mfaAccountMethods_table_name
-    defaultMfaAccountMethods:
-      tableName: your_VAuthenticator_defaultMfaAccountMethods_table_name
-    keys:
-      mfa:
-        tableName: your_VAuthenticator_Mfa_Keys_table_name
-      signature:
-        tableName: your_VAuthenticator_Signature_Keys_table_name
-    ticket:
-      tableName: your_VAuthenticator_Ticket_table_name
-    passwordHistory:
-      tableName: your_VAuthenticator_Password_History_table_name
-      historyEvaluationLimit: 1
-      maxHistoryAllowedSize: 3
+      enabled: false
+      ttl: 1h
+      name: client_application_cache
 ```
-
-These values configure the DynamoDB-backed repositories used by the `dynamo` profile.
 
 | Name | Description | Default |
 | --- | --- | --- |
-| `application.dynamoDb.group.tableName` | DynamoDB table used by the group repository. | `your_VAuthenticator_Group_table_name` |
-| `application.dynamoDb.groupToRole.tableName` | DynamoDB table used to store group-to-role mappings. | `your_VAuthenticator_GroupToRole_table_name` |
+| `application.role.protectedFromDelete` | Comma-separated roles that cannot be deleted. | `ROLE_USER,VAUTHENTICATOR_ADMIN` |
+| `application.cache.account.enabled` | Read accounts through a Redis cache. Every account write evicts it. | `false` |
+| `application.cache.account.ttl` | Account cache TTL, as a Spring duration. | `1h` |
+| `application.cache.account.name` | Account cache region name. | `account_cache` |
+| `application.cache.role.enabled` | Read roles through a Redis cache. | `false` |
+| `application.cache.role.ttl` | Role cache TTL, as a Spring duration. | `1h` |
+| `application.cache.role.name` | Role cache region name. | `role_cache` |
+| `application.cache.clientApplication.enabled` | Read client applications through a Redis cache. | `false` |
+| `application.cache.clientApplication.ttl` | Client application cache TTL, as a Spring duration. | `1h` |
+| `application.cache.clientApplication.name` | Client application cache region name. | `client_application_cache` |
 
 ### Documents, MFA, Assets, Events
 
