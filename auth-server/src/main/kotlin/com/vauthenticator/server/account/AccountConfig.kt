@@ -1,6 +1,9 @@
 package com.vauthenticator.server.account
 
 import com.hubspot.jinjava.Jinjava
+import com.vauthenticator.server.account.adapter.CachedAccountRepository
+import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
+import com.vauthenticator.server.account.domain.AccountCacheContentConverter
 import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
@@ -11,6 +14,7 @@ import com.vauthenticator.server.account.domain.emailverification.VerifyEMailCha
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.account.domain.welcome.SayWelcome
 import com.vauthenticator.server.account.domain.welcome.SendWelcomeMailUponSignUpEventConsumer
+import com.vauthenticator.server.cache.CacheOperation
 import com.vauthenticator.server.communication.NoReplyEMailConfiguration
 import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderService
@@ -24,10 +28,14 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationReposi
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
 import com.vauthenticator.server.ticket.domain.TicketRepository
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mail.javamail.JavaMailSender
+import tools.jackson.databind.ObjectMapper
 import java.time.Clock
 
 @Configuration(proxyBeanMethods = false)
@@ -45,6 +53,22 @@ class AccountConfig {
     fun saveAccount(accountRepository: AccountRepository): SaveAccount =
         SaveAccount(accountRepository)
 
+}
+
+@Configuration(proxyBeanMethods = false)
+class AccountRepositoryConfig {
+
+    @Bean("accountRepository")
+    fun accountRepository(
+        jdbcTemplate: JdbcTemplate,
+        objectMapper: ObjectMapper,
+        @Qualifier("accountCacheOperation") accountCacheOperation: ObjectProvider<CacheOperation<String, String>>
+    ): AccountRepository {
+        val jdbcAccountRepository = JdbcAccountRepository(jdbcTemplate)
+        return accountCacheOperation.ifAvailable
+            ?.let { CachedAccountRepository(AccountCacheContentConverter(objectMapper), it, jdbcAccountRepository) }
+            ?: jdbcAccountRepository
+    }
 }
 
 

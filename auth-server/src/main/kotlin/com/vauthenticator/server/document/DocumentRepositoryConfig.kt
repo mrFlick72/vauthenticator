@@ -1,4 +1,4 @@
-package com.vauthenticator.server.document.config
+package com.vauthenticator.server.document
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.vauthenticator.server.document.adapter.FileSystemDocumentRepository
