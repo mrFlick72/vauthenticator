@@ -58,7 +58,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `role`: groups, roles, and permission validation
 - `ticket`: ticket creation and storage used by multi-step flows
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
-- `config`: Spring configuration for auth server, database, AWS, security, and time
+- `config`: Spring configuration for auth server, AWS, security, and time; each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
 
 The package structure generally follows `api`, `domain`, `adapter`, and `web` subpackages where applicable.
 
