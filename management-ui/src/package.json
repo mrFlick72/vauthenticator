@@ -4,7 +4,7 @@
   "description": "VAuthenticator Management UI",
   "scripts": {
     "build": "webpack --config webpack.config.js --mode=development",
-    "production-build": "webpack --config webpack.config.js --mode=production",
+    "production-build": "NODE_ENV=production webpack --config webpack.config.js --mode=production",
     "watch": "webpack --config webpack.config.js --mode=development --watch",
     "typecheck": "tsc --noEmit"
   },
