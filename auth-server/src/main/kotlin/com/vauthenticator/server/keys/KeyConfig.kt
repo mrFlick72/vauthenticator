@@ -54,7 +54,6 @@ class KeyConfig {
     @Bean("keyRepository")
     fun keyRepository(
         keyGenerator: KeyGenerator,
-        keyDecrypter: KeyDecrypter,
         keyStorage: KeyStorage
     ): KeyRepository =
         KeyRepository(

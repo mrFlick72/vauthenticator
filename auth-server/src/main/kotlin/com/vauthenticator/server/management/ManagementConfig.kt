@@ -54,11 +54,6 @@ class TenantInitConfig {
             keySetUpJob
         )
 
-}
-
-@Configuration(proxyBeanMethods = false)
-class DatabaseTtlEntryCleanJobConfig {
-
     @Bean
     fun databaseTtlEntryCleanJob(
         jdbcTemplate: JdbcTemplate
