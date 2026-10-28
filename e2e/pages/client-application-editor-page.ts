@@ -54,10 +54,11 @@ export class ClientApplicationEditorPage {
 
     constructor(private readonly page: Page) {
         this.clientAppId = page.locator('#clientAppId');
-        this.applicationType = page.locator('#applicationType');
+        // FormSelect renders its label and its react-select container with the same id
+        this.applicationType = page.locator('div#applicationType');
         this.secret = page.locator('#secret');
         this.clientAppName = page.locator('#clientAppName');
-        this.scopes = page.locator('#scopes');
+        this.scopes = page.locator('div#scopes');
         this.withPkce = page.getByLabel('with_pkce');
         this.accessTokenValidity = page.locator('#accessTokenValidity');
         this.refreshTokenValidity = page.locator('#refreshTokenValidity');

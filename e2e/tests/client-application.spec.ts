@@ -23,6 +23,7 @@ test('create a new client application', async () => {
     // reopen it to prove the values made it through the api and back
     const saved = await clientApplications.edit(clientApplication.clientAppId);
     await expect(saved.clientAppName).toHaveValue(clientApplication.clientAppName);
+    await expect(saved.applicationType).toContainText('CONFIDENTIAL');
     await saved.openUriTab();
     await expect(saved.webServerRedirectUri).toHaveValue(clientApplication.webServerRedirectUri);
 });
@@ -59,6 +60,8 @@ test('create a public client application with pkce', async () => {
     await editor.save();
 
     const saved = await clientApplications.edit(clientApplication.clientAppId);
+    await expect(saved.applicationType).toContainText('PUBLIC');
+    await expect(saved.secret).toBeHidden();
     await saved.openPermissionTab();
     await expect(saved.withPkce).toBeChecked();
 });
