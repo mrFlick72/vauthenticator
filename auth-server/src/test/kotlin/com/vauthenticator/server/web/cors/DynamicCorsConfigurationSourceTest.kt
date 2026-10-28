@@ -39,6 +39,17 @@ class DynamicCorsConfigurationSourceTest {
         assertEquals(AuthServerCorsConfiguration(origin).allowCredentials, actual.allowCredentials)
     }
 
+    @Test
+    fun `the http methods used by the management ui api calls are allowed`() {
+        val origin = "http://example.com"
+        every { corsConfigurationResolver.configurationFor(any()) } returns AuthServerCorsConfiguration(origin)
+
+        val actual = uut.getCorsConfiguration(requestFrom(origin))
+
+        // PATCH resets a client application secret from the management ui
+        assertEquals(listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"), actual.allowedMethods)
+    }
+
     private fun requestFrom(origin: String): MockHttpServletRequest {
         val request = MockHttpServletRequest()
         request.method = "GET"
