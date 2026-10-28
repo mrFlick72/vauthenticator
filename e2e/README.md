@@ -41,7 +41,8 @@ docker compose down -v       # when done
 - `auth-server/application.yml`: auth-server configuration for the stack, mounted as `config/application.yml`
 - `management-ui.env`: runtime configuration for the management UI container
 - `tests/admin-login.setup.ts`: logs in as the seeded `admin@email.com` and saves the browser storage state
-- `tests/*.spec.ts`: scenarios
+- `pages/`: page objects, one per management UI or auth-server screen; they own locators and actions, specs own assertions
+- `tests/*.spec.ts`: scenarios, written against the page objects
 
 ## Login and storage state
 

@@ -32,6 +32,9 @@ The hosts entries are a prerequisite, see `README.md`.
   development config with compose service names. Do not change `auth-server/local` or `management-ui/local` for e2e needs.
 - Tests must not depend on each other or on data from a previous run: use unique ids (`e2e-<timestamp>`).
 - Log in through the `setup` project and its storage state; do not drive the login form in every test.
+- Use the Page Object Model: locators and actions live in `pages/` (one class per screen), specs keep the
+  assertions and must not call `page.locator` directly. Navigation methods wait for the target URL and return
+  the next page object.
 - Prefer locating elements by the ids and labels the UI already renders. If a test needs a UI change to be
   locatable, that is a `management-ui` change and must be called out as cross-project.
 - `storageState` does not capture `sessionStorage`: do not try to reuse management UI tokens across tests.
