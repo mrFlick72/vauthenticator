@@ -133,7 +133,7 @@ Notes:
 - The generated output is written to `management-ui/dist`.
 - `production-build` sets `NODE_ENV=production`: babel's preset-react picks dev or prod JSX from it, and it must match webpack's `--mode` or the bundle calls the undefined `jsxDEV` of React's production runtime and renders nothing.
 - The suite under the root `e2e/` builds this project with `production-build.sh` and drives it in a browser.
-- For the local UI to start authentication correctly, set `local/.env` (from `local/.env.example`) to match the local auth server before running `docker compose up --build` in `local/`.
+- For the local UI to start authentication correctly, set `local/.env` (from `local/.env.example`) to match the local auth server before running `docker compose up --build` in `local/`. If the container keeps serving an old bundle or `config.json` after a rebuild or an `.env` change, use `docker compose up --build --force-recreate` to get a fresh container from the updated image.
 
 ## Conventions For Changes
 

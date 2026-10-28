@@ -57,6 +57,12 @@ bash build.sh
 docker compose -f local/docker-compose.yml up --build
 ```
 
+If the UI still serves an old bundle or an old `config.json` after a rebuild or a `local/.env` change, force a fresh container from the updated image:
+
+```bash
+docker compose -f local/docker-compose.yml up --build --force-recreate
+```
+
 The local UI is served from:
 
 - `http://local.management.vauthenticator.com:8085/secure/admin/index`
