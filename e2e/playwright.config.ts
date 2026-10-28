@@ -1,6 +1,8 @@
 import {defineConfig, devices} from '@playwright/test';
 
 export const ADMIN_STORAGE_STATE = '.auth/admin.json';
+// the browser and the seeded client applications reach the auth-server through this host, see README.md
+export const AUTH_SERVER_URL = 'http://local.api.vauthenticator.com:9090';
 
 export default defineConfig({
     testDir: './tests',

@@ -35,6 +35,8 @@ The hosts entries are a prerequisite, see `README.md`.
 - Use the Page Object Model: locators and actions live in `pages/` (one class per screen), specs keep the
   assertions and must not call `page.locator` directly. Navigation methods wait for the target URL and return
   the next page object.
+- MUI icons carry no `data-testid` in the production build the stack serves: locate a bare icon by its table
+  column or by the field it adorns, as the client application page objects do.
 - Prefer locating elements by the ids and labels the UI already renders. If a test needs a UI change to be
   locatable, that is a `management-ui` change and must be called out as cross-project.
 - `storageState` does not capture `sessionStorage`: do not try to reuse management UI tokens across tests.

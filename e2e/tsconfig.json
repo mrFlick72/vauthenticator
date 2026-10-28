@@ -8,5 +8,5 @@
     "esModuleInterop": true,
     "noEmit": true
   },
-  "include": ["playwright.config.ts", "pages/**/*.ts", "tests/**/*.ts"]
+  "include": ["playwright.config.ts", "pages/**/*.ts", "support/**/*.ts", "tests/**/*.ts"]
 }

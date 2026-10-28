@@ -17,6 +17,8 @@ export class AdminHomePage {
     async openClientApplications() {
         await this.clientApplicationSection.click();
         await expect(this.page).toHaveURL(/\/client-applications\/list$/);
-        return new ClientApplicationListPage(this.page);
+        const clientApplications = new ClientApplicationListPage(this.page);
+        await clientApplications.showAllRows();
+        return clientApplications;
     }
 }
