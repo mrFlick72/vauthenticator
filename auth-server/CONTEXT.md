@@ -86,11 +86,21 @@ _Avoid_: remove, delete
 
 ### Communication
 
+**Email Type**:
+The purpose an email is sent for — welcome, email verification, password reset, or the MFA challenge; each type has exactly one **Email Template**.
+
+**Email Template**:
+The admin-editable document an email of a given **Email Type** is rendered from. It is stored and edited as exact text: what an admin saves is what is rendered, character for character.
+_Avoid_: email body, mail content
+
+**Placeholder**:
+A marked spot in an **Email Template** or **SMS Template** that is filled with per-message values (the account holder's name, a code, a link) when the message is rendered. Placeholder syntax belongs to the rendering engine, which may change; outside rendering, a placeholder is just part of the template's text.
+
 **SMS Type**:
 The purpose an SMS is sent for; each type has exactly one **SMS Template**. Today the only type is the MFA challenge; more purposes may be added later.
 
 **SMS Template**:
-The admin-editable text an SMS of a given **SMS Type** is rendered from. It mirrors the email template of an email type: an SMS whose template has not been set up cannot be sent.
+The admin-editable text an SMS of a given **SMS Type** is rendered from. It mirrors the **Email Template** of an **Email Type**: an SMS whose template has not been set up cannot be sent.
 _Avoid_: SMS message (for the template)
 
 ### Roles
