@@ -16,7 +16,8 @@ for this subtree.
 
 `run.sh` is the single entry point:
 
-1. builds auth-server frontend assets (`auth-server/local/build-frontend.sh`) and the jar (`./mvnw clean package -DskipTests`)
+1. builds auth-server frontend assets (`auth-server/local/build-frontend.sh`) and the jar (`./mvnw clean package -DskipTests`),
+   then copies `auth-server/dist` into the writable, gitignored `.documents/` the stack mounts
 2. builds the management UI (`management-ui/production-build.sh`)
 3. `docker compose down -v` then `up -d --build`, so every run starts from an empty database
 4. waits for `:9091/actuator/health`, then `POST :9091/actuator/tenant-setup`
@@ -31,12 +32,21 @@ The hosts entries are a prerequisite, see `README.md`.
 - Keep e2e-only configuration here: `auth-server/application.yml` and `management-ui.env` mirror the local
   development config with compose service names. Do not change `auth-server/local` or `management-ui/local` for e2e needs.
 - Tests must not depend on each other or on data from a previous run: use unique ids (`e2e-<timestamp>`).
-- Log in through the `setup` project and its storage state; do not drive the login form in every test.
+- Log in through the `setup` project and its storage state; do not drive the login form in every test. The
+  exception is a scenario that needs another user or ends a session: it logs in from a fresh browser context
+  (`support/accounts.ts`), never from the shared admin state.
+- Arrange data and prove results through `support/admin-api.ts` rather than through other screens, so a
+  scenario only drives the screen it covers.
+- Never edit the seeded admin account, seeded signature keys or a template other than `MFA`; scenarios that
+  change global state follow the rules in `README.md` ("Global state"). Key scenarios belong to the `keys` project.
 - Use the Page Object Model: locators and actions live in `pages/` (one class per screen), specs keep the
   assertions and must not call `page.locator` directly. Navigation methods wait for the target URL and return
   the next page object.
 - MUI icons carry no `data-testid` in the production build the stack serves: locate a bare icon by its table
   column or by the field it adorns, as the client application page objects do.
+- Use the shared component page objects in `pages/components/`: every `StickyHeadTable` paginates at 10 rows
+  (`showAllRows()`), and every `FormSelect` gives its label and its select the same id (`FormSelect` targets
+  `div#<id>`). Snackbars that hide after 600ms are not asserted: wait for the api response status instead.
 - Prefer locating elements by the ids and labels the UI already renders. If a test needs a UI change to be
   locatable, that is a `management-ui` change and must be called out as cross-project.
 - `storageState` does not capture `sessionStorage`: do not try to reuse management UI tokens across tests.

@@ -42,14 +42,31 @@ docker compose down -v       # when done
 - `management-ui.env`: runtime configuration for the management UI container
 - `tests/admin-login.setup.ts`: logs in as the seeded `admin@email.com` and saves the browser storage state
 - `pages/`: page objects, one per management UI or auth-server screen; they own locators and actions, specs own assertions
-- `support/`: test data builders (`aClientApplication()`) and direct auth-server calls used to prove a result
-- `tests/*.spec.ts`: scenarios, written against the page objects
+- `pages/components/`: page objects for the shared management UI components (table, select, confirmation dialog, header)
+- `support/`: test data builders (`aClientApplication()`, `anAccount()`), `AdminApi` (auth-server calls with the
+  seeded m2m `admin` client, used to arrange data and prove a result) and logins as a test account from a fresh browser
+- `tests/*.spec.ts`: scenarios, written against the page objects, one file per management UI section
+- `.documents/` (gitignored): a writable copy of `auth-server/dist` that `run.sh` makes for the stack, so the
+  template scenarios can save email and SMS templates without touching the working tree
 
 ## Login and storage state
 
 The setup project logs in once and saves Playwright's `storageState`. That captures the auth-server session
 cookie but not `sessionStorage`, where the management UI keeps its tokens: each test still goes through
 `/oauth2/authorize`, and the cookie lets it through without the login form.
+
+Scenarios that need another user (an account being locked, disabled or forced to reset its password) or that end
+a session (logout) log in from a browser context of their own, so the shared admin session is never touched.
+
+## Global state
+
+Some management UI screens change state that every scenario shares:
+
+- signature keys: `tests/keys.spec.ts` runs in its own `keys` project, after the `chromium` project and serially,
+  and only rotates or deletes keys it created
+- email and SMS templates: only the `MFA` templates are edited, and the original is put back through the api
+- accounts: scenarios sign up accounts of their own and never edit the admin; bulk password lifecycle rules use a
+  pattern on a domain unique to the scenario
 
 ## CI
 
