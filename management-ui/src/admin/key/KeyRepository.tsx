@@ -36,7 +36,8 @@ export async function deleteKeyFor(kid: string) {
             },
             mode: "cors",
             credentials: 'include',
-            body: JSON.stringify({kid: kid, "key_purpose": "SIGNATURE"})
+            // a key_ttl of 0 deletes the key now; the api requires the field
+            body: JSON.stringify({kid: kid, "key_purpose": "SIGNATURE", "key_ttl": 0})
         })
 }
 
