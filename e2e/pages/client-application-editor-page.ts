@@ -1,5 +1,6 @@
 import {expect, Locator, Page} from '@playwright/test';
 import {ClientApplicationListPage} from './client-application-list-page';
+import {FormSelect} from './components/form-select';
 
 export type ClientApplicationType = 'CONFIDENTIAL' | 'PUBLIC';
 export type AuthorizedGrantType = 'authorization_code' | 'refresh_token' | 'client_credentials';
@@ -32,10 +33,10 @@ export type ClientApplication = ClientApplicationCredentials & ClientApplication
 // the same three-tab form serves /client-applications/save and /client-applications/edit/:id
 export class ClientApplicationEditorPage {
     readonly clientAppId: Locator;
-    readonly applicationType: Locator;
+    readonly applicationType: FormSelect;
     readonly secret: Locator;
     readonly clientAppName: Locator;
-    readonly scopes: Locator;
+    readonly scopes: FormSelect;
     readonly withPkce: Locator;
     readonly accessTokenValidity: Locator;
     readonly refreshTokenValidity: Locator;
@@ -54,11 +55,10 @@ export class ClientApplicationEditorPage {
 
     constructor(private readonly page: Page) {
         this.clientAppId = page.locator('#clientAppId');
-        // FormSelect renders its label and its react-select container with the same id
-        this.applicationType = page.locator('div#applicationType');
+        this.applicationType = new FormSelect(page, 'applicationType');
         this.secret = page.locator('#secret');
         this.clientAppName = page.locator('#clientAppName');
-        this.scopes = page.locator('div#scopes');
+        this.scopes = new FormSelect(page, 'scopes');
         this.withPkce = page.getByLabel('with_pkce');
         this.accessTokenValidity = page.locator('#accessTokenValidity');
         this.refreshTokenValidity = page.locator('#refreshTokenValidity');
@@ -80,16 +80,10 @@ export class ClientApplicationEditorPage {
         return this.page.getByLabel(grantType);
     }
 
-    // scopes and application type are react-select widgets: type the option, then pick it with Enter
-    private async selectOption(select: Locator, option: string) {
-        await select.locator('input').fill(option);
-        await this.page.keyboard.press('Enter');
-    }
-
     async fillCredentials(credentials: ClientApplicationCredentials) {
         await this.clientAppId.fill(credentials.clientAppId);
         if (credentials.applicationType) {
-            await this.selectOption(this.applicationType, credentials.applicationType);
+            await this.applicationType.select(credentials.applicationType);
         }
         if (credentials.secret !== undefined) {
             await this.secret.fill(credentials.secret);
@@ -108,7 +102,7 @@ export class ClientApplicationEditorPage {
 
     async fillPermissions(permissions: ClientApplicationPermissions) {
         for (const scope of permissions.scopes) {
-            await this.selectOption(this.scopes, scope);
+            await this.scopes.select(scope);
         }
         if (permissions.withPkce !== undefined) {
             await this.withPkce.setChecked(permissions.withPkce);

@@ -45,8 +45,9 @@ services:
     volumes:
       # Spring Boot picks up ./config/application.yml relative to the working directory
       - ./auth-server/application.yml:/usr/local/vauthenticator/config/application.yml:ro
-      # login page assets and email/SMS templates built by auth-server/local/build-frontend.sh
-      - ../auth-server/dist:/usr/local/vauthenticator/dist:ro
+      # login page assets and email/SMS templates built by auth-server/local/build-frontend.sh,
+      # copied by run.sh so that the template scenarios can save them
+      - ./.documents:/usr/local/vauthenticator/dist
     ports:
       - "9090:9090"
       - "9091:9091"
