@@ -154,14 +154,19 @@ const ClientAppManagementPage = () => {
                 return { value: scope, label: scope }
             }))
 
-            let clientApp = await findClientApplicationFor(clientApplication.clientApplicationId!!)
+            // a new client application has nothing to load, and must keep the CONFIDENTIAL default
+            if (!clientAppId) {
+                return
+            }
+
+            let clientApp = await findClientApplicationFor(clientAppId)
 
             setClientApplication(
                 {
                     clientApplicationId: clientApplication.clientApplicationId,
                     clientAppName: clientApp.clientAppName,
                     secret: clientApp.secret,
-                    applicationType: CONFIDENTIAL_CLIENT_APP_TYPE,
+                    applicationType: clientApp.confidential ? CONFIDENTIAL_CLIENT_APP_TYPE : PUBLIC_CLIENT_APP_TYPE,
                     scopes: clientApp.scopes.map(scope => {
                         return { value: scope, label: scope } as SelectOption;
                     }),

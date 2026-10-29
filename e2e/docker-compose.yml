@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    volumes:
+      - ../auth-server/src/main/resources/data/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  redis:
+    image: redis
+
+  localstack:
+    image: localstack/localstack:3.2
+    environment:
+      - SERVICES=s3,kms,iam,sts,sns
+
+  mail-server:
+    image: mailhog/mailhog
+
+  auth-server:
+    build:
+      context: ../auth-server
+      dockerfile: application.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      localstack:
+        condition: service_started
+      mail-server:
+        condition: service_started
+    environment:
+      # dummy credentials for the env-var AWS credentials provider; nothing in the
+      # e2e scenarios calls AWS, localstack only backs the SNS endpoint override
+      - AWS_ACCESS_KEY_ID=e2e
+      - AWS_SECRET_ACCESS_KEY=e2e
+      - AWS_REGION=eu-central-1
+    volumes:
+      # Spring Boot picks up ./config/application.yml relative to the working directory
+      - ./auth-server/application.yml:/usr/local/vauthenticator/config/application.yml:ro
+      # login page assets and email/SMS templates built by auth-server/local/build-frontend.sh,
+      # copied by run.sh so that the template scenarios can save them
+      - ./.documents:/usr/local/vauthenticator/dist
+    ports:
+      - "9090:9090"
+      - "9091:9091"
+
+  management-ui:
+    build:
+      context: ../management-ui
+      dockerfile: Dockerfile
+    env_file:
+      - management-ui.env
+    ports:
+      - "8085:80"

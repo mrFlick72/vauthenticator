@@ -30,8 +30,9 @@ export async function findAccountFor(email: string) {
             mode: "cors",
             credentials: 'include'
         });
-    let body = await response.json();
-    return Promise.resolve(body as Account)
+    // an unknown account comes back as 200 with an empty body
+    let body = await response.text();
+    return body ? JSON.parse(body) as Account : undefined
 }
 
 // todo change result type
