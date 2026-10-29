@@ -8,7 +8,10 @@ import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.ClientAppFixture.aClientAppId
 import com.vauthenticator.server.support.MfaFixture.email
 import com.vauthenticator.server.support.MfaFixture.mfaDeviceId
+import com.vauthenticator.server.support.MfaFixture.associatedMfaAccountMethod
 import com.vauthenticator.server.support.MfaFixture.notAssociatedMfaAccountMethod
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
+import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.support.TicketFixture.ticketContext
 import com.vauthenticator.server.ticket.domain.TicketCreator
 import com.vauthenticator.server.ticket.domain.TicketId
@@ -19,6 +22,7 @@ import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -270,4 +274,57 @@ class MfaMethodsEnrollmentTest {
         verify { sensitiveEmailMasker.mask(email) }
         verify { sensitiveEmailMasker.mask(anotherEmail) }
     }
+
+    @Test
+    fun `when the channel to enroll has an associated device the enrolment is refused`() {
+        every { accountRepository.accountFor(userName) } returns account
+        every { mfaAccountMethodsRepository.findBy(userName, EMAIL_MFA_METHOD, email) } returns
+                emailMfaAccountMethod.copy(associated = true)
+
+        val failure = assertThrows(MfaAssociationFailureException::class.java) {
+            uut.enroll(userName, EMAIL_MFA_METHOD, email, clientAppId, true)
+        }
+
+        assertEquals(MfaAssociationFailureReason.ALREADY_ASSOCIATED, failure.reason)
+        verify(exactly = 0) { mfaSender.sendMfaChallengeFor(any(), any()) }
+        verify(exactly = 0) { ticketCreator.createTicketFor(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the email is enrolled for verification the ticket is a self association email verification ticket`() {
+        every { accountRepository.accountFor(userName) } returns account
+        every { mfaAccountMethodsRepository.findBy(userName, EMAIL_MFA_METHOD, userName) } returns null
+        every { mfaAccountMethodsRepository.save(userName, EMAIL_MFA_METHOD, userName, false) } returns
+                notAssociatedMfaAccountMethod(userName, userName, EMAIL_MFA_METHOD)
+        every {
+            ticketCreator.createTicketFor(account, ClientAppId.empty(), emailVerificationTicketContext())
+        } returns ticketId
+
+        val actual = uut.enrollForEmailVerification(userName)
+
+        assertEquals(ticketId, actual)
+        verify(exactly = 0) { mfaSender.sendMfaChallengeFor(any(), any()) }
+    }
+
+    @Test
+    fun `when the email enrolled for verification has an associated device the device is reused`() {
+        every { accountRepository.accountFor(userName) } returns account
+        every { mfaAccountMethodsRepository.findBy(userName, EMAIL_MFA_METHOD, userName) } returns
+                associatedMfaAccountMethod(userName, userName, EMAIL_MFA_METHOD)
+        every {
+            ticketCreator.createTicketFor(account, ClientAppId.empty(), emailVerificationTicketContext())
+        } returns ticketId
+
+        val actual = uut.enrollForEmailVerification(userName)
+
+        assertEquals(ticketId, actual)
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+    }
+
+    private fun emailVerificationTicketContext() = ticketContext(
+        userName,
+        Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE,
+        mfaDeviceId.content,
+        Ticket.EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
+    )
 }

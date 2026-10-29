@@ -92,3 +92,9 @@ data class MfaDeviceRevoked(val mfaDeviceId: MfaDeviceId, val mfaMethod: MfaMeth
 
 class UnAssociatedMfaVerificationException(message: String) : AuthenticationException(message)
 class AssociatedMfaVerificationException(message: String) : AuthenticationException(message)
+
+/** Why confirming an enrolled device did not make it associated (see CONTEXT.md, Association Failure). */
+enum class MfaAssociationFailureReason { WRONG_CODE, INVALID_TICKET, ALREADY_ASSOCIATED }
+
+class MfaAssociationFailureException(val reason: MfaAssociationFailureReason, message: String) :
+    RuntimeException(message)

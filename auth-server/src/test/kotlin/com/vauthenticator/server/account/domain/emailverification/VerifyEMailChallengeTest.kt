@@ -2,6 +2,8 @@ package com.vauthenticator.server.account.domain.emailverification
 
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.emailverification.VerifyEMailChallenge
+import com.vauthenticator.server.mfa.domain.MfaAssociationFailureException
+import com.vauthenticator.server.mfa.domain.MfaAssociationFailureReason
 import com.vauthenticator.server.mfa.domain.MfaMethodsEnrollmentAssociation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.support.AccountTestFixture
@@ -91,4 +93,42 @@ internal class VerifyEMailChallengeTest {
         assertThrows(InvalidTicketException::class.java) { underTest.verifyMail(RAW_TICKET) }
     }
 
+    @Test
+    internal fun `when the email device is already associated the account is still verified`() {
+        val account = AccountTestFixture.anAccount()
+        val enabledAccount = account.copy(accountNonLocked = true, enabled = true, emailVerified = true)
+        val ticketId = TicketId(RAW_TICKET)
+
+        every { ticketRepository.loadFor(ticketId) } returns TicketFixture.ticketFor(
+            ticketId.content,
+            account.email,
+            ClientAppId.empty().content
+        )
+        every { mfaMethodsEnrollmentAssociation.associate(RAW_TICKET, true) } throws
+                MfaAssociationFailureException(MfaAssociationFailureReason.ALREADY_ASSOCIATED, "already associated")
+        every { accountRepository.accountFor(account.email) } returns account
+        every { accountRepository.save(enabledAccount) } just runs
+
+        underTest.verifyMail(RAW_TICKET)
+
+        verify { accountRepository.save(enabledAccount) }
+    }
+
+    @Test
+    internal fun `when the association fails for another reason the account is not verified`() {
+        val account = AccountTestFixture.anAccount()
+        val ticketId = TicketId(RAW_TICKET)
+
+        every { ticketRepository.loadFor(ticketId) } returns TicketFixture.ticketFor(
+            ticketId.content,
+            account.email,
+            ClientAppId.empty().content
+        )
+        every { mfaMethodsEnrollmentAssociation.associate(RAW_TICKET, true) } throws
+                MfaAssociationFailureException(MfaAssociationFailureReason.INVALID_TICKET, "invalid ticket")
+
+        assertThrows(MfaAssociationFailureException::class.java) { underTest.verifyMail(RAW_TICKET) }
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+    }
 }

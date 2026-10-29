@@ -95,7 +95,6 @@ class TicketContextTest {
     private fun validMfaContext() = TicketContext.mfaContextFor(
         mfaMethod = MfaMethod.EMAIL_MFA_METHOD,
         mfaChannel = mfaChannel,
-        mfaDeviceId = mfaDeviceId,
-        ticketContextAdditionalProperties = emptyMap()
+        mfaDeviceId = mfaDeviceId
     )
 }

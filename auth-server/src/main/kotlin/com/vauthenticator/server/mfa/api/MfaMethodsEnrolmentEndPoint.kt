@@ -86,8 +86,8 @@ class MfaEnrolmentAssociationEndPoint(
         authentication: Authentication?,
         @RequestBody associationRequest: MfaEnrollmentAssociationRequest,
     ): ResponseEntity<Unit> {
-        permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
-        mfaMethodsEnrolmentAssociation.associate(associationRequest.ticket, associationRequest.code)
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.MFA_ENROLLMENT))
+        mfaMethodsEnrolmentAssociation.associate(principal.name, associationRequest.ticket, associationRequest.code)
         return noContent().build()
     }
 
@@ -97,6 +97,16 @@ class MfaEnrolmentAssociationEndPoint(
     @ExceptionHandler(MfaDeviceRevocationException::class)
     fun mfaDeviceRevocationExceptionHandler(e: MfaDeviceRevocationException) =
         status(HttpStatus.CONFLICT).body(MfaDeviceRevocationRefusalResponse(e.refusal))
+
+    @ExceptionHandler(MfaAssociationFailureException::class)
+    fun mfaAssociationFailureExceptionHandler(e: MfaAssociationFailureException) =
+        status(
+            when (e.reason) {
+                MfaAssociationFailureReason.WRONG_CODE -> HttpStatus.UNPROCESSABLE_CONTENT
+                MfaAssociationFailureReason.INVALID_TICKET -> HttpStatus.GONE
+                MfaAssociationFailureReason.ALREADY_ASSOCIATED -> HttpStatus.CONFLICT
+            }
+        ).body(MfaAssociationFailureResponse(e.reason))
 
 }
 
@@ -120,6 +130,10 @@ data class MfaEnrollmentAssociationRequest(
 
 data class MfaDeviceRevocationRefusalResponse(
     val reason: MfaDeviceRevocationRefusal
+)
+
+data class MfaAssociationFailureResponse(
+    val reason: MfaAssociationFailureReason
 )
 
 data class MfaDeviceRepresentation(

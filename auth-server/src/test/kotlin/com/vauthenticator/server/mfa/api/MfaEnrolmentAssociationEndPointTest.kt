@@ -214,7 +214,7 @@ class MfaEnrolmentAssociationEndPointTest {
             authorities = listOf("USER"),
             scopes = listOf(Scope.MFA_ENROLLMENT.content)
         )
-        every { mfaMethodsEnrolmentAssociation.associate("A_TICKET", "A_CODE") } just runs
+        every { mfaMethodsEnrolmentAssociation.associate(email, "A_TICKET", "A_CODE") } just runs
 
         mokMvc.perform(
             post("/api/mfa/associate")
@@ -235,7 +235,7 @@ class MfaEnrolmentAssociationEndPointTest {
             authorities = listOf("USER"),
             scopes = listOf(Scope.OPEN_ID.content)
         )
-        every { mfaMethodsEnrolmentAssociation.associate("A_TICKET", "A_CODE") } just runs
+        every { mfaMethodsEnrolmentAssociation.associate(email, "A_TICKET", "A_CODE") } just runs
 
         mokMvc.perform(
             post("/api/mfa/associate")
@@ -312,7 +312,7 @@ class MfaEnrolmentAssociationEndPointTest {
                 .principal(sessionUser)
         ).andExpect(status().isUnauthorized)
 
-        verify(exactly = 0) { mfaMethodsEnrolmentAssociation.associate(any<String>(), any<String>()) }
+        verify(exactly = 0) { mfaMethodsEnrolmentAssociation.associate(any<String>(), any<String>(), any<String>(), any()) }
     }
 
     @Test
@@ -403,5 +403,51 @@ class MfaEnrolmentAssociationEndPointTest {
         ).andExpect(status().isUnauthorized)
 
         verify(exactly = 0) { mfaDevices.revoke(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a new mfa channel to enroll is already associated`() {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+        every { mfaMethodsEnrollment.enroll(EMAIL, EMAIL_MFA_METHOD, EMAIL, ClientAppId(A_CLIENT_APP_ID), true) } throws
+                MfaAssociationFailureException(MfaAssociationFailureReason.ALREADY_ASSOCIATED, "already associated")
+
+        mokMvc.perform(
+            post("/api/mfa/enrollment")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(MfaEnrollmentRequest(EMAIL, EMAIL_MFA_METHOD)))
+                .principal(authentication)
+        )
+            .andExpect(status().isConflict)
+            .andExpect(content().json("""{"reason":"ALREADY_ASSOCIATED"}"""))
+    }
+
+    @Test
+    fun `when a new enrolled mfa association fails for a wrong code`() {
+        assertAssociationFailure(MfaAssociationFailureReason.WRONG_CODE, 422)
+    }
+
+    @Test
+    fun `when a new enrolled mfa association fails for an invalid ticket`() {
+        assertAssociationFailure(MfaAssociationFailureReason.INVALID_TICKET, 410)
+    }
+
+    @Test
+    fun `when a new enrolled mfa association fails for an already associated device`() {
+        assertAssociationFailure(MfaAssociationFailureReason.ALREADY_ASSOCIATED, 409)
+    }
+
+    private fun assertAssociationFailure(reason: MfaAssociationFailureReason, expectedStatus: Int) {
+        val authentication = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+        every { mfaMethodsEnrolmentAssociation.associate(EMAIL, "A_TICKET", "A_CODE") } throws
+                MfaAssociationFailureException(reason, "association failed")
+
+        mokMvc.perform(
+            post("/api/mfa/associate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(MfaEnrollmentAssociationRequest("A_TICKET", "A_CODE")))
+                .principal(authentication)
+        )
+            .andExpect(status().`is`(expectedStatus))
+            .andExpect(content().json("""{"reason":"${reason.name}"}"""))
     }
 }

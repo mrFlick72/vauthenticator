@@ -1,5 +1,6 @@
 package com.vauthenticator.server.mfa.domain
 
+import com.vauthenticator.server.mfa.domain.MfaAssociationFailureReason.*
 import com.vauthenticator.server.ticket.domain.*
 
 typealias MfaAssociationVerifier = (ticket: Ticket) -> Unit
@@ -13,46 +14,71 @@ class MfaMethodsEnrollmentAssociation(
     fun associate(ticketId: String, asDefaultMethod: Boolean = false) {
         associate(
             ticketId,
-            asDefaultMethod
+            asDefaultMethod,
+            redeemable = { true }
         ) {
             if (it.context.isMfaNotSelfAssociable()) {
-                throw InvalidTicketException("Mfa association without code is allowed only if in the ticket context there is ${Ticket.MFA_SELF_ASSOCIATION_CONTEXT_KEY} feature enabled")
+                throw MfaAssociationFailureException(
+                    INVALID_TICKET,
+                    "Mfa association without code is allowed only if in the ticket context there is ${Ticket.MFA_SELF_ASSOCIATION_CONTEXT_KEY} feature enabled"
+                )
             }
         }
 
     }
 
-    fun associate(ticketId: String, code: String, asDefaultMethod: Boolean = false) {
+    fun associate(userName: String, ticketId: String, code: String, asDefaultMethod: Boolean = false) {
         associate(
             ticketId,
-            asDefaultMethod
+            asDefaultMethod,
+            // a ticket of another account or flow is left in place: it is not this caller's to consume
+            redeemable = { it.userName == userName && it.context.isForMfaEnrollment() }
         ) {
-            mfaVerifier.verifyMfaChallengeToBeAssociatedFor(
-                it.userName,
-                it.context.mfaDeviceId(),
-                MfaChallenge(code)
-            )
+            try {
+                mfaVerifier.verifyMfaChallengeToBeAssociatedFor(
+                    it.userName,
+                    it.context.mfaDeviceId(),
+                    MfaChallenge(code)
+                )
+            } catch (e: MfaException) {
+                throw MfaAssociationFailureException(WRONG_CODE, e.message.orEmpty())
+            } catch (e: MfaDeviceNotFoundException) {
+                throw MfaAssociationFailureException(INVALID_TICKET, e.message.orEmpty())
+            } catch (e: AssociatedMfaVerificationException) {
+                throw MfaAssociationFailureException(ALREADY_ASSOCIATED, e.message.orEmpty())
+            }
         }
     }
 
-    private fun associate(ticket: String, asDefaultMethod: Boolean, verifier: MfaAssociationVerifier) {
+    private fun associate(
+        ticket: String,
+        asDefaultMethod: Boolean,
+        redeemable: (Ticket) -> Boolean,
+        verifier: MfaAssociationVerifier
+    ) {
         val loadedTicket = ticketRepository.loadFor(TicketId(ticket))
-            ?: throw InvalidTicketException("The ticket $ticket is not a valid ticket, it seems to be expired")
-        val enrolledMfaAccountMethod = mfaAccountMethodsRepository.findBy(loadedTicket.userName, loadedTicket.context.mfaMethod(), loadedTicket.context.mfaChannel())
-            ?.takeIf { it.mfaDeviceId == loadedTicket.context.mfaDeviceId() }
+            ?.takeIf(redeemable)
+            ?: throw MfaAssociationFailureException(INVALID_TICKET, "The ticket $ticket is not a valid ticket, it seems to be expired")
+        val (mfaMethod, mfaChannel, mfaDeviceId) = try {
+            Triple(loadedTicket.context.mfaMethod(), loadedTicket.context.mfaChannel(), loadedTicket.context.mfaDeviceId())
+        } catch (e: InvalidTicketException) {
+            throw MfaAssociationFailureException(INVALID_TICKET, e.message.orEmpty())
+        }
+        val enrolledMfaAccountMethod = mfaAccountMethodsRepository.findBy(loadedTicket.userName, mfaMethod, mfaChannel)
+            ?.takeIf { it.mfaDeviceId == mfaDeviceId }
             ?: run {
                 revoke(loadedTicket)
-                throw InvalidTicketException("The ticket $ticket is not a valid ticket, its mfa device no longer exists")
+                throw MfaAssociationFailureException(INVALID_TICKET, "The ticket $ticket is not a valid ticket, its mfa device no longer exists")
             }
         if (enrolledMfaAccountMethod.associated) {
             revoke(loadedTicket)
-            throw InvalidTicketException("The ticket $ticket is not a valid ticket, it seems that the mfa associated is already associated", InvalidTicketCause.ALREADY_ASSOCIATED_MFA)
+            throw MfaAssociationFailureException(ALREADY_ASSOCIATED, "The ticket $ticket is not a valid ticket, it seems that the mfa associated is already associated")
         }
         verifier.invoke(loadedTicket)
         val mfaAccountMethod = mfaAccountMethodsRepository.save(
             loadedTicket.userName,
-            loadedTicket.context.mfaMethod(),
-            loadedTicket.context.mfaChannel(),
+            mfaMethod,
+            mfaChannel,
             true
         )
         // an account with an associated device always has a default one: login challenges go to it
