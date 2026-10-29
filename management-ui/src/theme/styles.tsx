@@ -12,9 +12,6 @@ const vauthenticatorStyles = () => {
         },
         title: {
             flexGrow: 1,
-        },
-        contentEditor: {
-            minHeight: "200px"
         }
     }
 };

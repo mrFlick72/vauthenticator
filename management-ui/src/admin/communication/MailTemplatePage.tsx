@@ -1,18 +1,16 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import AdminTemplate from "../../components/AdminTemplate";
-import vauthenticatorStyles from "../../theme/styles";
 import {Alert, Snackbar, Typography} from "@mui/material";
 
 import Separator from "../../components/Separator";
 import FormButton from "../../components/FormButton";
 import {getMailTemplateFor, saveMailTemplateFor} from "./MailTemplateRepository";
 import FormSelect from "../../components/FormSelect";
+import TemplateEditor from "../../components/TemplateEditor";
 
 const MailTemplatePage = () => {
     const pageTitle = "EMail Template Management"
-    const classes = vauthenticatorStyles();
-
-    let mailContent = useRef<HTMLDivElement>(null)
+    const [mailContent, setMailContent] = useState("")
     const [mailType, setMailType] = useState("")
     const [openSucceeded, setOpenSucceeded] = React.useState(false);
     const [openFailure, setOpenFailure] = React.useState(false);
@@ -25,7 +23,7 @@ const MailTemplatePage = () => {
     let saveMailTemplate = () => {
         saveMailTemplateFor({
             emailType: mailType,
-            body: mailContent?.current?.innerText
+            body: mailContent
         })
             .then(r => {
                 if (r.status === 204) {
@@ -57,11 +55,7 @@ const MailTemplatePage = () => {
                         onChangeHandler={(event) => {
                              setMailType(event.value)
                              getMailTemplateFor(event.value)
-                                 .then(content => {
-                                     if(mailContent && mailContent.current) {
-                                         mailContent.current.innerText = content.body
-                                     }
-                                 })
+                                 .then(content => setMailContent(content.body))
                          }}
                         options={[
                              {value: "WELCOME", label: "WELCOME"},
@@ -73,7 +67,7 @@ const MailTemplatePage = () => {
 
             <Separator/>
 
-            <div ref={mailContent} contentEditable="true" style={classes.contentEditor}/>
+            <TemplateEditor label="EMail Template" language="html" value={mailContent} onChange={setMailContent}/>
 
             <Separator/>
 

@@ -47,6 +47,9 @@ The admin app uses `BrowserRouter` with `basename="/secure/admin"`. Current top-
 - keys
 - email templates (`/email-templates`)
 - SMS templates (`/sms-templates`, today only the MFA challenge text)
+
+  Both template pages edit through `components/TemplateEditor.tsx`, a CodeMirror 6 editor that keeps the template's
+  exact text (HTML mode for email, plain text for SMS). Placeholders are plain text: the UI does not know the rendering engine.
 - password lifecycle (`/password-lifecycle`, optional `?account=<email>` preloads an account)
 
 The home screen is a card-based navigation page that links into those feature areas.

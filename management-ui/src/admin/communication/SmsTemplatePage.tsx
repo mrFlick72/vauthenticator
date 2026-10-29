@@ -1,18 +1,16 @@
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import AdminTemplate from "../../components/AdminTemplate";
-import vauthenticatorStyles from "../../theme/styles";
 import {Alert, Snackbar, Typography} from "@mui/material";
 
 import Separator from "../../components/Separator";
 import FormButton from "../../components/FormButton";
 import {getSmsTemplateFor, saveSmsTemplateFor} from "./SmsTemplateRepository";
 import FormSelect from "../../components/FormSelect";
+import TemplateEditor from "../../components/TemplateEditor";
 
 const SmsTemplatePage = () => {
     const pageTitle = "SMS Template Management"
-    const classes = vauthenticatorStyles();
-
-    let smsContent = useRef<HTMLDivElement>(null)
+    const [smsContent, setSmsContent] = useState("")
     const [smsType, setSmsType] = useState("")
     const [openSucceeded, setOpenSucceeded] = React.useState(false);
     const [openFailure, setOpenFailure] = React.useState(false);
@@ -25,7 +23,7 @@ const SmsTemplatePage = () => {
     let saveSmsTemplate = () => {
         saveSmsTemplateFor({
             smsType: smsType,
-            body: smsContent?.current?.innerText
+            body: smsContent
         })
             .then(r => {
                 if (r.status === 204) {
@@ -57,11 +55,7 @@ const SmsTemplatePage = () => {
                         onChangeHandler={(event) => {
                              setSmsType(event.value)
                              getSmsTemplateFor(event.value)
-                                 .then(content => {
-                                     if(smsContent && smsContent.current) {
-                                         smsContent.current.innerText = content.body
-                                     }
-                                 })
+                                 .then(content => setSmsContent(content.body))
                          }}
                         options={[
                              {value: "MFA", label: "MFA"}
@@ -70,7 +64,7 @@ const SmsTemplatePage = () => {
 
             <Separator/>
 
-            <div ref={smsContent} contentEditable="true" style={classes.contentEditor}/>
+            <TemplateEditor label="SMS Template" language="text" value={smsContent} onChange={setSmsContent}/>
 
             <Separator/>
 
