@@ -141,7 +141,7 @@ Documented custom management endpoints:
 Documented MFA endpoints (see `docs/mfa.md`):
 
 - `POST /api/mfa/enrollment`
-- `POST /api/mfa/associate`
+- `POST /api/mfa/associate` (failures carry a `reason`: `WRONG_CODE`, `INVALID_TICKET`, `ALREADY_ASSOCIATED`; redeems only `mfaEnrollment` tickets of the caller; ADR 0013)
 - `GET /api/mfa/enrollment` (also used by the login MFA page via the session)
 - `PUT /api/mfa/device`
 - `DELETE /api/mfa/enrollment/{mfaDeviceId}` (revoke a device; rules in ADR 0009)

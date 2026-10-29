@@ -72,10 +72,14 @@ The kind of second factor a device uses: email or SMS.
 The destination codes are sent to: an email address or a phone number.
 
 **Enrolled**:
-A device that is registered but whose code has not yet been confirmed. It does not count as a second factor.
+A device that is registered but whose code has not yet been confirmed. It does not count as a second factor. The account holder can enroll its channel again (same device, new code), for instance after the first code expired; a channel whose device is already **Associated** cannot be enrolled again.
 
 **Associated**:
 A device whose code has been confirmed by the account holder. Only associated devices count as a second factor at login.
+
+**Association Failure**:
+An attempt to confirm an enrolled device that does not make it **Associated**, for one of three reasons: the code is wrong (the same attempt can be retried with another code), the attempt is no longer valid (expired, already used, or its device was revoked meanwhile — the device must be enrolled again), or the device is already associated (nothing is left to confirm).
+_Avoid_: invalid ticket (for the wrong-code case)
 
 **Default Device**:
 The associated device a challenge goes to when the caller does not name one.

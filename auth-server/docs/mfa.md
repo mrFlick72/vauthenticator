@@ -42,6 +42,8 @@ It is possible to register multiple email via api.
 ```
 *Response Status:* ```201 Created```
 
+A channel whose device is already associated cannot be enrolled again: the call returns ```409 Conflict``` with ```{ "reason": "ALREADY_ASSOCIATED" }``` and no code is sent. A channel whose device is only enrolled can be enrolled again; the device stays the same and a new code and ticket are issued.
+
 ### Association
 
 *URI:* ```Post /api/mfa/associate```
@@ -56,6 +58,18 @@ It is possible to register multiple email via api.
 ```
 
 *Response Status:* ```204 No Content```
+
+When the association fails the response body names the reason; callers should act on ```reason```, the status is a hint (see ADR ```docs/adr/0013-mfa-association-failures-by-reason-and-mfa-enrollment-ticket-purpose.md```):
+
+```json
+{
+  "reason": "WRONG_CODE | INVALID_TICKET | ALREADY_ASSOCIATED"
+}
+```
+
+  - ```WRONG_CODE``` (```422 Unprocessable Entity```): the code does not match. The ticket is still valid; retry with another code.
+  - ```INVALID_TICKET``` (```410 Gone```): the ticket is unknown, expired or already used, was not issued by an MFA enrollment for the calling account, or its device was revoked meanwhile. Enroll the device again.
+  - ```ALREADY_ASSOCIATED``` (```409 Conflict```): the device is already associated; the code is not checked and the ticket is consumed. Refresh the device list.
 
 ### List Enrolled Devices
 
@@ -226,6 +240,6 @@ Both endpoints accept a bearer JWT only, as the email template endpoints do: a b
 
 ### Verification
 
-A login challenge is verified against the device named by ```mfa-device-id```, or against the account's default device. The verification fails when that device does not exist, belongs to another account, or is not associated, and when the account has no default device. An association ticket fails when its device no longer exists.
+A login challenge is verified against the device named by ```mfa-device-id```, or against the account's default device. The verification fails when that device does not exist, belongs to another account, or is not associated, and when the account has no default device. An association ticket fails with ```INVALID_TICKET``` when its device no longer exists.
 
 A verified login challenge marks MFA as passed in the session and resumes the authorization request that asked for it (see [login-workflow.md](login-workflow.md)).
