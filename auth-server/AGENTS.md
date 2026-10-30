@@ -56,7 +56,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `oidc`: RP-initiated logout, OIDC Session Management, userinfo, and ID token enrichment
 - `password`: password reset, change, generation, policy/history logic, and password lifecycle rules (`domain/lifecycle`) evaluated by a scheduled job
 - `role`: groups, roles, and permission validation
-- `ticket`: ticket creation and storage used by multi-step flows
+- `ticket`: ticket creation and storage used by multi-step flows; a ticket expires on read after a lifetime per purpose (`ticket.ttl.*`, ADR 0014)
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
 - `config`: Spring configuration for auth server, AWS, security, and time; each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
 

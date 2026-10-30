@@ -22,7 +22,7 @@ class TicketCreator(
             ticketId,
             account.email,
             clientAppId.content,
-            ticketFeatures.ttl.expirationTimeStampInSecondFromNow(clock),
+            ticketFeatures.ttlFor(ticketContext).expirationTimeStampInSecondFromNow(clock),
             ticketContext
         )
         ticketRepository.store(ticket)

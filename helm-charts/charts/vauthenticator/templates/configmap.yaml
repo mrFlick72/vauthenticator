@@ -80,6 +80,12 @@ data:
         length: {{ .Values.application.mfa.otp.otpLength }}
         timeToLiveInSeconds: {{ .Values.application.mfa.otp.otpTimeToLiveInSeconds }}
 
+    ticket:
+      ttl:
+        mfa-enrollment: {{ .Values.application.ticket.ttl.mfaEnrollment }}
+        reset-password: {{ .Values.application.ticket.ttl.resetPassword }}
+        email-verification: {{ .Values.application.ticket.ttl.emailVerification }}
+
     spring:
       profiles:
         active: {{ .Values.application.profiles }}

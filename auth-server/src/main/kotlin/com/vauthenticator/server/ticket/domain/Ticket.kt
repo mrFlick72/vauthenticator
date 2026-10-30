@@ -83,6 +83,13 @@ data class TicketContext(val content: Map<String, String>) {
 
 data class TicketId(val content: String)
 
-data class TicketFeatures(val ttl: Duration)
+data class TicketFeatures(val mfaEnrollment: Duration, val resetPassword: Duration, val emailVerification: Duration) {
+    // a ticket without a known purpose gets the shortest lifetime
+    fun ttlFor(context: TicketContext): Duration = when {
+        context.isForResetPassword() -> resetPassword
+        context.isForEmailVerification() -> emailVerification
+        else -> mfaEnrollment
+    }
+}
 
 class InvalidTicketException(message: String) : RuntimeException(message)

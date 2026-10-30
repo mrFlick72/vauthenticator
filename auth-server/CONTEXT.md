@@ -88,6 +88,12 @@ The associated device a challenge goes to when the caller does not name one.
 The account holder takes a device off their account; it can no longer receive or verify challenges. An account's last associated device cannot be revoked, nor can its **Default Device** until another device is made default; enrolled devices can always be revoked. Revoking a device is distinct from revoking a ticket or a token.
 _Avoid_: remove, delete
 
+### Tickets
+
+**Ticket**:
+The one-time proof a multi-step flow hands out — an MFA enrollment, a reset-password link, an email-verification link — and redeems later. It belongs to one account and one purpose, works only for that flow, is used up when redeemed, and cannot be redeemed after its lifetime, which depends on the purpose.
+_Avoid_: token (a separate OAuth2 concept), link (the ticket is what the link carries)
+
 ### Communication
 
 **Email Type**:

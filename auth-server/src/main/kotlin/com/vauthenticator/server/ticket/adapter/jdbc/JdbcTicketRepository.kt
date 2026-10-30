@@ -5,10 +5,12 @@ import com.vauthenticator.server.ticket.domain.TicketId
 import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.springframework.jdbc.core.JdbcTemplate
 import tools.jackson.databind.ObjectMapper
+import java.time.Clock
 
 class JdbcTicketRepository(
     private val jdbcTemplate: JdbcTemplate,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val clock: Clock
 ) : TicketRepository {
 
     override fun store(ticket: Ticket) {
@@ -25,7 +27,8 @@ class JdbcTicketRepository(
 
     override fun loadFor(ticketId: TicketId): Ticket? {
         val queryResult = jdbcTemplate.query(
-            "SELECT * FROM TICKET WHERE ticket = ?",
+            // an expired ticket is not redeemable even before the clean-up job deletes it
+            "SELECT * FROM TICKET WHERE ticket = ? AND ttl >= ?",
             { rs, _ ->
                 Ticket(
                     ticketId = TicketId(rs.getString("ticket")),
@@ -41,7 +44,8 @@ class JdbcTicketRepository(
 
                 )
             },
-            ticketId.content
+            ticketId.content,
+            clock.instant().epochSecond
         )
 
         return queryResult.firstOrNull()
