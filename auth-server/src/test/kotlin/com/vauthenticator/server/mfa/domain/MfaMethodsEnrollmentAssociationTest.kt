@@ -327,8 +327,11 @@ class MfaMethodsEnrollmentAssociationTest {
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
         every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
                 MfaDeviceNotFoundException("not found")
+        every { ticketRepository.delete(ticketId) } just runs
 
         assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
+
+        verify { ticketRepository.delete(ticketId) }
     }
 
     @Test
@@ -382,11 +385,11 @@ class MfaMethodsEnrollmentAssociationTest {
         every { ticketRepository.loadFor(ticketId) } returns ticket
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
         every { ticketRepository.recordCodeAttempt(ticketId) } returns null
-        every { ticketRepository.delete(ticketId) } just runs
 
         assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
 
         verify(exactly = 0) { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(any(), any(), any()) }
+        verify(exactly = 0) { ticketRepository.delete(any()) }
     }
 
     @Test
