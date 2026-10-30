@@ -47,21 +47,20 @@ class TaimosOtpMfa(
 
     override fun verify(account: Account, mfaMethod: MfaMethod, mfaChannel: String, optCode: MfaChallenge) {
         val mfaSecret = generateSecretKeyFor(account, mfaMethod, mfaChannel)
-        try {
-            val validated =
-                TimeBasedOneTimePasswordUtil.validateCurrentNumberHex(
-                    mfaSecret.content(),
-                    optCode.content().toInt(),
-                    tokenTimeWindowMillis,
-                    System.currentTimeMillis(),
-                    tokenTimeWindow,
-                    properties.length
-                )
-            if (!validated) {
-                throw MfaException("Customer Code does not match with system code")
-            }
-        } catch (e: RuntimeException) {
-            throw MfaException("Customer Code does not match with system code")
+        // a code that is not a number cannot match; any other failure here is not about the code
+        val code = optCode.content().toIntOrNull()
+            ?: throw WrongMfaCodeException("Customer Code does not match with system code")
+        val validated =
+            TimeBasedOneTimePasswordUtil.validateCurrentNumberHex(
+                mfaSecret.content(),
+                code,
+                tokenTimeWindowMillis,
+                System.currentTimeMillis(),
+                tokenTimeWindow,
+                properties.length
+            )
+        if (!validated) {
+            throw WrongMfaCodeException("Customer Code does not match with system code")
         }
     }
 

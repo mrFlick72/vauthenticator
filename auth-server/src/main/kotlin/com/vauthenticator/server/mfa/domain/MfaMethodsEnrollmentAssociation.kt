@@ -47,10 +47,14 @@ class MfaMethodsEnrollmentAssociation(
                     it.context.mfaDeviceId(),
                     MfaChallenge(code)
                 )
-            } catch (e: MfaException) {
+            } catch (e: WrongMfaCodeException) {
                 // the wrong code that reaches the limit consumes the ticket: WRONG_CODE promises a ticket that can be retried
                 throw if (codeAttempts == MAX_ASSOCIATION_CODE_ATTEMPTS) tooManyCodesFailureFor(it)
                 else MfaAssociationFailureException(WRONG_CODE, e.message.orEmpty())
+            } catch (e: MfaException) {
+                // not about the code (e.g. the device key cannot be resolved): retrying cannot succeed
+                revoke(it)
+                throw MfaAssociationFailureException(INVALID_TICKET, e.message.orEmpty())
             } catch (e: MfaDeviceNotFoundException) {
                 throw MfaAssociationFailureException(INVALID_TICKET, e.message.orEmpty())
             } catch (e: AssociatedMfaVerificationException) {

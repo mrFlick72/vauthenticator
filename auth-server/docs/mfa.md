@@ -68,7 +68,7 @@ When the association fails the response body names the reason; callers should ac
 ```
 
   - ```WRONG_CODE``` (```422 Unprocessable Entity```): the code does not match. The ticket is still valid; retry with another code. At most five codes are checked against a ticket: a fifth wrong code consumes it and answers ```INVALID_TICKET```.
-  - ```INVALID_TICKET``` (```410 Gone```): the ticket is unknown, expired or already used, was consumed by too many wrong codes, was not issued by an MFA enrollment for the calling account, or its device was revoked meanwhile. Enroll the device again.
+  - ```INVALID_TICKET``` (```410 Gone```): the ticket is unknown, expired or already used, was consumed by too many wrong codes, was not issued by an MFA enrollment for the calling account, or its device was revoked meanwhile, or the code could not be checked for a reason other than the code itself. Enroll the device again.
   - ```ALREADY_ASSOCIATED``` (```409 Conflict```): the device is already associated; the code is not checked and the ticket is consumed. Refresh the device list.
 
 *Upgrading an existing database:* the count of checked codes is the ```TICKET.code_attempts``` column. A database created before it needs:

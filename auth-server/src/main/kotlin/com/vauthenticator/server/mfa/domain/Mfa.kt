@@ -61,7 +61,7 @@ data class MfaAccountMethod(
     val associated: Boolean
 )
 
-class MfaException(message: String) : AuthenticationException(message) {
+open class MfaException(message: String) : AuthenticationException(message) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -72,6 +72,9 @@ class MfaException(message: String) : AuthenticationException(message) {
         return javaClass.hashCode()
     }
 }
+
+/** The code given does not match the one expected for the device; every other [MfaException] is not about the code. */
+class WrongMfaCodeException(message: String) : MfaException(message)
 
 class MfaDeviceNotFoundException(message: String) : AuthenticationException(message)
 enum class MfaDeviceRevocationRefusal { LAST_ASSOCIATED_DEVICE, DEFAULT_DEVICE }

@@ -9,6 +9,8 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import org.apache.commons.codec.binary.Hex
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -27,12 +29,12 @@ class TaimosOtpMfaTest {
     @MockK
     lateinit var keyDecrypter: KeyDecrypter
 
-    @Test
-    fun `when generate a secret from account secret key`() {
-        val underTest =
-            TaimosOtpMfa(keyDecrypter, keyRepository, mfaAccountMethodsRepository, OtpConfigurationProperties(6, 60))
+    private val kid = Kid("A_KID")
 
-        val kid = Kid("A_KID")
+    private fun underTest() =
+        TaimosOtpMfa(keyDecrypter, keyRepository, mfaAccountMethodsRepository, OtpConfigurationProperties(6, 60))
+
+    private fun givenTheDeviceSecretKey() {
         val key = Key(
             DataKey.from("QV9FTkNSWVBURURfS0VZ", ""),
             MasterKid(""),
@@ -47,8 +49,46 @@ class TaimosOtpMfaTest {
 
         every { keyRepository.keyFor(kid, KeyPurpose.MFA) } returns key
         every { keyDecrypter.decryptKey("QV9FTkNSWVBURURfS0VZ") } returns "QV9ERUNSWVBURURfU1lNTUVUUklDX0tFWQ=="
-        val actual = underTest.generateSecretKeyFor(account, MfaMethod.EMAIL_MFA_METHOD, email)
+    }
+
+    @Test
+    fun `when generate a secret from account secret key`() {
+        givenTheDeviceSecretKey()
+
+        val actual = underTest().generateSecretKeyFor(account, MfaMethod.EMAIL_MFA_METHOD, email)
         val expectedSecret = Hex.encodeHexString(decoder.decode("QV9ERUNSWVBURURfU1lNTUVUUklDX0tFWQ=="))
         assertEquals(MfaSecret(expectedSecret), actual)
+    }
+
+    @Test
+    fun `when the code does not match the verification fails as a wrong code`() {
+        givenTheDeviceSecretKey()
+        val underTest = underTest()
+        val rightCode = underTest.getTOTPCode(underTest.generateSecretKeyFor(account, MfaMethod.EMAIL_MFA_METHOD, email))
+        val wrongCode = MfaChallenge(((rightCode.content().toInt() + 1) % 1_000_000).toString().padStart(6, '0'))
+
+        assertThrows(WrongMfaCodeException::class.java) {
+            underTest.verify(account, MfaMethod.EMAIL_MFA_METHOD, email, wrongCode)
+        }
+    }
+
+    @Test
+    fun `when the code is not a number the verification fails as a wrong code`() {
+        givenTheDeviceSecretKey()
+
+        assertThrows(WrongMfaCodeException::class.java) {
+            underTest().verify(account, MfaMethod.EMAIL_MFA_METHOD, email, MfaChallenge("NOT_A_CODE"))
+        }
+    }
+
+    @Test
+    fun `when the device secret key cannot be found the verification fails but not as a wrong code`() {
+        every { mfaAccountMethodsRepository.findBy(email, MfaMethod.EMAIL_MFA_METHOD, email) } returns null
+
+        val failure = assertThrows(MfaException::class.java) {
+            underTest().verify(account, MfaMethod.EMAIL_MFA_METHOD, email, MfaChallenge("123456"))
+        }
+
+        assertFalse(failure is WrongMfaCodeException)
     }
 }
