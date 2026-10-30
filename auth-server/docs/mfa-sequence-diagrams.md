@@ -44,9 +44,17 @@ sequenceDiagram
         KeyStorage->>KeyDB: write key
         MfaRepo->>MfaDB: write device (new mfaDeviceId, key id)
     end
+    alt device already associated
+        Enrollment-->>EP: MfaAssociationFailureException(ALREADY_ASSOCIATED)
+        EP-->>Client: 409 Conflict {reason}
+    end
+    Enrollment->>TicketRepo: deleteMfaEnrollmentTicketsFor(userName, mfaDeviceId)
+    TicketRepo->>TicketDB: delete the device's pending enrollment tickets
+    Note right of TicketRepo: the latest enrollment replaces the earlier ones (ADR 0013)
     Enrollment->>Sender: sendMfaChallengeFor(userName, mfaDeviceId)
     Note right of Sender: see 6. Send a challenge
-    Enrollment->>TicketCreator: createTicketFor(account, clientAppId,<br/>mfa context: mfaDeviceId, mfaMethod, mfaChannel)
+    Enrollment->>TicketCreator: createTicketFor(account, clientAppId,<br/>mfa context: mfaDeviceId, mfaMethod, mfaChannel,<br/>purpose = mfaEnrollment)
+    Note right of TicketCreator: lifetime by purpose: ticket.ttl.mfa-enrollment (ADR 0014)
     TicketCreator->>TicketRepo: store(ticket)
     TicketRepo->>TicketDB: write ticket
     EP-->>Client: 201 Created {ticket}
@@ -54,7 +62,7 @@ sequenceDiagram
 
 ## 2. Associate an MFA Device
 
-`POST /api/mfa/associate`: confirms the code sent to an enrolled device and makes it associated. The email-verification link follows the same path without a code (self-association) and always sets the device as default.
+`POST /api/mfa/associate`: confirms the code sent to an enrolled device and makes it associated. Every failure is an `MfaAssociationFailureException` whose reason the endpoint maps to a status and a `{reason}` body: `WRONG_CODE` → `422`, `INVALID_TICKET` → `410`, `ALREADY_ASSOCIATED` → `409` (ADR 0013). The email-verification link follows the same path without a code (self-association), redeems only `emailVerification` tickets and always sets the device as default.
 
 ```mermaid
 sequenceDiagram
@@ -72,20 +80,28 @@ sequenceDiagram
     participant MfaDB as MFA device store<br/>(database)
     Client->>EP: POST /api/mfa/associate<br/>{ticket, code}<br/>Bearer JWT
     EP->>PV: validate(authentication, mfa:enrollment)
-    EP->>Association: associate(ticket, code)
+    EP->>Association: associate(userName, ticket, code)
     Association->>TicketRepo: loadFor(ticketId)
-    TicketRepo->>TicketDB: read ticket
-    alt ticket expired or unknown
-        Association-->>EP: InvalidTicketException
+    TicketRepo->>TicketDB: read ticket, if not expired
+    alt expired, unknown, another account's, or not purpose = mfaEnrollment
+        Association-->>EP: INVALID_TICKET (the ticket is left in place)
     end
     Association->>MfaRepo: findBy(userName, mfaMethod, mfaChannel) from the ticket
     MfaRepo->>MfaDB: read device
     alt device gone, or not the device the ticket names
         Association->>TicketRepo: delete(ticketId)
-        Association-->>EP: InvalidTicketException
+        Association-->>EP: INVALID_TICKET
     else device already associated
         Association->>TicketRepo: delete(ticketId)
-        Association-->>EP: InvalidTicketException(ALREADY_ASSOCIATED_MFA)
+        Association-->>EP: ALREADY_ASSOCIATED
+    end
+    Association->>TicketRepo: recordCodeAttempt(ticketId)
+    TicketRepo->>TicketDB: code_attempts + 1, returned (one UPDATE ... RETURNING)
+    alt ticket consumed meanwhile
+        Association-->>EP: INVALID_TICKET
+    else more than five codes
+        Association->>TicketRepo: delete(ticketId)
+        Association-->>EP: INVALID_TICKET
     end
     Association->>Verifier: verifyMfaChallengeToBeAssociatedFor(userName, mfaDeviceId, code)
     Verifier->>MfaRepo: findBy(mfaDeviceId)
@@ -93,7 +109,16 @@ sequenceDiagram
     Verifier->>AccountRepo: accountFor(userName)
     AccountRepo->>AccountDB: read account
     Verifier->>OtpMfa: verify(account, mfaMethod, mfaChannel, code)
-    Note right of OtpMfa: wrong code → MfaException,<br/>the ticket is kept, so the code can be retried<br/>(secret lookup: see 6. Send a challenge)
+    Note right of OtpMfa: secret lookup: see 6. Send a challenge
+    alt wrong code (WrongMfaCodeException), below the fifth
+        Association-->>EP: WRONG_CODE (the ticket is kept, so the code can be retried)
+    else fifth wrong code
+        Association->>TicketRepo: delete(ticketId)
+        Association-->>EP: INVALID_TICKET
+    else device not found, or any other MfaException
+        Association->>TicketRepo: delete(ticketId)
+        Association-->>EP: INVALID_TICKET
+    end
     Association->>MfaRepo: save(userName, mfaMethod, mfaChannel, associated = true)
     MfaRepo->>MfaDB: write device (same id and key)
     Association->>MfaRepo: getDefaultDevice(userName)

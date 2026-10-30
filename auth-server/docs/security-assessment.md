@@ -191,6 +191,12 @@ lockout: after `login.failed-login-lock.threshold` (default 5) consecutive wrong
 Failed-Login Lock for `login.failed-login-lock.duration` (default 1m), see `docs/failed-login-lock.md`. Still open:
 per-IP throttling, the MFA OTP (TTL and attempt cap), `/api/mfa/*` and the reset endpoints, so the finding stays open.
 
+**2026-10-30 update — partially addressed (#339, ADR 0013, ADR 0014):** `POST /api/mfa/associate` checks at most five
+codes per enrollment ticket, counted before each check so parallel requests cannot exceed it; enrolling the channel
+again replaces the device's pending tickets instead of adding a fresh count beside them. Tickets now expire on read,
+an MFA enrollment ticket after `ticket.ttl.mfa-enrollment` (default 5m). Still open: per-IP throttling, the login OTP
+at `/mfa-challenge` (TTL and attempt cap) and the reset endpoints, so the finding stays open.
+
 ---
 
 ### VA-SEC-04 — AES/ECB unauthenticated key wrapping (non-KMS)
