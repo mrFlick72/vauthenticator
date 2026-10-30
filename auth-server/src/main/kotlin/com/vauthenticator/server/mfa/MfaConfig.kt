@@ -79,12 +79,14 @@ class MfaConfig {
     fun mfaMethodsEnrollment(
         mfaSender: MfaChallengeSender,
         ticketCreator: TicketCreator,
+        ticketRepository: TicketRepository,
         accountRepository: AccountRepository,
         mfaAccountMethodsRepository: MfaAccountMethodsRepository,
         sensitiveDataMaskerResolver: SensitiveDataMaskerResolver
     ) = MfaMethodsEnrollment(
         accountRepository,
         ticketCreator,
+        ticketRepository,
         mfaSender,
         mfaAccountMethodsRepository,
         sensitiveDataMaskerResolver

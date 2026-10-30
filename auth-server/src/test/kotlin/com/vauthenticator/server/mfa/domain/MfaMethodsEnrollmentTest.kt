@@ -14,6 +14,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.support.TicketFixture.ticketContext
 import com.vauthenticator.server.ticket.domain.TicketCreator
+import com.vauthenticator.server.ticket.domain.TicketRepository
 import com.vauthenticator.server.ticket.domain.TicketId
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -21,6 +22,7 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
+import io.mockk.verifyOrder
 import junit.framework.TestCase.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
@@ -36,6 +38,9 @@ class MfaMethodsEnrollmentTest {
 
     @MockK
     private lateinit var ticketCreator: TicketCreator
+
+    @MockK
+    private lateinit var ticketRepository: TicketRepository
 
     @MockK
     private lateinit var accountRepository: AccountRepository
@@ -64,9 +69,11 @@ class MfaMethodsEnrollmentTest {
 
     @BeforeEach
     fun setUp() {
+        every { ticketRepository.deleteMfaEnrollmentTicketsFor(any(), any()) } just runs
         uut = MfaMethodsEnrollment(
             accountRepository,
             ticketCreator,
+            ticketRepository,
             mfaSender,
             mfaAccountMethodsRepository,
             SensitiveDataMaskerResolver(
@@ -304,6 +311,7 @@ class MfaMethodsEnrollmentTest {
 
         assertEquals(ticketId, actual)
         verify(exactly = 0) { mfaSender.sendMfaChallengeFor(any(), any()) }
+        verify(exactly = 0) { ticketRepository.deleteMfaEnrollmentTicketsFor(any(), any()) }
     }
 
     @Test
@@ -319,6 +327,21 @@ class MfaMethodsEnrollmentTest {
 
         assertEquals(ticketId, actual)
         verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `when a channel is enrolled again the pending enrolments of its device are replaced`() {
+        every { accountRepository.accountFor(userName) } returns account
+        every { mfaAccountMethodsRepository.findBy(userName, EMAIL_MFA_METHOD, email) } returns emailMfaAccountMethod
+        every { ticketRepository.deleteMfaEnrollmentTicketsFor(userName, mfaDeviceId) } just runs
+        every { ticketCreator.createTicketFor(account, clientAppId, ticketContext(email, mfaDeviceId = mfaDeviceId.content)) } returns ticketId
+
+        uut.enroll(userName, EMAIL_MFA_METHOD, email, clientAppId, false)
+
+        verifyOrder {
+            ticketRepository.deleteMfaEnrollmentTicketsFor(userName, mfaDeviceId)
+            ticketCreator.createTicketFor(account, clientAppId, ticketContext(email, mfaDeviceId = mfaDeviceId.content))
+        }
     }
 
     private fun emailVerificationTicketContext() = ticketContext(

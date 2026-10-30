@@ -42,7 +42,7 @@ It is possible to register multiple email via api.
 ```
 *Response Status:* ```201 Created```
 
-A channel whose device is already associated cannot be enrolled again: the call returns ```409 Conflict``` with ```{ "reason": "ALREADY_ASSOCIATED" }``` and no code is sent. A channel whose device is only enrolled can be enrolled again; the device stays the same and a new code and ticket are issued.
+A channel whose device is already associated cannot be enrolled again: the call returns ```409 Conflict``` with ```{ "reason": "ALREADY_ASSOCIATED" }``` and no code is sent. A channel whose device is only enrolled can be enrolled again; the device stays the same, a new code and ticket are issued, and the device's earlier enrollment tickets stop working.
 
 ### Association
 

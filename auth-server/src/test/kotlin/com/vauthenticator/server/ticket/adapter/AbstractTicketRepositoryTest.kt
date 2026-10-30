@@ -2,7 +2,10 @@ package com.vauthenticator.server.ticket.adapter
 
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.EMAIL
+import com.vauthenticator.server.mfa.domain.MfaDeviceId
+import com.vauthenticator.server.support.TicketFixture.ticketContext
 import com.vauthenticator.server.support.TicketFixture.ticketFor
+import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.ticket.domain.TicketId
 import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -111,6 +114,30 @@ abstract class AbstractTicketRepositoryTest {
     @Test
     fun `when a code attempt is recorded on a missing ticket there is no count`() {
         assertNull(uut.recordCodeAttempt(TicketId(ticketGenerator.invoke())))
+    }
+
+    @Test
+    fun `when the mfa enrollment tickets of a device are deleted only those tickets go`() {
+        val first = ticket.copy(ticketId = TicketId("FIRST_ENROLLMENT"))
+        val second = ticket.copy(ticketId = TicketId("SECOND_ENROLLMENT"))
+        val anotherDevice = ticket.copy(
+            ticketId = TicketId("ANOTHER_DEVICE"),
+            context = ticketContext(EMAIL, mfaDeviceId = "ANOTHER_MFA_DEVICE_ID")
+        )
+        val anotherAccount = ticket.copy(ticketId = TicketId("ANOTHER_ACCOUNT"), userName = "another_$EMAIL")
+        val emailVerification = ticket.copy(
+            ticketId = TicketId("EMAIL_VERIFICATION"),
+            context = ticketContext(EMAIL, "true", purpose = Ticket.EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE)
+        )
+        listOf(first, second, anotherDevice, anotherAccount, emailVerification).forEach { uut.store(it) }
+
+        uut.deleteMfaEnrollmentTicketsFor(EMAIL, MfaDeviceId("AN_MFA_DEVICE_ID"))
+
+        assertNull(uut.loadFor(first.ticketId))
+        assertNull(uut.loadFor(second.ticketId))
+        assertEquals(anotherDevice, uut.loadFor(anotherDevice.ticketId))
+        assertEquals(anotherAccount, uut.loadFor(anotherAccount.ticketId))
+        assertEquals(emailVerification, uut.loadFor(emailVerification.ticketId))
     }
 
     fun getTicketGenerator() = ticketGenerator

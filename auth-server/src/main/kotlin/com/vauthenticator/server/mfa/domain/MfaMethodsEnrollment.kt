@@ -8,11 +8,13 @@ import com.vauthenticator.server.ticket.domain.Ticket.Companion.EMAIL_VERIFICATI
 import com.vauthenticator.server.ticket.domain.TicketContext
 import com.vauthenticator.server.ticket.domain.TicketCreator
 import com.vauthenticator.server.ticket.domain.TicketId
+import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.slf4j.LoggerFactory
 
 class MfaMethodsEnrollment(
     private val accountRepository: AccountRepository,
     private val ticketCreator: TicketCreator,
+    private val ticketRepository: TicketRepository,
     private val mfaSender: MfaChallengeSender,
     private val mfaAccountMethodsRepository: MfaAccountMethodsRepository,
     private val sensitiveDataMaskerResolver: SensitiveDataMaskerResolver
@@ -51,6 +53,9 @@ class MfaMethodsEnrollment(
                 "Mfa enrollment refused: the mfa device of this channel is already associated"
             )
         }
+
+        // the latest enrollment replaces the pending ones: each ticket allows only a few codes against the same device secret
+        ticketRepository.deleteMfaEnrollmentTicketsFor(userName, mfaAccountMethod.mfaDeviceId)
 
         if (sendChallengeCode) {
             mfaSender.sendMfaChallengeFor(mfaAccountMethod.userName, mfaAccountMethod.mfaDeviceId)
