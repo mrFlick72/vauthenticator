@@ -9,6 +9,8 @@ section: Features · Account lifecycle
 
 Account flows include signup, welcome email, email verification, password reset, and password change. A pending password change must be completed before any application accepts the sign-in. It is presented right after the password, after MFA when the application requires it.
 
+The links these flows send work for a limited time: an email-verification link for 24 hours and a reset-password link for 15 minutes by default. Both are server settings, also exposed by the Helm chart. Verification links sent before upgrading to 0.10 stop working; the account holder asks for a new verification email.
+
 Administrators can manage accounts and assign password lifecycle rules through the management UI or management APIs.
 
 ## Failed-login lock
