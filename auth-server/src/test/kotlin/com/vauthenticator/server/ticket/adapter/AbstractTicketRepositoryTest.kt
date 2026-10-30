@@ -100,17 +100,17 @@ abstract class AbstractTicketRepositoryTest {
     }
 
     @Test
-    fun `when failed attempts are recorded on a ticket the count grows by one each time`() {
+    fun `when code attempts are recorded on a ticket the count grows by one each time`() {
         val ticketId = TicketId(ticketGenerator.invoke())
         uut.store(ticket)
 
-        assertEquals(1, uut.recordFailedAttempt(ticketId))
-        assertEquals(2, uut.recordFailedAttempt(ticketId))
+        assertEquals(1, uut.recordCodeAttempt(ticketId))
+        assertEquals(2, uut.recordCodeAttempt(ticketId))
     }
 
     @Test
-    fun `when a failed attempt is recorded on a missing ticket there is no count`() {
-        assertNull(uut.recordFailedAttempt(TicketId(ticketGenerator.invoke())))
+    fun `when a code attempt is recorded on a missing ticket there is no count`() {
+        assertNull(uut.recordCodeAttempt(TicketId(ticketGenerator.invoke())))
     }
 
     fun getTicketGenerator() = ticketGenerator

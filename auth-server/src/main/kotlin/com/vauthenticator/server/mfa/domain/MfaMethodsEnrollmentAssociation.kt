@@ -5,7 +5,7 @@ import com.vauthenticator.server.ticket.domain.*
 
 typealias MfaAssociationVerifier = (ticket: Ticket) -> Unit
 
-const val MAX_WRONG_ASSOCIATION_CODES = 5
+const val MAX_ASSOCIATION_CODE_ATTEMPTS = 5
 
 class MfaMethodsEnrollmentAssociation(
     private val ticketRepository: TicketRepository,
@@ -36,6 +36,11 @@ class MfaMethodsEnrollmentAssociation(
             // a ticket of another account or flow is left in place: it is not this caller's to consume
             redeemable = { it.userName == userName && it.context.isForMfaEnrollment() }
         ) {
+            // counted before the check, so parallel requests cannot get more codes checked than the limit
+            val codeAttempts = ticketRepository.recordCodeAttempt(it.ticketId)
+            if (codeAttempts == null || codeAttempts > MAX_ASSOCIATION_CODE_ATTEMPTS) {
+                throw tooManyCodesFailureFor(it)
+            }
             try {
                 mfaVerifier.verifyMfaChallengeToBeAssociatedFor(
                     it.userName,
@@ -43,7 +48,9 @@ class MfaMethodsEnrollmentAssociation(
                     MfaChallenge(code)
                 )
             } catch (e: MfaException) {
-                throw wrongCodeFailureFor(it, e)
+                // the wrong code that reaches the limit consumes the ticket: WRONG_CODE promises a ticket that can be retried
+                throw if (codeAttempts == MAX_ASSOCIATION_CODE_ATTEMPTS) tooManyCodesFailureFor(it)
+                else MfaAssociationFailureException(WRONG_CODE, e.message.orEmpty())
             } catch (e: MfaDeviceNotFoundException) {
                 throw MfaAssociationFailureException(INVALID_TICKET, e.message.orEmpty())
             } catch (e: AssociatedMfaVerificationException) {
@@ -90,14 +97,9 @@ class MfaMethodsEnrollmentAssociation(
         revoke(loadedTicket)
     }
 
-    // the wrong code that reaches the limit consumes the ticket: WRONG_CODE promises a ticket that can be retried
-    private fun wrongCodeFailureFor(ticket: Ticket, e: MfaException): MfaAssociationFailureException {
-        val failedAttempts = ticketRepository.recordFailedAttempt(ticket.ticketId)
-        if (failedAttempts == null || failedAttempts >= MAX_WRONG_ASSOCIATION_CODES) {
-            revoke(ticket)
-            return MfaAssociationFailureException(INVALID_TICKET, "The ticket ${ticket.ticketId.content} is not a valid ticket, too many wrong codes")
-        }
-        return MfaAssociationFailureException(WRONG_CODE, e.message.orEmpty())
+    private fun tooManyCodesFailureFor(ticket: Ticket): MfaAssociationFailureException {
+        revoke(ticket)
+        return MfaAssociationFailureException(INVALID_TICKET, "The ticket ${ticket.ticketId.content} is not a valid ticket, too many wrong codes")
     }
 
     private fun revoke(ticket: Ticket) =

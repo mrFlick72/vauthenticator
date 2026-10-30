@@ -3,7 +3,7 @@
 For issue [#339](https://github.com/mrFlick72/vauthenticator/issues/339) we made `POST /api/mfa/associate` tell its callers why an association failed. Before, an invalid ticket was an unhandled `InvalidTicketException` (`500`) and a wrong code was an `MfaException`, an `AuthenticationException` that reached Spring Security's entry point instead of the controller, so a JWT caller could not tell "try the code again" from "enroll again" from "already done". The same change settles which tickets the endpoint redeems, extending ADR 0008 to MFA enrollment.
 
 - **Three reasons, one exception.** Every association failure is an `MfaAssociationFailureException` carrying an `MfaAssociationFailureReason`, mapped in `MfaEnrolmentAssociationEndPoint` to a `{ "reason": ... }` body, as the revocation refusals of ADR 0009 are:
-  - `WRONG_CODE` → `422`: the ticket stays valid, the caller retries with another code. A ticket accepts at most five wrong codes: the fifth consumes it and is reported as `INVALID_TICKET`, since `WRONG_CODE` promises a ticket that can be retried. Enrolling again issues a new ticket with a fresh count.
+  - `WRONG_CODE` → `422`: the ticket stays valid, the caller retries with another code. At most five codes are checked against a ticket: a fifth wrong code consumes it and is reported as `INVALID_TICKET`, since `WRONG_CODE` promises a ticket that can be retried, and any further code is refused without being checked. Enrolling again issues a new ticket with a fresh count.
   - `INVALID_TICKET` → `410`: unknown, expired, used, consumed by too many wrong codes, issued to another account, without the `mfaEnrollment` purpose, or its device was revoked meanwhile; the caller enrolls the device again.
   - `ALREADY_ASSOCIATED` → `409`: the device already counts as a second factor; the code is not checked and the ticket is consumed.
   The reason is the contract; the status is a hint. The exception is a `RuntimeException`, not an `AuthenticationException`, so a wrong code no longer reaches the security entry point.
@@ -16,10 +16,10 @@ For issue [#339](https://github.com/mrFlick72/vauthenticator/issues/339) we made
 - More `InvalidTicketCause` values on `InvalidTicketException` — rejected: a wrong code is not a ticket problem, and `InvalidTicketException` is shared with reset-password and email verification, which do not need these reasons.
 - Refuse re-enrollment for every caller of `MfaMethodsEnrollment.enroll` — rejected: it would break the verification resend for accounts whose email device is already associated.
 - Accept purpose-less self-association tickets at the verification link for a transition period — rejected: the resend path already recovers those accounts, and a transition rule would have to be remembered and removed later.
-- Count wrong codes inside the ticket's JSON context — rejected: a read-then-write count lets parallel guesses all pass the limit; the count is a `TICKET.failed_attempts` column incremented in one `UPDATE ... RETURNING`.
+- Count wrong codes inside the ticket's JSON context, after checking the code — rejected: parallel guesses would all be checked before any of them is counted. The count is a `TICKET.code_attempts` column incremented in one `UPDATE ... RETURNING` before the code is checked, so the limit holds however many requests arrive at once.
 
 **Consequences:**
 - MFA enrollment tickets issued before this change have no purpose and are rejected as `INVALID_TICKET`; the caller enrolls again.
 - Verification links sent before this change have no purpose and are refused; the account holder asks for a new verification email.
-- `TICKET` gets a `failed_attempts` column in `schema.sql` (and the Helm chart's copy). There is no migration tool, so existing databases need `ALTER TABLE TICKET ADD COLUMN failed_attempts integer NOT NULL DEFAULT 0;` (see `docs/mfa.md`).
+- `TICKET` gets a `code_attempts` column in `schema.sql` (and the Helm chart's copy). There is no migration tool, so existing databases need `ALTER TABLE TICKET ADD COLUMN code_attempts integer NOT NULL DEFAULT 0;` (see `docs/mfa.md`).
 - `InvalidTicketCause` loses its only non-default use and is removed.

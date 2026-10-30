@@ -69,6 +69,7 @@ class MfaMethodsEnrollmentAssociationTest {
     @BeforeEach
     fun setUp() {
         underTest = MfaMethodsEnrollmentAssociation(ticketRepository, mfaAccountMethodsRepository, mfaVerifier)
+        every { ticketRepository.recordCodeAttempt(ticketId) } returns 1
     }
 
     @Test
@@ -253,7 +254,7 @@ class MfaMethodsEnrollmentAssociationTest {
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
         every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
                 MfaException("Customer Code does not match with system code")
-        every { ticketRepository.recordFailedAttempt(ticketId) } returns 4
+        every { ticketRepository.recordCodeAttempt(ticketId) } returns 4
 
         assertFailsWith(MfaAssociationFailureReason.WRONG_CODE) { underTest.associate(userName, RAW_TICKET, CODE) }
 
@@ -367,7 +368,7 @@ class MfaMethodsEnrollmentAssociationTest {
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
         every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
                 MfaException("Customer Code does not match with system code")
-        every { ticketRepository.recordFailedAttempt(ticketId) } returns 5
+        every { ticketRepository.recordCodeAttempt(ticketId) } returns 5
         every { ticketRepository.delete(ticketId) } just runs
 
         assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
@@ -377,15 +378,43 @@ class MfaMethodsEnrollmentAssociationTest {
     }
 
     @Test
-    fun `when the ticket disappears while a wrong code is recorded the association fails as invalid ticket`() {
+    fun `when the ticket disappears before its code is checked the association fails as invalid ticket`() {
         every { ticketRepository.loadFor(ticketId) } returns ticket
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
-        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
-                MfaException("Customer Code does not match with system code")
-        every { ticketRepository.recordFailedAttempt(ticketId) } returns null
+        every { ticketRepository.recordCodeAttempt(ticketId) } returns null
         every { ticketRepository.delete(ticketId) } just runs
 
         assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
+
+        verify(exactly = 0) { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the ticket already had five codes checked a further code is not checked`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { ticketRepository.recordCodeAttempt(ticketId) } returns 6
+        every { ticketRepository.delete(ticketId) } just runs
+
+        assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
+
+        verify(exactly = 0) { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(any(), any(), any()) }
+        verify { ticketRepository.delete(ticketId) }
+    }
+
+    @Test
+    fun `when the fifth code is right the device is associated`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { ticketRepository.recordCodeAttempt(ticketId) } returns 5
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } just runs
+        every { mfaAccountMethodsRepository.save(userName, ticket.context.mfaMethod(), ticket.context.mfaChannel(), true) } returns mfaAccountMethod
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns MfaDeviceId("ANOTHER_MFA_DEVICE_ID")
+        every { ticketRepository.delete(ticketId) } just runs
+
+        underTest.associate(userName, RAW_TICKET, CODE)
+
+        verify { mfaAccountMethodsRepository.save(userName, ticket.context.mfaMethod(), ticket.context.mfaChannel(), true) }
     }
 
     private fun emailVerificationTicketContext() = TicketFixture.ticketContext(
