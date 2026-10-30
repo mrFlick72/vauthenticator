@@ -78,7 +78,8 @@ class MfaMethodsEnrollmentAssociationTest {
                 context = TicketFixture.ticketContext(
                     userName,
                     Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE,
-                    "AN_MFA_DEVICE_ID"
+                    "AN_MFA_DEVICE_ID",
+                    Ticket.EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
                 )
             )
         every { ticketRepository.loadFor(ticketId) } returns ticketWithAutoAssociationFeatureEnabled
@@ -195,7 +196,7 @@ class MfaMethodsEnrollmentAssociationTest {
     @Test
     fun `when the mfa device of a self association ticket no longer exists the association is rejected`() {
         val selfAssociationTicket =
-            ticket.copy(context = TicketFixture.ticketContext(userName, Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE))
+            ticket.copy(context = emailVerificationTicketContext())
         every { ticketRepository.loadFor(ticketId) } returns selfAssociationTicket
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns null
         every { ticketRepository.delete(selfAssociationTicket.ticketId) } just runs
@@ -252,6 +253,7 @@ class MfaMethodsEnrollmentAssociationTest {
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
         every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
                 MfaException("Customer Code does not match with system code")
+        every { ticketRepository.recordFailedAttempt(ticketId) } returns 4
 
         assertFailsWith(MfaAssociationFailureReason.WRONG_CODE) { underTest.associate(userName, RAW_TICKET, CODE) }
 
@@ -331,7 +333,7 @@ class MfaMethodsEnrollmentAssociationTest {
     @Test
     fun `when a self association ticket is for an already associated device the association fails as already associated`() {
         every { ticketRepository.loadFor(ticketId) } returns
-                ticket.copy(context = TicketFixture.ticketContext(userName, Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE))
+                ticket.copy(context = emailVerificationTicketContext())
         every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns mfaAccountMethod
         every { ticketRepository.delete(ticket.ticketId) } just runs
 
@@ -347,6 +349,50 @@ class MfaMethodsEnrollmentAssociationTest {
 
         verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
     }
+
+    @Test
+    fun `when a self association ticket has no email verification purpose the association fails`() {
+        every { ticketRepository.loadFor(ticketId) } returns
+                ticket.copy(context = TicketFixture.ticketContext(userName, Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE, purpose = null))
+
+        assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(RAW_TICKET) }
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+        verify(exactly = 0) { ticketRepository.delete(any()) }
+    }
+
+    @Test
+    fun `when the fifth wrong code is given the ticket is consumed and the association fails as invalid ticket`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
+                MfaException("Customer Code does not match with system code")
+        every { ticketRepository.recordFailedAttempt(ticketId) } returns 5
+        every { ticketRepository.delete(ticketId) } just runs
+
+        assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
+
+        verify { ticketRepository.delete(ticketId) }
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the ticket disappears while a wrong code is recorded the association fails as invalid ticket`() {
+        every { ticketRepository.loadFor(ticketId) } returns ticket
+        every { mfaAccountMethodsRepository.findBy(ticket.userName, ticket.context.mfaMethod(), ticket.context.mfaChannel())} returns notAssociatedMfaAccountMethod
+        every { mfaVerifier.verifyMfaChallengeToBeAssociatedFor(userName, ticket.context.mfaDeviceId(), MfaChallenge(CODE)) } throws
+                MfaException("Customer Code does not match with system code")
+        every { ticketRepository.recordFailedAttempt(ticketId) } returns null
+        every { ticketRepository.delete(ticketId) } just runs
+
+        assertFailsWith(MfaAssociationFailureReason.INVALID_TICKET) { underTest.associate(userName, RAW_TICKET, CODE) }
+    }
+
+    private fun emailVerificationTicketContext() = TicketFixture.ticketContext(
+        userName,
+        Ticket.MFA_SELF_ASSOCIATION_CONTEXT_VALUE,
+        purpose = Ticket.EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
+    )
 
     private fun assertFailsWith(reason: MfaAssociationFailureReason, association: () -> Unit) {
         val failure = Assertions.assertThrows(MfaAssociationFailureException::class.java) { association() }

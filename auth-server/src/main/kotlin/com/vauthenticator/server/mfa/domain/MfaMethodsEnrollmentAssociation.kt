@@ -5,6 +5,8 @@ import com.vauthenticator.server.ticket.domain.*
 
 typealias MfaAssociationVerifier = (ticket: Ticket) -> Unit
 
+const val MAX_WRONG_ASSOCIATION_CODES = 5
+
 class MfaMethodsEnrollmentAssociation(
     private val ticketRepository: TicketRepository,
     private val mfaAccountMethodsRepository: MfaAccountMethodsRepository,
@@ -15,7 +17,7 @@ class MfaMethodsEnrollmentAssociation(
         associate(
             ticketId,
             asDefaultMethod,
-            redeemable = { true }
+            redeemable = { it.context.isForEmailVerification() }
         ) {
             if (it.context.isMfaNotSelfAssociable()) {
                 throw MfaAssociationFailureException(
@@ -41,7 +43,7 @@ class MfaMethodsEnrollmentAssociation(
                     MfaChallenge(code)
                 )
             } catch (e: MfaException) {
-                throw MfaAssociationFailureException(WRONG_CODE, e.message.orEmpty())
+                throw wrongCodeFailureFor(it, e)
             } catch (e: MfaDeviceNotFoundException) {
                 throw MfaAssociationFailureException(INVALID_TICKET, e.message.orEmpty())
             } catch (e: AssociatedMfaVerificationException) {
@@ -86,6 +88,16 @@ class MfaMethodsEnrollmentAssociation(
             mfaAccountMethodsRepository.setAsDefault(loadedTicket.userName, mfaAccountMethod.mfaDeviceId)
         }
         revoke(loadedTicket)
+    }
+
+    // the wrong code that reaches the limit consumes the ticket: WRONG_CODE promises a ticket that can be retried
+    private fun wrongCodeFailureFor(ticket: Ticket, e: MfaException): MfaAssociationFailureException {
+        val failedAttempts = ticketRepository.recordFailedAttempt(ticket.ticketId)
+        if (failedAttempts == null || failedAttempts >= MAX_WRONG_ASSOCIATION_CODES) {
+            revoke(ticket)
+            return MfaAssociationFailureException(INVALID_TICKET, "The ticket ${ticket.ticketId.content} is not a valid ticket, too many wrong codes")
+        }
+        return MfaAssociationFailureException(WRONG_CODE, e.message.orEmpty())
     }
 
     private fun revoke(ticket: Ticket) =

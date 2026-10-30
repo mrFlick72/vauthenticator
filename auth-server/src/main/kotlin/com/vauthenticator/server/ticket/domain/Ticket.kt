@@ -3,6 +3,7 @@ package com.vauthenticator.server.ticket.domain
 import com.vauthenticator.server.mfa.domain.MfaDeviceId
 import com.vauthenticator.server.mfa.domain.MfaMethod
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_CHANNEL_CONTEXT_KEY
+import com.vauthenticator.server.ticket.domain.Ticket.Companion.EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_DEVICE_ID_CONTEXT_KEY
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_ENROLLMENT_PURPOSE_CONTEXT_VALUE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_METHOD_CONTEXT_KEY
@@ -62,6 +63,7 @@ data class TicketContext(val content: Map<String, String>) {
 
     fun isForResetPassword() = content[PURPOSE_CONTEXT_KEY] == RESET_PASSWORD_PURPOSE_CONTEXT_VALUE
     fun isForMfaEnrollment() = content[PURPOSE_CONTEXT_KEY] == MFA_ENROLLMENT_PURPOSE_CONTEXT_VALUE
+    fun isForEmailVerification() = content[PURPOSE_CONTEXT_KEY] == EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
     fun isMfaNotSelfAssociable() = content[MFA_SELF_ASSOCIATION_CONTEXT_KEY] != MFA_SELF_ASSOCIATION_CONTEXT_VALUE
     fun mfaMethod(): MfaMethod {
         val mfaMethod = requiredValue(MFA_METHOD_CONTEXT_KEY)

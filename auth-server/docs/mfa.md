@@ -67,9 +67,17 @@ When the association fails the response body names the reason; callers should ac
 }
 ```
 
-  - ```WRONG_CODE``` (```422 Unprocessable Entity```): the code does not match. The ticket is still valid; retry with another code.
-  - ```INVALID_TICKET``` (```410 Gone```): the ticket is unknown, expired or already used, was not issued by an MFA enrollment for the calling account, or its device was revoked meanwhile. Enroll the device again.
+  - ```WRONG_CODE``` (```422 Unprocessable Entity```): the code does not match. The ticket is still valid; retry with another code. A ticket accepts at most five wrong codes: the fifth consumes it and answers ```INVALID_TICKET```.
+  - ```INVALID_TICKET``` (```410 Gone```): the ticket is unknown, expired or already used, was consumed by too many wrong codes, was not issued by an MFA enrollment for the calling account, or its device was revoked meanwhile. Enroll the device again.
   - ```ALREADY_ASSOCIATED``` (```409 Conflict```): the device is already associated; the code is not checked and the ticket is consumed. Refresh the device list.
+
+*Upgrading an existing database:* the wrong-code count is the ```TICKET.failed_attempts``` column. A database created before it needs:
+
+```sql
+ALTER TABLE TICKET ADD COLUMN failed_attempts integer NOT NULL DEFAULT 0;
+```
+
+Verification links (```/email-verify/{ticket}```) redeem only email verification tickets: links sent before this change are refused, and the account holder asks for a new verification email.
 
 ### List Enrolled Devices
 

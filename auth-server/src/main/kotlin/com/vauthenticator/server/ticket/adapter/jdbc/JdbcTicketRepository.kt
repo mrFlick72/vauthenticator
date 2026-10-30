@@ -51,4 +51,11 @@ class JdbcTicketRepository(
         jdbcTemplate.update("DELETE FROM TICKET WHERE ticket=?", ticketId.content)
     }
 
+    override fun recordFailedAttempt(ticketId: TicketId): Int? =
+        jdbcTemplate.query(
+            "UPDATE TICKET SET failed_attempts = failed_attempts + 1 WHERE ticket = ? RETURNING failed_attempts",
+            { rs, _ -> rs.getInt("failed_attempts") },
+            ticketId.content
+        ).firstOrNull()
+
 }

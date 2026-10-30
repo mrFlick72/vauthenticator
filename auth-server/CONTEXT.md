@@ -78,7 +78,7 @@ A device that is registered but whose code has not yet been confirmed. It does n
 A device whose code has been confirmed by the account holder. Only associated devices count as a second factor at login.
 
 **Association Failure**:
-An attempt to confirm an enrolled device that does not make it **Associated**, for one of three reasons: the code is wrong (the same attempt can be retried with another code), the attempt is no longer valid (expired, already used, or its device was revoked meanwhile — the device must be enrolled again), or the device is already associated (nothing is left to confirm).
+An attempt to confirm an enrolled device that does not make it **Associated**, for one of three reasons: the code is wrong (the same attempt can be retried with another code, up to a limit after which the attempt is no longer valid), the attempt is no longer valid (expired, already used, or its device was revoked meanwhile — the device must be enrolled again), or the device is already associated (nothing is left to confirm).
 _Avoid_: invalid ticket (for the wrong-code case)
 
 **Default Device**:
