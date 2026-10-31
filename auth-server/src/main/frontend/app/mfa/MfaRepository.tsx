@@ -3,7 +3,8 @@ export type MfaAccountEnrolledMethod = {
     mfaMethod: string
     mfaChannel: string
     mfaDeviceId: string,
-    default: boolean
+    default: boolean,
+    associated: boolean
 }
 
 export async function sendMfaCode(mfaDeviceId : string): Promise<void> {

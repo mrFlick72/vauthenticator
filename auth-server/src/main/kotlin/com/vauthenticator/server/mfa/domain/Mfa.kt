@@ -11,10 +11,25 @@ data class MfaDevice(
     val mfaMethod: MfaMethod,
     val mfaChannel: String,
     val mfaDeviceId: MfaDeviceId,
-    val default: Boolean
+    val default: Boolean,
+    val associated: Boolean
 )
 
 data class MfaDeviceId(val content: String)
+
+/**
+ * Which of the account's MFA Devices a listing returns: an enrolled device is not associated until its
+ * code is confirmed, and only associated devices count as a second factor.
+ */
+enum class MfaDeviceAssociationFilter {
+    ASSOCIATED, NOT_ASSOCIATED, ALL;
+
+    fun accepts(associated: Boolean) = when (this) {
+        ASSOCIATED -> associated
+        NOT_ASSOCIATED -> !associated
+        ALL -> true
+    }
+}
 
 class MfaFailureEvent(authentication: Authentication, exception: AuthenticationException) :
     AbstractAuthenticationFailureEvent(authentication, exception) {
