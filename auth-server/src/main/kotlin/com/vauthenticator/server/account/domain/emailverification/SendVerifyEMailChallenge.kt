@@ -20,9 +20,14 @@ class SendVerifyEMailChallenge(
 
     fun sendVerifyMail(email: String): Unit = accountRepository.accountFor(email)
         ?.let { account ->
-            val verificationTicket = mfaMethodsEnrollment.enrollForEmailVerification(account.email)
-            val mailContext = mailContextFrom(verificationTicket)
-            mailVerificationMailSender.sendFor(account, mailContext)
+            if (account.emailVerified) {
+                // nothing to verify: its email is a valid second factor already
+                mfaMethodsEnrollment.associateVerifiedEmail(account.email)
+            } else {
+                val verificationTicket = mfaMethodsEnrollment.enrollForEmailVerification(account.email)
+                val mailContext = mailContextFrom(verificationTicket)
+                mailVerificationMailSender.sendFor(account, mailContext)
+            }
         } ?: throw run {
             logger.warn("account not found")
             AccountNotFoundException("account not found")
