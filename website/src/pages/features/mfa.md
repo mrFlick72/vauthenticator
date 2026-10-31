@@ -9,7 +9,7 @@ section: Features · Authentication
 
 VAuthenticator includes MFA with one-time codes sent by email or SMS. The login workflow integrates MFA challenges, while enrollment APIs support registering and associating devices.
 
-An MFA device is one method (email or SMS) on one channel: an email address or a phone number. A device is enrolled when it is registered, and associated once the account holder confirms the code sent to it. Only associated devices count as a second factor. One associated device is the default device, which receives the login challenge unless the sign-in page picks another one.
+An MFA device is one method (email or SMS) on one channel: an email address or a phone number. A device is enrolled when it is registered, and associated once the account holder confirms the code sent to it. Only associated devices count as a second factor. One associated device is the default device, which receives the login challenge unless the sign-in page picks another one. The account's verified email is its first associated device: confirming the verification link associates it as the default device, and an account created with its email already verified, such as the administrator of the local setup, gets it associated at once instead of a verification email.
 
 The text of a challenge is a template an administrator can edit, for email and for SMS alike, from the management UI or the template APIs. An SMS challenge, like an email one, can be sent only once its template is set up; the local setup installs a default one.
 
@@ -28,7 +28,7 @@ A client application with `mfa:always` must also have the `mfa:enrollment` scope
 Your application can let account holders manage their own devices through the API, with a bearer token carrying the `mfa:enrollment` scope:
 
 - enroll a new email address or phone number, and associate it with the code it receives
-- list the account's devices, with the email addresses and phone numbers masked
+- list the account's devices, with the email addresses and phone numbers masked: by default only the associated ones, or on request the enrollments still waiting for their code, or both
 - choose the default device
 - revoke a device they no longer use
 
