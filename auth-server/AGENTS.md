@@ -56,7 +56,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `oidc`: RP-initiated logout, OIDC Session Management, userinfo, and ID token enrichment
 - `password`: password reset, change, generation, policy/history logic, and password lifecycle rules (`domain/lifecycle`) evaluated by a scheduled job
 - `role`: groups, roles, and permission validation
-- `ticket`: ticket creation and storage used by multi-step flows
+- `ticket`: ticket creation and storage used by multi-step flows; a ticket expires on read after a lifetime per purpose (`ticket.ttl.*`, ADR 0014)
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
 - `config`: Spring configuration for auth server, AWS, security, and time; each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
 
@@ -141,7 +141,7 @@ Documented custom management endpoints:
 Documented MFA endpoints (see `docs/mfa.md`):
 
 - `POST /api/mfa/enrollment`
-- `POST /api/mfa/associate`
+- `POST /api/mfa/associate` (failures carry a `reason`: `WRONG_CODE`, `INVALID_TICKET`, `ALREADY_ASSOCIATED`; redeems only `mfaEnrollment` tickets of the caller, at most five codes checked per ticket, counted in `TICKET.code_attempts` before the check, which needs a manual `ALTER TABLE` on existing databases; ADR 0013)
 - `GET /api/mfa/enrollment` (also used by the login MFA page via the session)
 - `PUT /api/mfa/device`
 - `DELETE /api/mfa/enrollment/{mfaDeviceId}` (revoke a device; rules in ADR 0009)

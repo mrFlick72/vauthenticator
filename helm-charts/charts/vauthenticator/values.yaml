@@ -207,6 +207,14 @@ application:
       otpLength: 6
       otpTimeToLiveInSeconds: 30
 
+  # How long a ticket (the one-time proof behind MFA enrollment, reset-password
+  # and email-verification links) can be redeemed, as Spring durations.
+  ticket:
+    ttl:
+      mfaEnrollment: 5m
+      resetPassword: 15m
+      emailVerification: 24h
+
   assetServer:
     onS3:
       enabled: false

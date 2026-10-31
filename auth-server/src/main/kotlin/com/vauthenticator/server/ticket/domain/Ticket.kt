@@ -3,7 +3,9 @@ package com.vauthenticator.server.ticket.domain
 import com.vauthenticator.server.mfa.domain.MfaDeviceId
 import com.vauthenticator.server.mfa.domain.MfaMethod
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_CHANNEL_CONTEXT_KEY
+import com.vauthenticator.server.ticket.domain.Ticket.Companion.EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_DEVICE_ID_CONTEXT_KEY
+import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_ENROLLMENT_PURPOSE_CONTEXT_VALUE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_METHOD_CONTEXT_KEY
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_NOT_SELF_ASSOCIATION_CONTEXT_VALUE
 import com.vauthenticator.server.ticket.domain.Ticket.Companion.MFA_SELF_ASSOCIATION_CONTEXT_KEY
@@ -28,6 +30,8 @@ data class Ticket(
         const val MFA_NOT_SELF_ASSOCIATION_CONTEXT_VALUE = "false"
         const val PURPOSE_CONTEXT_KEY = "purpose"
         const val RESET_PASSWORD_PURPOSE_CONTEXT_VALUE = "resetPassword"
+        const val MFA_ENROLLMENT_PURPOSE_CONTEXT_VALUE = "mfaEnrollment"
+        const val EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE = "emailVerification"
     }
 }
 
@@ -41,7 +45,7 @@ data class TicketContext(val content: Map<String, String>) {
             mfaChannel: String,
             mfaDeviceId: String,
             autoAssociation: Boolean = false,
-            ticketContextAdditionalProperties: Map<String, String>
+            purpose: String = MFA_ENROLLMENT_PURPOSE_CONTEXT_VALUE
         ) = TicketContext(
             mapOf(
                 MFA_DEVICE_ID_CONTEXT_KEY to mfaDeviceId,
@@ -51,12 +55,15 @@ data class TicketContext(val content: Map<String, String>) {
                     MFA_SELF_ASSOCIATION_CONTEXT_VALUE
                 } else {
                     MFA_NOT_SELF_ASSOCIATION_CONTEXT_VALUE
-                }
-            ) + ticketContextAdditionalProperties
+                },
+                PURPOSE_CONTEXT_KEY to purpose
+            )
         )
     }
 
     fun isForResetPassword() = content[PURPOSE_CONTEXT_KEY] == RESET_PASSWORD_PURPOSE_CONTEXT_VALUE
+    fun isForMfaEnrollment() = content[PURPOSE_CONTEXT_KEY] == MFA_ENROLLMENT_PURPOSE_CONTEXT_VALUE
+    fun isForEmailVerification() = content[PURPOSE_CONTEXT_KEY] == EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
     fun isMfaNotSelfAssociable() = content[MFA_SELF_ASSOCIATION_CONTEXT_KEY] != MFA_SELF_ASSOCIATION_CONTEXT_VALUE
     fun mfaMethod(): MfaMethod {
         val mfaMethod = requiredValue(MFA_METHOD_CONTEXT_KEY)
@@ -76,10 +83,13 @@ data class TicketContext(val content: Map<String, String>) {
 
 data class TicketId(val content: String)
 
-data class TicketFeatures(val ttl: Duration)
-
-enum class InvalidTicketCause {
-    TICKET_EXPIRED,
-    ALREADY_ASSOCIATED_MFA
+data class TicketFeatures(val mfaEnrollment: Duration, val resetPassword: Duration, val emailVerification: Duration) {
+    // a ticket without a known purpose gets the shortest lifetime
+    fun ttlFor(context: TicketContext): Duration = when {
+        context.isForResetPassword() -> resetPassword
+        context.isForEmailVerification() -> emailVerification
+        else -> mfaEnrollment
+    }
 }
-class InvalidTicketException(message: String, val reason : InvalidTicketCause = InvalidTicketCause.TICKET_EXPIRED) : RuntimeException(message)
+
+class InvalidTicketException(message: String) : RuntimeException(message)

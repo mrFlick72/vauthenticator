@@ -373,6 +373,25 @@ application:
 | `application.cache.clientApplication.ttl` | Client application cache TTL, as a Spring duration. | `1h` |
 | `application.cache.clientApplication.name` | Client application cache region name. | `client_application_cache` |
 
+### Tickets
+
+A ticket is the one-time proof behind MFA enrollment, reset-password links and email-verification links. It is deleted when redeemed and cannot be redeemed after its TTL.
+
+```yaml
+application:
+  ticket:
+    ttl:
+      mfaEnrollment: 5m
+      resetPassword: 15m
+      emailVerification: 24h
+```
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `application.ticket.ttl.mfaEnrollment` | How long an MFA enrollment ticket can be associated, as a Spring duration. | `5m` |
+| `application.ticket.ttl.resetPassword` | How long a reset-password link works, as a Spring duration. | `15m` |
+| `application.ticket.ttl.emailVerification` | How long an email-verification link works, as a Spring duration. | `24h` |
+
 ### Documents, MFA, Assets, Events
 
 ```yaml

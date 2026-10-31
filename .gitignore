@@ -34,3 +34,6 @@ management-ui/src/node_modules/
 
 ### VS Code ###
 .vscode/
+
+# packaged subcharts from `helm dependency update`
+helm-charts/charts/*/charts/*.tgz

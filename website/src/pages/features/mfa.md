@@ -32,6 +32,12 @@ Your application can let account holders manage their own devices through the AP
 - choose the default device
 - revoke a device they no longer use
 
+An enrollment is confirmed with the code sent to the device, within five minutes by default. At most five codes are checked against one enrollment; after that, or once it expires, the account holder enrolls the device again. Enrolling a channel again replaces its earlier pending enrollment, so only the latest code works. A channel whose device is already associated cannot be enrolled again.
+
+A failed association says why, so your application can react without guessing: the code is wrong (ask for it again), the enrollment is no longer valid (enroll again), or the device is already associated (refresh the device list). The reason is in the response body, `WRONG_CODE`, `INVALID_TICKET` or `ALREADY_ASSOCIATED`, with `422`, `410` and `409` as the status.
+
+Existing PostgreSQL databases need a new column before upgrading; the API reference below gives the statement.
+
 Revocation always leaves the account with a usable second factor. The account's last associated device cannot be revoked, and the default device can be revoked only after another device has been made the default. A revoked device and its key are deleted; enrolling the same channel again creates a new device.
 
 The login check fails closed. If the device cannot be found, belongs to another account, or the account has no default device, the second factor is rejected rather than skipped.

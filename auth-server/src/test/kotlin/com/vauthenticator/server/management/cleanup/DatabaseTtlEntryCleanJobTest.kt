@@ -29,7 +29,7 @@ class DatabaseTtlEntryCleanJobTest {
 
     @Test
     fun `when the old entries are deleted`() {
-        val ticketRepository = JdbcTicketRepository(jdbcTemplate, ObjectMapper())
+        val ticketRepository = JdbcTicketRepository(jdbcTemplate, ObjectMapper(), Clock.systemUTC())
         val keyStorage = JdbcKeyStorage(jdbcTemplate, Clock.systemDefaultZone())
 
         val uut = DatabaseTtlEntryCleanJob(jdbcTemplate, Clock.systemUTC())
@@ -52,8 +52,9 @@ class DatabaseTtlEntryCleanJobTest {
         uut.execute()
 
 
-        val actualTicket = ticketRepository.loadFor(TicketId("A_TICKET"))
-        assertTrue(actualTicket == null)
+        // loadFor already hides an expired ticket: the row itself must be gone
+        val remainingTickets = jdbcTemplate.queryForObject("SELECT count(*) FROM TICKET WHERE ticket = 'A_TICKET'", Int::class.java)
+        assertTrue(remainingTickets == 0)
         assertThrows(NoSuchElementException::class.java) {
             keyStorage.findOne(kid, SIGNATURE)
         }

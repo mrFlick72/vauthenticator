@@ -95,7 +95,8 @@ CREATE TABLE TICKET
     ttl                   bigint       not null default 0,
     user_name             varchar(255) not null,
     client_application_id varchar(255) not null,
-    context               text         not null default '{}'
+    context               text         not null default '{}',
+    code_attempts       integer      not null default 0
 );
 
 CREATE TABLE PASSWORD_HISTORY
