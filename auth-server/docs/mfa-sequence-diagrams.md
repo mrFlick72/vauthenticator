@@ -133,7 +133,7 @@ sequenceDiagram
 
 ## 3. List the MFA Devices
 
-`GET /api/mfa/enrollment`: also called by the login MFA page through the browser session.
+`GET /api/mfa/enrollment[?associated=true|false|all]`: also called by the login MFA page through the browser session, without the parameter (associated devices only).
 
 ```mermaid
 sequenceDiagram
@@ -155,16 +155,17 @@ sequenceDiagram
         ClientAppRepo->>ClientAppDB: read client application
         Note right of PV: no resolvable client app → 403 (ADR 0008)
     end
-    EP->>Enrollment: getEnrollmentsFor(userName, masked = true)
+    alt associated not true, false or all
+        EP-->>Client: 400 Bad Request
+    end
+    EP->>Enrollment: getEnrollmentsFor(userName, association filter, masked = true)
     Enrollment->>MfaRepo: getDefaultDevice(userName)
     MfaRepo->>MfaDB: read default
-    alt no default device
-        EP-->>Client: 200 OK []
-    end
     Enrollment->>MfaRepo: findAll(userName)
     MfaRepo->>MfaDB: read the account's devices
+    Note right of Enrollment: keeps the devices the filter accepts<br/>(default: associated only)
     Enrollment->>Masker: mask userName and channel per mfaMethod
-    EP-->>Client: 200 OK [devices, default flagged]
+    EP-->>Client: 200 OK [devices, default and associated flagged]
 ```
 
 ## 4. Set the Default Device

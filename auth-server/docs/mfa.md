@@ -14,6 +14,7 @@ At login, MFA is a step of the login workflow: a client application with the ```
 **A client application with ```mfa:always``` must also have ```mfa:enrollment```.** The login MFA page lists the account's devices with ```GET /api/mfa/enrollment```, authorized by the scopes of the client application in the browser session. Without ```mfa:enrollment``` that call gets ```403```, the page has no device to submit, and every code is rejected as wrong or expired (the server logs ```MfaDeviceNotFoundException```).
 
 During the account registration a step to validate the main mail, that is the user_name too, the main mail became a valid MFA channel.
+An account created with its email already verified (the admin account of ```POST /actuator/tenant-setup```) gets no verification mail: its email device is associated at once and becomes the default device when the account has none (ADR ```docs/adr/0015-mfa-device-listing-filtered-by-association-and-verified-email-as-default-device.md```).
 It is possible to register multiple email via api.
 
 *Authentication:* Enrollment, Association, Set Default Device and Revoke Device require a bearer JWT. A call without one, including from a logged-in browser session, gets ```401 Unauthorized``` with ```WWW-Authenticate: Bearer```. A JWT without the required scope gets ```403 Forbidden```. List Enrolled Devices and Challenge also accept the browser session used by the MFA pages: without a bearer JWT, the scope is checked on the session's client application (see ADR ```docs/adr/0007-jwt-only-api-authentication-per-controller.md```).
@@ -87,7 +88,11 @@ Verification links (```/email-verify/{ticket}```) redeem only email verification
 
 The login MFA page calls this endpoint, so a client application that uses MFA login (```mfa:always```) must also have ```mfa:enrollment```.
 
-Returns the MFA devices enrolled for the authenticated account. The `userName` and `mfaChannel` values are returned masked.
+Returns the MFA devices of the authenticated account. By default only the associated devices, the ones that count as a second factor; an enrolled device whose code was never confirmed is listed only on request. The `userName` and `mfaChannel` values are returned masked.
+
+*Query Parameters:*
+
+- ```associated``` (optional, default ```true```): ```true``` lists only the associated devices, ```false``` only the enrolled devices not associated yet, ```all``` both. Any other value gets ```400 Bad Request```.
 
 *Response Body:*
 
@@ -98,7 +103,8 @@ Returns the MFA devices enrolled for the authenticated account. The `userName` a
     "mfaMethod": "EMAIL_MFA_METHOD",
     "mfaChannel": "axxxx@email.com",
     "mfaDeviceId": "xxxx",
-    "default": true
+    "default": true,
+    "associated": true
   }
 ]
 ```
