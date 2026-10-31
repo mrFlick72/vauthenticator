@@ -22,20 +22,26 @@ class MfaMethodsEnrollment(
 
     private val logger = LoggerFactory.getLogger(MfaMethodsEnrollment::class.java)
 
-    fun getEnrollmentsFor(userName: String, withMaskedSensibleInformation: Boolean = false): List<MfaDevice> =
-        mfaAccountMethodsRepository.getDefaultDevice(userName)?.let { defaultMfaDevice ->
-            mfaAccountMethodsRepository.findAll(userName)
-                .map {
-                    val sensitiveDataMasker = sensitiveDataMaskerResolver.getSensitiveDataMasker(it.mfaMethod)
-                    MfaDevice(
-                        if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.userName) else it.userName,
-                        it.mfaMethod,
-                        if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.mfaChannel) else it.mfaChannel,
-                        it.mfaDeviceId,
-                        it.mfaDeviceId.content == defaultMfaDevice.content
-                    )
-                }
-        } ?: emptyList()
+    fun getEnrollmentsFor(
+        userName: String,
+        associationFilter: MfaDeviceAssociationFilter = MfaDeviceAssociationFilter.ASSOCIATED,
+        withMaskedSensibleInformation: Boolean = false
+    ): List<MfaDevice> {
+        val defaultMfaDevice = mfaAccountMethodsRepository.getDefaultDevice(userName)
+        return mfaAccountMethodsRepository.findAll(userName)
+            .filter { associationFilter.accepts(it.associated) }
+            .map {
+                val sensitiveDataMasker = sensitiveDataMaskerResolver.getSensitiveDataMasker(it.mfaMethod)
+                MfaDevice(
+                    if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.userName) else it.userName,
+                    it.mfaMethod,
+                    if (withMaskedSensibleInformation) sensitiveDataMasker.mask(it.mfaChannel) else it.mfaChannel,
+                    it.mfaDeviceId,
+                    it.mfaDeviceId == defaultMfaDevice,
+                    it.associated
+                )
+            }
+    }
 
 
     fun enroll(
@@ -88,6 +94,16 @@ class MfaMethodsEnrollment(
                 purpose = EMAIL_VERIFICATION_PURPOSE_CONTEXT_VALUE
             )
         )
+    }
+
+    // an account created with its email already verified skips the verification link, so its email is associated here
+    fun associateVerifiedEmail(userName: String) {
+        val account = accountFor(userName)
+        val emailDevice = mfaAccountMethodsRepository.save(userName, MfaMethod.EMAIL_MFA_METHOD, account.email, true)
+        // an account with an associated device always has a default one: login challenges go to it
+        if (mfaAccountMethodsRepository.getDefaultDevice(userName) == null) {
+            mfaAccountMethodsRepository.setAsDefault(userName, emailDevice.mfaDeviceId)
+        }
     }
 
     private fun accountFor(userName: String) =

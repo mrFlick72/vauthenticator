@@ -67,6 +67,20 @@ internal class SendVerifyEMailChallengeTest {
     }
 
     @Test
+    internal fun `an account with an already verified email gets its email associated instead of a verification mail`() {
+        val account = anAccount().copy(emailVerified = true)
+
+        every { accountRepository.accountFor(account.email) } returns account
+        every { mfaMethodsEnrollment.associateVerifiedEmail(account.email) } just runs
+
+        underTest.sendVerifyMail(account.email)
+
+        verify { mfaMethodsEnrollment.associateVerifiedEmail(account.email) }
+        verify(exactly = 0) { mfaMethodsEnrollment.enrollForEmailVerification(any()) }
+        verify(exactly = 0) { mailVerificationMailSender.sendFor(any(), any()) }
+    }
+
+    @Test
     internal fun `when account does not exist`() {
         val email = "anemail@test.com"
         val clientAppId = ClientAppId(A_CLIENT_APP_ID)

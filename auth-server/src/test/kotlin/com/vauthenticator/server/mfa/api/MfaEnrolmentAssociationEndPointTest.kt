@@ -2,6 +2,7 @@ package com.vauthenticator.server.mfa.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.mfa.domain.*
+import com.vauthenticator.server.mfa.domain.MfaDeviceAssociationFilter.ASSOCIATED
 import com.vauthenticator.server.mfa.domain.MfaMethod.EMAIL_MFA_METHOD
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
@@ -27,6 +28,8 @@ import io.mockk.verify
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
@@ -74,7 +77,7 @@ class MfaEnrolmentAssociationEndPointTest {
         val clientAppId = aClientAppId()
 
         every { clientApplicationRepository.findOne(clientAppId) } returns aClientApp(clientAppId).copy(scopes = Scopes.from(Scope.MFA_ENROLLMENT))
-        every {  mfaMethodsEnrollment.getEnrollmentsFor(email, true) } returns listOf(MfaDevice(email, EMAIL_MFA_METHOD, email, mfaDeviceId, true))
+        every { mfaMethodsEnrollment.getEnrollmentsFor(email, ASSOCIATED, true) } returns listOf(MfaDevice(email, EMAIL_MFA_METHOD, email, mfaDeviceId, true, true))
 
         mokMvc.perform(
             get("/api/mfa/enrollment")
@@ -86,7 +89,7 @@ class MfaEnrolmentAssociationEndPointTest {
                 content().json(
                     objectMapper.writeValueAsString(
                         listOf(
-                            MfaDeviceRepresentation(email, EMAIL_MFA_METHOD, email, "AN_MFA_DEVICE_ID", true)
+                            MfaDeviceRepresentation(email, EMAIL_MFA_METHOD, email, "AN_MFA_DEVICE_ID", true, true)
                         )
                     )
                 )
@@ -105,21 +108,60 @@ class MfaEnrolmentAssociationEndPointTest {
                 .principal(principalFor(EMAIL))
         ).andExpect(status().isForbidden)
 
-        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any()) }
+        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any(), any()) }
     }
 
     @Test
     fun `when all enrolment are retrieved with a bearer JWT`() {
         val principal = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
 
-        every { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, true) } returns listOf(MfaDevice(EMAIL, EMAIL_MFA_METHOD, EMAIL, mfaDeviceId, true))
+        every { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, ASSOCIATED, true) } returns listOf(MfaDevice(EMAIL, EMAIL_MFA_METHOD, EMAIL, mfaDeviceId, true, true))
 
         mokMvc.perform(
             get("/api/mfa/enrollment")
                 .principal(principal)
         ).andExpect(status().isOk)
 
-        verify { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, true) }
+        verify { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, ASSOCIATED, true) }
+    }
+
+    @ParameterizedTest
+    @CsvSource("true,ASSOCIATED", "false,NOT_ASSOCIATED", "all,ALL", "ALL,ALL")
+    fun `when the enrolments are retrieved filtered by association`(associated: String, filter: MfaDeviceAssociationFilter) {
+        val principal = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+
+        every { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, filter, true) } returns listOf(MfaDevice(EMAIL, EMAIL_MFA_METHOD, EMAIL, mfaDeviceId, false, false))
+
+        mokMvc.perform(
+            get("/api/mfa/enrollment")
+                .param("associated", associated)
+                .principal(principal)
+        )
+            .andExpect(status().isOk)
+            .andExpect(
+                content().json(
+                    objectMapper.writeValueAsString(
+                        listOf(
+                            MfaDeviceRepresentation(EMAIL, EMAIL_MFA_METHOD, EMAIL, "AN_MFA_DEVICE_ID", false, false)
+                        )
+                    )
+                )
+            )
+
+        verify { mfaMethodsEnrollment.getEnrollmentsFor(EMAIL, filter, true) }
+    }
+
+    @Test
+    fun `when the enrolments are retrieved with an unknown association filter`() {
+        val principal = principalFor(A_CLIENT_APP_ID, EMAIL, scopes = listOf(Scope.MFA_ENROLLMENT.content))
+
+        mokMvc.perform(
+            get("/api/mfa/enrollment")
+                .param("associated", "pending")
+                .principal(principal)
+        ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any(), any()) }
     }
 
     @Test
@@ -131,7 +173,7 @@ class MfaEnrolmentAssociationEndPointTest {
                 .principal(principal)
         ).andExpect(status().isForbidden)
 
-        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any()) }
+        verify(exactly = 0) { mfaMethodsEnrollment.getEnrollmentsFor(any(), any(), any()) }
     }
 
     @Test

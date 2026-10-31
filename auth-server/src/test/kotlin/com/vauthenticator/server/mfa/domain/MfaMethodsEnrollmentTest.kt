@@ -1,5 +1,6 @@
 package com.vauthenticator.server.mfa.domain
 
+import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.mask.SensitiveDataMaskerResolver
 import com.vauthenticator.server.mask.SensitiveEmailMasker
@@ -60,11 +61,16 @@ class MfaMethodsEnrollmentTest {
     private val ticketId = TicketId("A_TICKET")
     private val emailMfaAccountMethod = notAssociatedMfaAccountMethod(userName, email, EMAIL_MFA_METHOD)
 
-    private val defaultMfaDevice = emailMfaAccountMethod
     private val anotherMfaDeviceId = MfaDeviceId("A_NEW_MFA_DEVICE_ID")
     private val anotherEmail = "irrelevant_$email"
     private val anotherMfaDevice = emailMfaAccountMethod
         .copy(mfaDeviceId = anotherMfaDeviceId, mfaChannel = anotherEmail)
+
+    private val associatedDefaultDevice = emailMfaAccountMethod.copy(associated = true)
+    private val associatedOtherDevice = anotherMfaDevice.copy(associated = true)
+    private val pendingMfaDeviceId = MfaDeviceId("A_PENDING_MFA_DEVICE_ID")
+    private val pendingEmail = "pending_$email"
+    private val pendingDevice = emailMfaAccountMethod.copy(mfaDeviceId = pendingMfaDeviceId, mfaChannel = pendingEmail)
 
 
     @BeforeEach
@@ -235,51 +241,127 @@ class MfaMethodsEnrollmentTest {
     }
 
     @Test
-    fun `find all mfa enrollments for an account`() {
+    fun `find all mfa enrollments for an account lists only its associated devices by default`() {
         every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
-        every {
-            mfaAccountMethodsRepository.findAll(userName)
-        } returns listOf(
-            defaultMfaDevice,
-            anotherMfaDevice
+        every { mfaAccountMethodsRepository.findAll(userName) } returns listOf(
+            associatedDefaultDevice,
+            associatedOtherDevice,
+            pendingDevice
         )
+
         val actual = uut.getEnrollmentsFor(userName)
 
         val expected = listOf(
-            MfaDevice(userName, EMAIL_MFA_METHOD, email, mfaDeviceId, true),
-            MfaDevice(userName, EMAIL_MFA_METHOD, anotherEmail, anotherMfaDeviceId, false),
+            MfaDevice(userName, EMAIL_MFA_METHOD, email, mfaDeviceId, default = true, associated = true),
+            MfaDevice(userName, EMAIL_MFA_METHOD, anotherEmail, anotherMfaDeviceId, default = false, associated = true),
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `find all mfa enrollments for an account lists only its not associated devices`() {
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
+        every { mfaAccountMethodsRepository.findAll(userName) } returns listOf(
+            associatedDefaultDevice,
+            associatedOtherDevice,
+            pendingDevice
         )
 
-        assertEquals(expected, actual)
+        val actual = uut.getEnrollmentsFor(userName, MfaDeviceAssociationFilter.NOT_ASSOCIATED)
 
-        verify { mfaAccountMethodsRepository.findAll(userName) }
+        val expected = listOf(
+            MfaDevice(userName, EMAIL_MFA_METHOD, pendingEmail, pendingMfaDeviceId, default = false, associated = false),
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `find all mfa enrollments for an account lists associated and not associated devices`() {
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
+        every { mfaAccountMethodsRepository.findAll(userName) } returns listOf(
+            associatedDefaultDevice,
+            associatedOtherDevice,
+            pendingDevice
+        )
+
+        val actual = uut.getEnrollmentsFor(userName, MfaDeviceAssociationFilter.ALL)
+
+        val expected = listOf(
+            MfaDevice(userName, EMAIL_MFA_METHOD, email, mfaDeviceId, default = true, associated = true),
+            MfaDevice(userName, EMAIL_MFA_METHOD, anotherEmail, anotherMfaDeviceId, default = false, associated = true),
+            MfaDevice(userName, EMAIL_MFA_METHOD, pendingEmail, pendingMfaDeviceId, default = false, associated = false),
+        )
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `find all mfa enrollments for an account without a default device still lists its devices`() {
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns null
+        every { mfaAccountMethodsRepository.findAll(userName) } returns listOf(associatedDefaultDevice)
+
+        val actual = uut.getEnrollmentsFor(userName)
+
+        val expected = listOf(
+            MfaDevice(userName, EMAIL_MFA_METHOD, email, mfaDeviceId, default = false, associated = true),
+        )
+        assertEquals(expected, actual)
     }
 
     @Test
     fun `find all mfa enrollments for an account with masked sensible information`() {
         every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns mfaDeviceId
-        every {
-            mfaAccountMethodsRepository.findAll(userName)
-        } returns listOf(
-            defaultMfaDevice,
-            anotherMfaDevice
+        every { mfaAccountMethodsRepository.findAll(userName) } returns listOf(
+            associatedDefaultDevice,
+            associatedOtherDevice
         )
-        every { sensitiveEmailMasker.mask(userName) } returns userName
-        every { sensitiveEmailMasker.mask(email) } returns email
-        every { sensitiveEmailMasker.mask(anotherEmail) } returns anotherEmail
-        val actual = uut.getEnrollmentsFor(userName, true)
+        every { sensitiveEmailMasker.mask(userName) } returns "masked_$userName"
+        every { sensitiveEmailMasker.mask(email) } returns "masked_$email"
+        every { sensitiveEmailMasker.mask(anotherEmail) } returns "masked_$anotherEmail"
+
+        val actual = uut.getEnrollmentsFor(userName, withMaskedSensibleInformation = true)
 
         val expected = listOf(
-            MfaDevice(userName, EMAIL_MFA_METHOD, email, mfaDeviceId, true),
-            MfaDevice(userName, EMAIL_MFA_METHOD, anotherEmail, anotherMfaDeviceId, false),
+            MfaDevice("masked_$userName", EMAIL_MFA_METHOD, "masked_$email", mfaDeviceId, default = true, associated = true),
+            MfaDevice("masked_$userName", EMAIL_MFA_METHOD, "masked_$anotherEmail", anotherMfaDeviceId, default = false, associated = true),
         )
-
         assertEquals(expected, actual)
+    }
 
-        verify { mfaAccountMethodsRepository.findAll(userName) }
-        verify { sensitiveEmailMasker.mask(userName) }
-        verify { sensitiveEmailMasker.mask(email) }
-        verify { sensitiveEmailMasker.mask(anotherEmail) }
+    @Test
+    fun `an already verified email is associated as the default device`() {
+        val emailDevice = associatedMfaAccountMethod(userName, userName, EMAIL_MFA_METHOD)
+        every { accountRepository.accountFor(userName) } returns account
+        every { mfaAccountMethodsRepository.save(userName, EMAIL_MFA_METHOD, userName, true) } returns emailDevice
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns null
+        every { mfaAccountMethodsRepository.setAsDefault(userName, emailDevice.mfaDeviceId) } just runs
+
+        uut.associateVerifiedEmail(userName)
+
+        verify { mfaAccountMethodsRepository.save(userName, EMAIL_MFA_METHOD, userName, true) }
+        verify { mfaAccountMethodsRepository.setAsDefault(userName, emailDevice.mfaDeviceId) }
+    }
+
+    @Test
+    fun `an already verified email does not replace the default device of the account`() {
+        val emailDevice = associatedMfaAccountMethod(userName, userName, EMAIL_MFA_METHOD)
+        every { accountRepository.accountFor(userName) } returns account
+        every { mfaAccountMethodsRepository.save(userName, EMAIL_MFA_METHOD, userName, true) } returns emailDevice
+        every { mfaAccountMethodsRepository.getDefaultDevice(userName) } returns anotherMfaDeviceId
+
+        uut.associateVerifiedEmail(userName)
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.setAsDefault(any(), any()) }
+    }
+
+    @Test
+    fun `an already verified email of a missing account is not associated`() {
+        every { accountRepository.accountFor(userName) } returns null
+
+        assertThrows(AccountNotFoundException::class.java) {
+            uut.associateVerifiedEmail(userName)
+        }
+
+        verify(exactly = 0) { mfaAccountMethodsRepository.save(any(), any(), any(), any()) }
     }
 
     @Test

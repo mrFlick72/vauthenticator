@@ -22,24 +22,34 @@ class MfaEnrolmentAssociationEndPoint(
 
 
     @GetMapping("/api/mfa/enrollment")
-    fun findAllAssociatedEnrolledMfaMethods(
+    fun findAllEnrolledMfaMethods(
         authentication: Authentication,
-        httpSession: HttpSession
+        httpSession: HttpSession,
+        @RequestParam(defaultValue = "true") associated: String
     ): ResponseEntity<List<MfaDeviceRepresentation>> {
         permissionValidator.validate(authentication, httpSession, Scopes.from(Scope.MFA_ENROLLMENT))
 
-        return ok(mfaMethodsEnrollment.getEnrollmentsFor(authentication.name, true)
+        return ok(mfaMethodsEnrollment.getEnrollmentsFor(authentication.name, associationFilterFrom(associated), true)
             .map {
                 MfaDeviceRepresentation(
                     it.userName,
                     it.mfaMethod,
                     it.mfaChannel,
                     it.mfaDeviceId.content,
-                    it.default
+                    it.default,
+                    it.associated
                 )
             }
         )
     }
+
+    private fun associationFilterFrom(associated: String) =
+        when (associated.lowercase()) {
+            "true" -> MfaDeviceAssociationFilter.ASSOCIATED
+            "false" -> MfaDeviceAssociationFilter.NOT_ASSOCIATED
+            "all" -> MfaDeviceAssociationFilter.ALL
+            else -> throw InvalidMfaDeviceAssociationFilterException("associated must be true, false or all, not $associated")
+        }
 
     @PutMapping("/api/mfa/device")
     fun setDefaultEnrolledMfaMethods(
@@ -91,6 +101,9 @@ class MfaEnrolmentAssociationEndPoint(
         return noContent().build()
     }
 
+    @ExceptionHandler(InvalidMfaDeviceAssociationFilterException::class)
+    fun invalidMfaDeviceAssociationFilterExceptionHandler() = badRequest().build<Unit>()
+
     @ExceptionHandler(MfaDeviceNotFoundException::class)
     fun mfaDeviceNotFoundExceptionHandler() = notFound().build<Unit>()
 
@@ -109,6 +122,8 @@ class MfaEnrolmentAssociationEndPoint(
         ).body(MfaAssociationFailureResponse(e.reason))
 
 }
+
+class InvalidMfaDeviceAssociationFilterException(message: String) : RuntimeException(message)
 
 data class SetDefaultMfaDeviceRequest(
     val mfaDeviceId: String
@@ -141,5 +156,6 @@ data class MfaDeviceRepresentation(
     val mfaMethod: MfaMethod,
     val mfaChannel: String,
     val mfaDeviceId: String,
-    val default: Boolean
+    val default: Boolean,
+    val associated: Boolean
 )
