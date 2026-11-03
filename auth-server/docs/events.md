@@ -60,8 +60,9 @@ password login appears twice (`AuthenticationSuccessEvent` and `InteractiveAuthe
 change-password events are forwarded too. A consumer that needs only Login Events filters on the payload class.
 
 Without a resolvable client app (request `client_id` parameter or the saved authorization request in the session),
-only a username/password authentication is forwarded, with no client app: a direct `/login`, and the MFA and
-change-password events that carry the same token. Any other authentication without a client app, such as a bearer
+only a username/password authentication is forwarded, with no client app: a direct `/login`, the MFA and
+change-password events that carry the same token, and a logout (`LogoutSuccessEvent`, which ends the session a login
+history pairs it with; a logout with a client app was already forwarded). Any other authentication without a client app, such as a bearer
 token on an API call, is not forwarded, so API traffic is not recorded as logins.
 
 ## Logger consumer
@@ -70,8 +71,10 @@ token on an API call, is not forwarded, so API traffic is not recorded as logins
 `event.consumer.enable.logger-event-consumer: true` (Helm: `events.enableLoggerConsumer`, off by default).
 
 - The username (for a failed login, whatever was typed), the client id, the user agent and the IP address are
-  client-controlled. The logger escapes control characters (CR, LF, NEL, ESC, ...) and the Unicode line and paragraph
-  separators in them, after truncating the user agent to 512 characters.
+  client-controlled. The logger writes them through `escapedForLog()` (`extentions/LogExt.kt`): a backslash is doubled
+  and control characters (CR, LF, NEL, ESC, ...), Unicode line and paragraph separators and format characters (bidi
+  overrides, zero-width characters) are written as escapes. The user agent and the IP address are first truncated to
+  512 characters, never in the middle of a character. `AccountUserDetailsService` logs the typed username the same way.
 - An authentication payload is written as its event type, plus the exception type for a failure (for example
   `AuthenticationFailureBadCredentialsEvent(BadCredentialsException)`), never as its text, which holds the typed
   username and the raw session id.

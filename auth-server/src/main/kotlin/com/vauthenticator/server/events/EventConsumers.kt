@@ -1,12 +1,13 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.server.extentions.escapedForLog
 import com.vauthenticator.server.password.domain.Password
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent
 
 private const val LOGGER_EVENT_CONSUMER = "logger-event-consumer"
-private const val MAX_LOGGED_USER_AGENT_LENGTH = 512
+private const val MAX_LOGGED_VALUE_LENGTH = 512
 
 class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) : EventConsumer {
 
@@ -14,8 +15,8 @@ class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) 
 
     override fun accept(event: VAuthenticatorEvent) {
         val logLine = """
-            The user ${escapeControlCharacters(event.userName.content)}
-            with the client id ${event.clientAppId.content.ifEmpty { "none" }.let(::escapeControlCharacters)}
+            The user ${event.userName.content.escapedForLog()}
+            with the client id ${event.clientAppId.content.ifEmpty { "none" }.escapedForLog()}
             has done an ${event.payload::class.simpleName} event
             event at ${event.timeStamp.epochSecond}
             event payload: ${loggablePayloadOf(event)}
@@ -27,8 +28,8 @@ class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) 
         event.requestContext?.let {
             """
 
-            from the ip address ${escapeControlCharacters(it.ipAddress)}
-            with the user agent ${it.userAgent?.let { userAgent -> escapeControlCharacters(userAgent.take(MAX_LOGGED_USER_AGENT_LENGTH)) } ?: "none"}
+            from the ip address ${it.ipAddress.cappedForLog()}
+            with the user agent ${it.userAgent?.cappedForLog() ?: "none"}
             in the session ${it.sessionReference ?: "none"}
             """.trimIndent()
         } ?: ""
@@ -43,24 +44,14 @@ class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) 
             is AbstractAuthenticationFailureEvent ->
                 "${payload::class.simpleName}(${payload.exception::class.simpleName})"
             is AbstractAuthenticationEvent -> "${payload::class.simpleName}"
-            else -> escapeControlCharacters(payload.toString())
+            else -> payload.toString().escapedForLog()
         }
 
-    /**
-     * Usernames, client ids, user agents and forwarded IP addresses are client-controlled: control characters (CR, LF, NEL, ESC, ...) and the
-     * Unicode line and paragraph separators are escaped, so they cannot forge log lines or rewrite a terminal.
-     */
-    private fun escapeControlCharacters(value: String) =
-        buildString {
-            value.forEach {
-                when {
-                    it == '\r' -> append("\\r")
-                    it == '\n' -> append("\\n")
-                    it.isISOControl() || it == '\u2028' || it == '\u2029' -> append("\\u%04x".format(it.code))
-                    else -> append(it)
-                }
-            }
-        }
+    /** Client-controlled values with no natural bound (user agent, forwarded IP) are capped, never mid-character, then escaped. */
+    private fun String.cappedForLog(): String {
+        val capped = take(MAX_LOGGED_VALUE_LENGTH)
+        return (if (capped.lastOrNull()?.isHighSurrogate() == true) capped.dropLast(1) else capped).escapedForLog()
+    }
 
     override fun handleable(event: VAuthenticatorEvent) = eventConsumerConfig.enable[LOGGER_EVENT_CONSUMER] ?: false
 }

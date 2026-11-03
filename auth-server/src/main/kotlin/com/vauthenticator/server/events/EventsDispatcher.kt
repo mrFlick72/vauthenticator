@@ -25,9 +25,9 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
     private val logger = LoggerFactory.getLogger(SpringEventEventsDispatcher::class.java)
 
     /**
-     * Wraps a Spring authentication event. Without a client app, only a login (a username/password authentication,
-     * which the MFA and change-password events also carry) is dispatched, with no client app ([ClientAppId.empty]);
-     * other authentications without one, such as bearer tokens on API calls, are not.
+     * Wraps a Spring authentication event. Without a client app, only a username/password authentication (a login,
+     * the MFA and change-password events carrying the same token, and a logout) is dispatched, with no client app
+     * ([ClientAppId.empty]); other authentications without one, such as bearer tokens on API calls, are not.
      */
     @EventListener
     fun handle(event: AbstractAuthenticationEvent) {

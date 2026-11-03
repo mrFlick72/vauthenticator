@@ -2,6 +2,7 @@ package com.vauthenticator.server.login.userdetails
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.extentions.escapedForLog
 import com.vauthenticator.server.extentions.loginClientAppId
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
@@ -23,7 +24,7 @@ open class AccountUserDetailsService(
         userRepository.accountFor(username)
             ?.let(::releaseExpiredFailedLoginLock)
             ?.let {
-                logger.info("Account found for $username username")
+                logger.info("Account found for ${username.escapedForLog()} username")
                 User(
                     it.username,
                     it.password,
@@ -35,7 +36,7 @@ open class AccountUserDetailsService(
                 )
             }
             ?: run {
-                logger.error("Account not found for $username username")
+                logger.error("Account not found for ${username.escapedForLog()} username")
                 throw UsernameNotFoundException("the user $username not found")
             }
 

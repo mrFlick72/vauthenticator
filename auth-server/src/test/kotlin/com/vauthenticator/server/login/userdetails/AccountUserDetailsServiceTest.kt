@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.boot.test.system.OutputCaptureExtension
+import org.springframework.boot.test.system.CapturedOutput
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
@@ -95,6 +97,18 @@ class AccountUserDetailsServiceTest {
         val actual = uut.loadUserByUsername(account.username)
 
         assertFalse(actual.isAccountNonLocked)
+    }
+
+    @Test
+    @ExtendWith(OutputCaptureExtension::class)
+    fun `a typed username that is not an account cannot forge log lines`(output: CapturedOutput) {
+        val typed = "x\r\nThe user admin@domain.com has done an AuthenticationSuccessEvent event"
+        every { accountRepository.accountFor(typed) } returns null
+
+        assertThrows(UsernameNotFoundException::class.java) { uut.loadUserByUsername(typed) }
+
+        assertTrue(output.out.contains("Account not found for x\\r\\nThe user admin@domain.com"), output.out)
+        assertTrue(output.out.lines().none { it.startsWith("The user admin@domain.com") }, output.out)
     }
 
     @Test

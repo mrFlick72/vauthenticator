@@ -10,6 +10,7 @@ import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -52,6 +53,11 @@ class AwsLambdaFunctionTest {
     @BeforeEach
     fun setUp() {
         uut = AwsLambdaFunction(redisTemplate, Duration.ofSeconds(1), objectMapper, client)
+    }
+
+    @AfterEach
+    fun resetRequestAttributes() {
+        RequestContextHolder.resetRequestAttributes()
     }
 
     @Test

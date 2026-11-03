@@ -17,7 +17,7 @@ import java.time.Instant
 
 class RequestContextTest {
 
-    // other tests (e.g. AwsLambdaFunctionTest) leave request attributes bound to the thread
+    // request attributes are bound to the thread: start and end every test without any
     @BeforeEach
     @AfterEach
     fun resetRequestAttributes() {

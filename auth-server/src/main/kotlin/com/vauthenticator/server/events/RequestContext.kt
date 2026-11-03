@@ -1,8 +1,8 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.server.extentions.toSha256
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
-import java.security.MessageDigest
 
 /**
  * Where an event came from: the request it was created in. The session is referenced by the SHA-256 of its id,
@@ -21,12 +21,8 @@ data class RequestContext(
             return RequestContext(
                 ipAddress = request.remoteAddr,
                 userAgent = request.getHeader("User-Agent"),
-                sessionReference = request.getSession(false)?.id?.let(::sha256Hex)
+                sessionReference = request.getSession(false)?.id?.toSha256()
             )
         }
-
-        private fun sha256Hex(value: String) =
-            MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
-                .joinToString("") { "%02x".format(it) }
     }
 }

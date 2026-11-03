@@ -18,7 +18,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
+import org.springframework.security.authentication.event.LogoutSuccessEvent
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -90,6 +92,22 @@ class SpringEventEventsDispatcherTest {
     }
 
     @Test
+    fun `a logout without a client app is dispatched with no client app`() {
+        RequestContextHolder.setRequestAttributes(ServletRequestAttributes(MockHttpServletRequest()))
+        val underTest = SpringEventEventsDispatcher(publisher)
+        val authentication = UsernamePasswordAuthenticationToken.authenticated("anemail@domain.com", null, emptyList())
+
+        every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
+        underTest.handle(LogoutSuccessEvent(authentication))
+
+        verify {
+            publisher.publishEvent(match<VAuthenticatorAuthEvent> {
+                it.clientAppId == ClientAppId.empty() && it.payload is LogoutSuccessEvent
+            })
+        }
+    }
+
+    @Test
     fun `a password login outside any request is dispatched with no client app`() {
         val underTest = SpringEventEventsDispatcher(publisher)
 
@@ -99,7 +117,7 @@ class SpringEventEventsDispatcherTest {
         verify { publisher.publishEvent(match<VAuthenticatorAuthEvent> { it.clientAppId == ClientAppId.empty() }) }
     }
 
-    // other tests (e.g. AwsLambdaFunctionTest) leave request attributes bound to the thread
+    // request attributes are bound to the thread: start and end every test without any
     @BeforeEach
     @AfterEach
     fun resetRequestAttributes() {

@@ -197,6 +197,24 @@ class LoggerEventConsumerTest {
         assertTrue(output.out.lines().any { it == "from the ip address 1.2.3.4\\nThe user admin@domain.com" }, output.out)
     }
 
+    @Test
+    fun `the user agent cap never splits a character in half`(output: CapturedOutput) {
+        val event = anEventCreatedInARequest(userAgent = "a".repeat(511) + "😀")
+
+        underTest.accept(event)
+
+        assertTrue(output.out.lines().any { it == "with the user agent " + "a".repeat(511) }, output.out)
+    }
+
+    @Test
+    fun `a forwarded ip address is capped`(output: CapturedOutput) {
+        val event = anEventCreatedInARequest(userAgent = "curl/8.0", remoteAddr = "1".repeat(600))
+
+        underTest.accept(event)
+
+        assertTrue(output.out.lines().any { it == "from the ip address " + "1".repeat(512) }, output.out)
+    }
+
     private val underTest = LoggerEventConsumer(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
 
     private fun anEventCreatedInARequest(userAgent: String, remoteAddr: String = "203.0.113.7"): VAuthenticatorEvent {
