@@ -2,6 +2,8 @@ package com.vauthenticator.server.events
 
 import com.vauthenticator.server.password.domain.Password
 import org.slf4j.LoggerFactory
+import org.springframework.security.authentication.event.AbstractAuthenticationEvent
+import org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent
 
 private const val LOGGER_EVENT_CONSUMER = "logger-event-consumer"
 private const val MAX_LOGGED_USER_AGENT_LENGTH = 512
@@ -12,8 +14,8 @@ class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) 
 
     override fun accept(event: VAuthenticatorEvent) {
         val logLine = """
-            The user ${escapeLineBreaks(event.userName.content)}
-            with the client id ${event.clientAppId.content}
+            The user ${escapeControlCharacters(event.userName.content)}
+            with the client id ${event.clientAppId.content.ifEmpty { "none" }.let(::escapeControlCharacters)}
             has done an ${event.payload::class.simpleName} event
             event at ${event.timeStamp.epochSecond}
             event payload: ${loggablePayloadOf(event)}
@@ -25,22 +27,40 @@ class LoggerEventConsumer(private val eventConsumerConfig: EventConsumerConfig) 
         event.requestContext?.let {
             """
 
-            from the ip address ${it.ipAddress}
-            with the user agent ${it.userAgent?.let { userAgent -> escapeLineBreaks(userAgent).take(MAX_LOGGED_USER_AGENT_LENGTH) } ?: "none"}
+            from the ip address ${escapeControlCharacters(it.ipAddress)}
+            with the user agent ${it.userAgent?.let { userAgent -> escapeControlCharacters(userAgent.take(MAX_LOGGED_USER_AGENT_LENGTH)) } ?: "none"}
             in the session ${it.sessionReference ?: "none"}
             """.trimIndent()
         } ?: ""
 
-    /** A password, even encoded, is never written to the log. */
+    /**
+     * A password, even encoded, is never written to the log. An authentication payload is written as its type only:
+     * its text holds the typed username and the raw session id (in the request details).
+     */
     private fun loggablePayloadOf(event: VAuthenticatorEvent): String =
-        when (event.payload) {
+        when (val payload = event.payload) {
             is Password -> "Password(*****)"
-            else -> escapeLineBreaks(event.payload.toString())
+            is AbstractAuthenticationFailureEvent ->
+                "${payload::class.simpleName}(${payload.exception::class.simpleName})"
+            is AbstractAuthenticationEvent -> "${payload::class.simpleName}"
+            else -> escapeControlCharacters(payload.toString())
         }
 
-    /** Usernames (also inside an authentication payload) and user agents are client-controlled: escaped line breaks cannot forge log lines. */
-    private fun escapeLineBreaks(value: String) =
-        value.replace("\r", "\\r").replace("\n", "\\n")
+    /**
+     * Usernames, client ids, user agents and forwarded IP addresses are client-controlled: control characters (CR, LF, NEL, ESC, ...) and the
+     * Unicode line and paragraph separators are escaped, so they cannot forge log lines or rewrite a terminal.
+     */
+    private fun escapeControlCharacters(value: String) =
+        buildString {
+            value.forEach {
+                when {
+                    it == '\r' -> append("\\r")
+                    it == '\n' -> append("\\n")
+                    it.isISOControl() || it == '\u2028' || it == '\u2029' -> append("\\u%04x".format(it.code))
+                    else -> append(it)
+                }
+            }
+        }
 
     override fun handleable(event: VAuthenticatorEvent) = eventConsumerConfig.enable[LOGGER_EVENT_CONSUMER] ?: false
 }

@@ -4,6 +4,7 @@ import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.support.ClientAppFixture
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -16,8 +17,10 @@ import java.time.Instant
 
 class RequestContextTest {
 
+    // other tests (e.g. AwsLambdaFunctionTest) leave request attributes bound to the thread
+    @BeforeEach
     @AfterEach
-    fun tearDown() {
+    fun resetRequestAttributes() {
         RequestContextHolder.resetRequestAttributes()
     }
 

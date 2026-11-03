@@ -16,6 +16,7 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent
 import org.springframework.mock.web.MockHttpSession
+import org.springframework.security.web.authentication.WebAuthenticationDetails
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.ServletRequestAttributes
 import java.time.Instant
@@ -32,7 +33,7 @@ class LoggerEventConsumerTest {
             with the client id A_CLIENT_APP_ID
             has done an AuthenticationSuccessEvent event
             event at ${vauthenticatorAuthEvent.timeStamp.epochSecond}
-            event payload: org.springframework.security.authentication.event.AuthenticationSuccessEvent
+            event payload: AuthenticationSuccessEvent
             """.trimIndent()
         assertTrue(output.out.contains(message))
     }
@@ -61,7 +62,7 @@ class LoggerEventConsumerTest {
         val loggedUserAgent = output.out.lines().single { it.startsWith("with the user agent ") }
             .removePrefix("with the user agent ")
         assertEquals(
-            ("curl/8.0\\r\\nThe user admin@domain.com\\nhas done an AuthenticationSuccessEvent event" + "x".repeat(600)).take(512),
+            "curl/8.0\\r\\nThe user admin@domain.com\\nhas done an AuthenticationSuccessEvent event" + "x".repeat(512 - forged.length),
             loggedUserAgent
         )
         assertTrue(output.out.lines().none { it.startsWith("The user admin@domain.com") })
@@ -115,11 +116,92 @@ class LoggerEventConsumerTest {
         assertTrue(output.out.lines().none { it.startsWith("The user admin@domain.com") }, output.out)
     }
 
-    private val underTest = LoggerEventConsumer(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
-
-    private fun anEventCreatedInARequest(userAgent: String): VAuthenticatorEvent {
+    @Test
+    fun `the session id inside an authentication event payload is never logged`(output: CapturedOutput) {
         val request = MockHttpServletRequest().apply {
             remoteAddr = "203.0.113.7"
+            setSession(MockHttpSession(null, "A_RAW_SESSION_ID"))
+        }
+        val token = UsernamePasswordAuthenticationToken("anemail@domain.com", "*******")
+            .apply { details = WebAuthenticationDetails(request) }
+        val event = VAuthenticatorAuthEvent(
+            Email("anemail@domain.com"),
+            ClientAppId(A_CLIENT_APP_ID),
+            Instant.now(),
+            AuthenticationFailureBadCredentialsEvent(token, BadCredentialsException("bad credentials"))
+        )
+
+        underTest.accept(event)
+
+        assertTrue(
+            output.out.lines().any {
+                it == "event payload: AuthenticationFailureBadCredentialsEvent(BadCredentialsException)"
+            },
+            output.out
+        )
+        assertTrue(!output.out.contains("A_RAW_SESSION_ID"), output.out)
+    }
+
+    @Test
+    fun `a client id cannot forge log lines`(output: CapturedOutput) {
+        val event = SignUpEvent(
+            Email("anemail@domain.com"),
+            ClientAppId("x\nThe user admin@domain.com"),
+            Instant.now(),
+            Password("A_PASSWORD")
+        )
+
+        underTest.accept(event)
+
+        assertTrue(output.out.lines().any { it == "with the client id x\\nThe user admin@domain.com" }, output.out)
+    }
+
+    @Test
+    fun `an event without a client app is logged with no client id`(output: CapturedOutput) {
+        val event = SignUpEvent(Email("anemail@domain.com"), ClientAppId.empty(), Instant.now(), Password("A_PASSWORD"))
+
+        underTest.accept(event)
+
+        assertTrue(output.out.lines().any { it == "with the client id none" }, output.out)
+    }
+
+    @Test
+    fun `unicode line separators and control characters cannot forge log lines`(output: CapturedOutput) {
+        val event = SignUpEvent(
+            Email("a\u0085b c d\u001B[2Je"),
+            ClientAppId(A_CLIENT_APP_ID),
+            Instant.now(),
+            Password("A_PASSWORD")
+        )
+
+        underTest.accept(event)
+
+        assertTrue(output.out.contains("The user a\\u0085b\\u2028c\\u2029d\\u001b[2Je\n"), output.out)
+    }
+
+    @Test
+    fun `the user agent is capped before it is escaped so no escape is cut in half`(output: CapturedOutput) {
+        val event = anEventCreatedInARequest(userAgent = "a".repeat(511) + "\r" + "tail")
+
+        underTest.accept(event)
+
+        assertTrue(output.out.lines().any { it == "with the user agent " + "a".repeat(511) + "\\r" }, output.out)
+    }
+
+    @Test
+    fun `an ip address taken from a forwarded header cannot forge log lines`(output: CapturedOutput) {
+        val event = anEventCreatedInARequest(userAgent = "curl/8.0", remoteAddr = "1.2.3.4\nThe user admin@domain.com")
+
+        underTest.accept(event)
+
+        assertTrue(output.out.lines().any { it == "from the ip address 1.2.3.4\\nThe user admin@domain.com" }, output.out)
+    }
+
+    private val underTest = LoggerEventConsumer(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
+
+    private fun anEventCreatedInARequest(userAgent: String, remoteAddr: String = "203.0.113.7"): VAuthenticatorEvent {
+        val request = MockHttpServletRequest().apply {
+            this.remoteAddr = remoteAddr
             addHeader("User-Agent", userAgent)
             setSession(MockHttpSession(null, "A_SESSION_ID"))
         }

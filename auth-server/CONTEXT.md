@@ -7,7 +7,7 @@ The OAuth2/OIDC authorization server and the account, password, MFA and role con
 ### Events
 
 **System Client**:
-The client identity that server-initiated actions (such as scheduled jobs) are attributed to when no real client app is involved.
+The client identity that server-initiated actions (such as scheduled jobs) are attributed to when no real client app is involved. It is not used when a person acts without a client app, such as logging in directly: that action has no client app.
 _Avoid_: anonymous client, null client
 
 ### Login
