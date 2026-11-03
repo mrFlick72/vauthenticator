@@ -98,7 +98,7 @@ class AccountUserDetailsServiceTest {
     }
 
     @Test
-    fun `when the login has no client app the release is attributed to the system client`() {
+    fun `when the login has no client app the release carries no client app`() {
         val locked = account.lockUntil(NOW.minusSeconds(1))
         val event = slot<VAuthenticatorEvent>()
         every { accountRepository.accountFor(account.username) } returns locked
@@ -109,7 +109,7 @@ class AccountUserDetailsServiceTest {
 
         uut.loadUserByUsername(account.username)
 
-        assertEquals(ClientAppId.system(), event.captured.clientAppId)
+        assertEquals(ClientAppId.empty(), event.captured.clientAppId)
     }
 
     @Test

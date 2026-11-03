@@ -48,7 +48,9 @@ lock).
   the lock end. Published when the lock actually ends. An expired lock is released at the next login attempt, so the
   event time can be later than the lock end, and no event is published if nobody tries to log in again.
 
-A login with no client app (a direct `/login`) attributes its events to the system client.
+A login with no client app (a direct `/login`) publishes its events with no client app (`ClientAppId.empty()`), not
+the System Client, which stands for actions the server starts itself
+([ADR 0016](adr/0016-events-carry-request-context-captured-centrally-with-a-hashed-session-id.md)).
 
 ## Components
 

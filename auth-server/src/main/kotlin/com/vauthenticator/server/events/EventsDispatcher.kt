@@ -1,7 +1,7 @@
 package com.vauthenticator.server.events
 
 import com.vauthenticator.server.account.domain.Email
-import com.vauthenticator.server.extentions.oauth2ClientId
+import com.vauthenticator.server.extentions.requestedClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
@@ -31,7 +31,7 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
      */
     @EventListener
     fun handle(event: AbstractAuthenticationEvent) {
-        val clientAppId = currentRequest()?.let(::clientAppIdOf)
+        val clientAppId = currentRequest()?.requestedClientAppId()
             ?: if (event.authentication is UsernamePasswordAuthenticationToken) ClientAppId.empty() else null
         if (clientAppId == null) {
             logger.debug("EVENT NOT PROCESSED: no client app and not a login")
@@ -49,9 +49,6 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
 
     private fun currentRequest(): HttpServletRequest? =
         (RequestContextHolder.getRequestAttributes() as? ServletRequestAttributes)?.request
-
-    private fun clientAppIdOf(request: HttpServletRequest): ClientAppId? =
-        request.oauth2ClientId() ?: request.getSession(false)?.oauth2ClientId()
 
     override fun dispatch(event: VAuthenticatorEvent) {
         publisher.publishEvent(event)
