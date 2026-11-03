@@ -1,0 +1,20 @@
+# Events carry request context captured centrally, with a hashed session id
+
+For issue [#215](https://github.com/mrFlick72/vauthenticator/issues/215) login data must reach consumers such as a login history, new sign-in notifications and attack detection, and later all auth-server auditing. These need to know where an attempt came from, which the events did not record: a `VAuthenticatorEvent` carried only the user, the client app, a timestamp and a payload. The existing in-process pipeline (`EventsDispatcher` → `SpringEventsCollector` → `EventConsumer`s) is reused as it is; the issue's Kafka publishing is not part of this change.
+
+- **Every event carries the request context, not a dedicated login event.** `VAuthenticatorEvent` gets an optional request context: the client IP address, the user agent, and a session reference. No new event type is added, so a future audit consumer reads one shape for every event.
+- **The context is captured where the event is created, from the current request.** The `VAuthenticatorEvent` constructor defaults it to the current HTTP request, if there is one. Every event raised while handling a request gets it without changing any subclass or call site; an event raised outside a request, such as by the password lifecycle job, has none.
+- **The IP is `request.remoteAddr`.** Every deployment sets `server.forward-headers-strategy: framework`, so `ForwardedHeaderFilter` has already applied `X-Forwarded-For` by the time an event is created.
+- **The session reference is the SHA-256 hex of the session id, never the id itself.** A session id is a credential, and events end up in logs. The session is read with `getSession(false)`, so creating an event never creates one. Spring Security's session fixation protection changes the session id when the password is proven, so `AuthenticationSuccessEvent` (published inside the authentication manager) and earlier failures carry the pre-login reference, while `InteractiveAuthenticationSuccessEvent` and the MFA events carry the post-login one.
+- **The forwarded authentication events stay as they are, except that none is dropped for lacking a client app.** `SpringEventEventsDispatcher` keeps wrapping every Spring authentication event, the interactive success duplicate included (it is the event that links the password check to the MFA check). A request without a resolvable client app now falls back to the System Client through `loginClientAppId()` instead of being dropped.
+- **The logger escapes and caps the user agent.** The user agent is client-controlled, so `LoggerEventConsumer` escapes CR and LF and truncates it to 512 characters before writing, to stop forged log lines. The event keeps the raw value for consumers that send it as structured data.
+
+**Considered options:**
+- A new `LoginEvent` type, emitted only for password and MFA check outcomes — rejected for now: it adds an event type, and the context is wanted on every event for auditing anyway.
+- Filling the context at each dispatch site — rejected: every existing and future call site would have to remember it, and those that forgot would silently log no context.
+- The raw session id — rejected: anyone reading the logs could take over the session. An HMAC with a server key — rejected: it only protects against someone who already holds the session id, who already holds the session.
+- Publishing to Kafka, or storing login events in PostgreSQL — deferred: either is one more `EventConsumer` on this pipeline, and storing would make the auth-server responsible for retaining personal data.
+
+**Consequences:**
+- IP address and user agent are personal data. The logger consumer stays off by default (`events.enableLoggerConsumer` in the Helm chart); whoever enables it or adds a consumer owns the retention of what it writes.
+- Event creation depends on the request bound to the current thread. An event created on another thread (for example from an `@Async` method) has no request context.

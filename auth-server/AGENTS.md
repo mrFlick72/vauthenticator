@@ -37,7 +37,7 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - `src/main/frontend`: React/TypeScript asset source and webpack config
 - `communication/default/email`: default email templates used for communication rendering and local asset/template build flows
 - `communication/default/sms`: default SMS templates (today the MFA challenge text), same flows as the email templates
-- `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, and lambda integration
+- `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, events, and lambda integration
 - `local`: local development compose files, sample config, helper script, and HTTP requests
 - `iac/terraform`: infrastructure-as-code assets
 
@@ -48,6 +48,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `account`: account CRUD, signup, welcome/verification flows, account repositories and web controllers
 - `communication`: email/SMS abstractions and template resolution
 - `document`: document/template loading from filesystem or S3
+- `events`: the in-process event pipeline (`EventsDispatcher` → `SpringEventsCollector` → `EventConsumer`s) that every domain event and wrapped Spring authentication event goes through; each event carries the request context (IP, user agent, SHA-256 session reference), see `docs/events.md` and ADR 0016
 - `keys`: signing/encryption key generation, storage, and rotation
 - `login`: login page, Spring Security user details, the login workflow (`login/workflow`, see `docs/login-workflow.md`), and the Failed-Login Lock (`login/failedloginlock`, see `docs/failed-login-lock.md`)
 - `management`: actuator-style setup and cleanup endpoints, including tenant bootstrap
@@ -185,6 +186,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - `docs/login-workflow.md`
 - `docs/password-lifecycle.md`
 - `docs/failed-login-lock.md`
+- `docs/events.md`
 - `docs/lambda.md`
 - `docs/adr/`
 - `src/main/kotlin/com/vauthenticator/server/config/AuthorizationServerConfig.kt`
