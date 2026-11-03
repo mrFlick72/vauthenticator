@@ -3,6 +3,7 @@ package com.vauthenticator.server.events
 import com.vauthenticator.server.events.EventFixture.vauthenticatorAuthEvent
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.login.LoginPageController
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -10,6 +11,7 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -54,5 +56,25 @@ class SpringEventEventsDispatcherTest {
         underTest.handle(vauthenticatorAuthEvent.payload as AbstractAuthenticationEvent)
 
         verify { publisher.publishEvent(vauthenticatorAuthEvent) }
+    }
+
+    @Test
+    fun `an authentication event without a client app is attributed to the system client`() {
+        RequestContextHolder.setRequestAttributes(ServletRequestAttributes(MockHttpServletRequest()))
+        val underTest = SpringEventEventsDispatcher(publisher)
+
+        every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
+        underTest.handle(vauthenticatorAuthEvent.payload as AbstractAuthenticationEvent)
+
+        verify {
+            publisher.publishEvent(match<VAuthenticatorAuthEvent> {
+                it.clientAppId == ClientAppId.system() && it.userName == vauthenticatorAuthEvent.userName
+            })
+        }
+    }
+
+    @AfterEach
+    fun tearDown() {
+        RequestContextHolder.resetRequestAttributes()
     }
 }

@@ -1,8 +1,7 @@
 package com.vauthenticator.server.events
 
 import com.vauthenticator.server.account.domain.Email
-import com.vauthenticator.server.extentions.oauth2ClientId
-import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
+import com.vauthenticator.server.extentions.loginClientAppId
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -23,40 +22,22 @@ class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublish
 
     private val logger = LoggerFactory.getLogger(SpringEventEventsDispatcher::class.java)
 
+    /** Wraps a Spring authentication event; one without a client app is attributed to the System Client. */
     @EventListener
     fun handle(event: AbstractAuthenticationEvent) {
-        val currentRequest = httpServletRequestFromRequestContextHolder()
-        val clientAppId = clientIdForm(currentRequest)
-        if (clientAppId != null) {
-            dispatchAdaptedEventFor(clientAppId.content, event)
-        } else {
-            logger.debug("PRE EVENT NOT PROCESSED")
-        }
-    }
-
-    private fun httpServletRequestFromRequestContextHolder(): HttpServletRequest {
-        logger.debug("PRE EVENT PROCESSING")
-        return (RequestContextHolder.getRequestAttributes() as ServletRequestAttributes).request
-    }
-
-    private fun clientIdForm(currentRequest: HttpServletRequest): ClientAppId? =
-        currentRequest.oauth2ClientId() ?: currentRequest.session.oauth2ClientId()
-
-    private fun dispatchAdaptedEventFor(
-        it: String,
-        event: AbstractAuthenticationEvent
-    ) {
         logger.debug("EVENT PROCESSING")
-
         dispatch(
             VAuthenticatorAuthEvent(
                 Email(event.authentication.name ?: "UNKNOWN"),
-                ClientAppId(it),
+                httpServletRequestFromRequestContextHolder().loginClientAppId(),
                 Instant.now(),
                 event
             )
         )
     }
+
+    private fun httpServletRequestFromRequestContextHolder(): HttpServletRequest =
+        (RequestContextHolder.getRequestAttributes() as ServletRequestAttributes).request
 
     override fun dispatch(event: VAuthenticatorEvent) {
         publisher.publishEvent(event)

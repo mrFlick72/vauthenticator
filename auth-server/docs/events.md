@@ -62,8 +62,10 @@ event whose request has no resolvable client app is attributed to the System Cli
 ## Logger consumer
 
 `LoggerEventConsumer` writes one log entry per event, including the request context. It is enabled with
-`event.consumer.enable.logger-event-consumer: true` (Helm: `events.enableLoggerConsumer`, off by default). The user
-agent is client-controlled, so the logger escapes CR and LF and truncates it to 512 characters before writing it.
+`event.consumer.enable.logger-event-consumer: true` (Helm: `events.enableLoggerConsumer`, off by default). The
+username (for a failed login, whatever was typed) and the user agent are client-controlled, so the logger escapes CR
+and LF in the username, the user agent and the payload text, and truncates the user agent to 512 characters. The
+encoded password carried by signup, password change and password reset events is written as `Password(*****)`.
 
 IP address and user agent are personal data: whoever enables the logger, or adds a consumer, owns the retention of
 what it writes.
