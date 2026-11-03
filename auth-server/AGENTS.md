@@ -37,7 +37,7 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - `src/main/frontend`: React/TypeScript asset source and webpack config
 - `communication/default/email`: default email templates used for communication rendering and local asset/template build flows
 - `communication/default/sms`: default SMS templates (today the MFA challenge text), same flows as the email templates
-- `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, and lambda integration
+- `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, events, and lambda integration
 - `local`: local development compose files, sample config, helper script, and HTTP requests
 - `iac/terraform`: infrastructure-as-code assets
 
@@ -48,6 +48,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `account`: account CRUD, signup, welcome/verification flows, account repositories and web controllers
 - `communication`: email/SMS abstractions and template resolution
 - `document`: document/template loading from filesystem or S3
+- `events`: the in-process event pipeline (`EventsDispatcher` → `SpringEventsCollector` → `EventConsumer`s) that every domain event and wrapped Spring authentication event goes through; each event carries the request context (IP, user agent, SHA-256 session reference), see `docs/events.md` and ADR 0016
 - `keys`: signing/encryption key generation, storage, and rotation
 - `login`: login page, Spring Security user details, the login workflow (`login/workflow`, see `docs/login-workflow.md`), and the Failed-Login Lock (`login/failedloginlock`, see `docs/failed-login-lock.md`)
 - `management`: actuator-style setup and cleanup endpoints, including tenant bootstrap
@@ -168,6 +169,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - If a change affects templates or frontend bundles, verify whether frontend assets or communication templates must be rebuilt or copied for the local filesystem-based setup.
 - Be careful with profile-specific behavior. Key management has both an AWS KMS and a plain-Java implementation; persistence is PostgreSQL only.
 - The account, role and client-application Redis caches are opt-in (`vauthenticator.cache.<region>.enabled`) and wired by the `*RepositoryConfig` classes. Any code that writes account tables without going through `CachedAccountRepository` must evict the account cache (a decorator such as `AccountCacheEvictingFailedLoginLockRepository`) and have a test that a cached account reflects the write. See ADR 0012.
+- Write client-controlled text (a typed username, a client id, a request header) to logs through `String.escapedForLog()` (`extentions/LogExt.kt`), never raw, so it cannot forge or disguise log lines. Events carry the request context (IP, user agent, SHA-256 session reference) of the request they are created in; never log a raw session id (ADR 0016).
 - Tests are organized near the same domain names in `src/test/kotlin/com/vauthenticator/server`.
 - `/api/**` authorization lives in the controllers, not in `WebSecurityConfig`. A JWT-only handler binds `Authentication?` and calls `PermissionValidator.validate(authentication, scopes)` (or `jwtAuthenticationOf(authentication)` when there is no scope to check), which returns the validated `JwtAuthenticationToken`. Never bind `JwtAuthenticationToken` directly: `/api/**` `.authenticated()` also accepts browser sessions, so a session caller would get a `500` instead of a `401`. Cover each JWT-only handler with a standalone controller test for "session user, even an admin → `401`". See ADR 0007. Session-aware handlers (browser flows) call `validate(authentication, session, scopes)`; a request without a resolvable session client app gets `403`. Ticket-based flows authorize by the ticket: set a purpose in the ticket context when issuing it and check it when redeeming (ADR 0008).
 - Architecture decisions are recorded in `docs/adr/`. Read the related ADRs before changing authorization, and add a new one when a decision changes.
@@ -185,6 +187,7 @@ Lambda-based token customization is supported when `vauthenticator.lambda.aws.en
 - `docs/login-workflow.md`
 - `docs/password-lifecycle.md`
 - `docs/failed-login-lock.md`
+- `docs/events.md`
 - `docs/lambda.md`
 - `docs/adr/`
 - `src/main/kotlin/com/vauthenticator/server/config/AuthorizationServerConfig.kt`

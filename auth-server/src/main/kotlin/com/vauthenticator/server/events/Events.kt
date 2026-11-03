@@ -33,7 +33,8 @@ sealed class VAuthenticatorEvent(
     val userName: Email,
     val clientAppId: ClientAppId,
     val timeStamp: Instant,
-    val payload: Any
+    val payload: Any,
+    val requestContext: RequestContext? = RequestContext.current()
 )
 
 

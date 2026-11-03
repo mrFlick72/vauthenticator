@@ -7,7 +7,7 @@ The OAuth2/OIDC authorization server and the account, password, MFA and role con
 ### Events
 
 **System Client**:
-The client identity that server-initiated actions (such as scheduled jobs) are attributed to when no real client app is involved.
+The client identity that server-initiated actions (such as scheduled jobs) are attributed to when no real client app is involved. It is not used when a person acts without a client app, such as logging in directly: that action has no client app.
 _Avoid_: anonymous client, null client
 
 ### Login
@@ -26,6 +26,10 @@ _Avoid_: logged in (when the workflow is not complete), fully authenticated
 **Second-Factor-Verified Session**:
 A session in which the MFA challenge is a **Passed Step**. It counts for every client app that requires MFA for the rest of the session, so MFA is not presented again; a session that is login-complete only for an app without MFA is not second-factor-verified.
 _Avoid_: MFA session, step-up
+
+**Login Event**:
+The recorded outcome of one check an account holder goes through while logging in: the password check or the MFA challenge, each either passed or failed (with the reason), together with where the attempt came from (IP address and user agent) and an opaque reference to the session it happened in. The session gets a new reference when the password is proven, so checks before and after that moment do not share one. One login produces one Login Event per check attempted. Reaching **Login-Complete** is not itself a Login Event; consumers such as a login history derive it from the Login Events.
+_Avoid_: login audit, auth event (for checks that are not part of a login, such as API token validation)
 
 **Account Lock**:
 A locked account cannot log in. A lock is lasting — it comes from signup (until the email is verified), an admin, or the lock **Lifecycle Action**, and stays until an explicit unlock (email verification or an admin) — unless it is a **Failed-Login Lock**.

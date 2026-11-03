@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Accounts & passwords
-description: Support an account from signup through verification, recovery, failed-login protection, and password lifecycle management.
+description: Support an account from signup through verification, recovery, failed-login protection, a sign-in audit trail, and password lifecycle management.
 section: Features · Account lifecycle
 ---
 
@@ -32,6 +32,24 @@ login:
 Existing PostgreSQL databases need a new column before upgrading; the reference below gives the statement.
 
 [Read the failed-login lock reference, with sequence diagrams of each flow](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/failed-login-lock.md).
+
+## Sign-in audit trail
+
+The server can write an entry to its log for every sign-in step and account event: each password check and MFA check, passed or failed, each sign-out, and signup, password change and reset, failed-login locks and their release, password lifecycle actions and MFA device revocation. It is off by default; turn it on with a server setting, also exposed by the Helm chart as `application.events.enableLoggerConsumer`:
+
+```yaml
+event:
+  consumer:
+    enable:
+      logger-event-consumer: true
+```
+
+- Each entry names the account, the application the sign-in was for (`none` for a direct sign-in), and where the request came from: IP address, browser user agent, and a session reference that groups the entries of a signed-in session without revealing the session itself (it changes once the password is proven, so earlier attempts carry a different one).
+- Behind a proxy or ingress the IP address is read from `X-Forwarded-For`, so it is only as reliable as the proxy that sets that header.
+- Passwords, even encoded, and session identifiers are never written. Text a visitor controls, such as a typed username or the user agent, is escaped so it cannot add fake entries to the log.
+- IP addresses and user agents are personal data: whoever turns the trail on decides how long the logs are kept.
+
+[Read the events reference](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/events.md).
 
 ## Password lifecycle rules
 

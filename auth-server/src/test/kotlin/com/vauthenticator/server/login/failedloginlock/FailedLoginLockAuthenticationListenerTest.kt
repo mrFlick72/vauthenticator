@@ -52,6 +52,16 @@ class FailedLoginLockAuthenticationListenerTest {
     }
 
     @Test
+    fun `when a direct password login with no client app fails it is a failed login with no client app`() {
+        every { currentHttpServletRequestService.getServletRequest() } returns MockHttpServletRequest()
+        every { failedLoginLock.failedLogin(USER_NAME, ClientAppId.empty()) } just runs
+
+        uut.onFailure(AuthenticationFailureBadCredentialsEvent(passwordLogin, BadCredentialsException("bad")))
+
+        verify { failedLoginLock.failedLogin(USER_NAME, ClientAppId.empty()) }
+    }
+
+    @Test
     fun `when a wrong mfa code is given it is not a failed login`() {
         uut.onFailure(MfaFailureEvent(passwordLogin, MfaException("bad code")))
 
