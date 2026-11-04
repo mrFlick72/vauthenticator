@@ -9,10 +9,10 @@ import ConfirmationDialog from "../../components/ConfirmationDialog";
 import IntervalInput from "./IntervalInput";
 import {describeIntervalSeconds, IntervalUnit, intervalUnitOptions, toIntervalSeconds} from "./PasswordLifeCycleInterval";
 import {
-    errorMessageFor,
     PasswordLifeCycleAction,
     passwordLifeCycleActionOptions,
     PasswordLifeCycleBulkResult,
+    passwordLifeCycleMessageFor,
     removeRuleForAccountPattern,
     saveRuleForAccountPattern
 } from "./PasswordLifeCycleRepository";
@@ -70,21 +70,21 @@ const BulkRulesCard: React.FC = () => {
 
     const execute = async (operation: PendingOperation) => {
         setPendingOperation(null)
-        const response = operation.kind === "apply"
-            ? await saveRuleForAccountPattern(operation.pattern, operation.action, operation.intervalSeconds)
-            : await removeRuleForAccountPattern(operation.pattern, operation.action)
-
-        if (response.status === 200) {
-            const result: PasswordLifeCycleBulkResult = await response.json()
-            setFeedback({
-                severity: "success",
-                message: operation.kind === "apply"
-                    ? `${operation.action} registered for ${result.matchedAccounts} accounts`
-                    : `${operation.action} removed from ${result.matchedAccounts} accounts`
-            })
-        } else {
-            setFeedback({severity: "error", message: await errorMessageFor(response)})
+        let result: PasswordLifeCycleBulkResult
+        try {
+            result = operation.kind === "apply"
+                ? await saveRuleForAccountPattern(operation.pattern, operation.action, operation.intervalSeconds)
+                : await removeRuleForAccountPattern(operation.pattern, operation.action)
+        } catch (error) {
+            setFeedback({severity: "error", message: passwordLifeCycleMessageFor(error)})
+            return
         }
+        setFeedback({
+            severity: "success",
+            message: operation.kind === "apply"
+                ? `${operation.action} registered for ${result.matchedAccounts} accounts`
+                : `${operation.action} removed from ${result.matchedAccounts} accounts`
+        })
     }
 
     return <Card>

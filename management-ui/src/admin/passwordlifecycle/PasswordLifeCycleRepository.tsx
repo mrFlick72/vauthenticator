@@ -1,4 +1,9 @@
 import {getIdpBaseUrl} from "../../config/ConfigLoader";
+import {ensureOk, errorMessageFor, jsonOf} from "../../utils/ApiError";
+
+// a 404 here means the account itself does not exist
+export const passwordLifeCycleMessageFor = (error: unknown) =>
+    errorMessageFor(error, "password lifecycle rules", "account")
 
 export enum PasswordLifeCycleAction {
     PASSWORD_RESET = "PASSWORD_RESET",
@@ -30,8 +35,8 @@ const accountRulesUrl = async (userName: string) =>
 const bulkRulesUrl = async (action: PasswordLifeCycleAction) =>
     `${await getIdpBaseUrl()}/api/admin/accounts/password/lifecycle/${action}/bulk`
 
-export async function findRulesFor(userName: string) {
-    return fetch(await accountRulesUrl(userName),
+export async function findRulesFor(userName: string): Promise<PasswordLifeCycleRule[]> {
+    const response = await fetch(await accountRulesUrl(userName),
         {
             method: "GET",
             headers: {
@@ -41,10 +46,11 @@ export async function findRulesFor(userName: string) {
             mode: "cors",
             credentials: 'include'
         })
+    return jsonOf<PasswordLifeCycleRule[]>(response)
 }
 
-export async function saveRuleFor(userName: string, action: PasswordLifeCycleAction, intervalSeconds: number) {
-    return fetch(`${await accountRulesUrl(userName)}/${action}`,
+export async function saveRuleFor(userName: string, action: PasswordLifeCycleAction, intervalSeconds: number): Promise<void> {
+    const response = await fetch(`${await accountRulesUrl(userName)}/${action}`,
         {
             method: "PUT",
             headers: {
@@ -55,10 +61,11 @@ export async function saveRuleFor(userName: string, action: PasswordLifeCycleAct
             credentials: 'include',
             body: JSON.stringify({intervalSeconds: intervalSeconds})
         })
+    await ensureOk(response)
 }
 
-export async function removeRuleFor(userName: string, action: PasswordLifeCycleAction) {
-    return fetch(`${await accountRulesUrl(userName)}/${action}`,
+export async function removeRuleFor(userName: string, action: PasswordLifeCycleAction): Promise<void> {
+    const response = await fetch(`${await accountRulesUrl(userName)}/${action}`,
         {
             method: "DELETE",
             headers: {
@@ -67,12 +74,13 @@ export async function removeRuleFor(userName: string, action: PasswordLifeCycleA
             mode: "cors",
             credentials: 'include'
         })
+    await ensureOk(response)
 }
 
 export async function saveRuleForAccountPattern(accountPattern: string,
                                                 action: PasswordLifeCycleAction,
-                                                intervalSeconds: number) {
-    return fetch(await bulkRulesUrl(action),
+                                                intervalSeconds: number): Promise<PasswordLifeCycleBulkResult> {
+    const response = await fetch(await bulkRulesUrl(action),
         {
             method: "POST",
             headers: {
@@ -84,10 +92,11 @@ export async function saveRuleForAccountPattern(accountPattern: string,
             credentials: 'include',
             body: JSON.stringify({accountPattern: accountPattern, intervalSeconds: intervalSeconds})
         })
+    return jsonOf<PasswordLifeCycleBulkResult>(response)
 }
 
-export async function removeRuleForAccountPattern(accountPattern: string, action: PasswordLifeCycleAction) {
-    return fetch(`${await bulkRulesUrl(action)}?accountPattern=${encodeURIComponent(accountPattern)}`,
+export async function removeRuleForAccountPattern(accountPattern: string, action: PasswordLifeCycleAction): Promise<PasswordLifeCycleBulkResult> {
+    const response = await fetch(`${await bulkRulesUrl(action)}?accountPattern=${encodeURIComponent(accountPattern)}`,
         {
             method: "DELETE",
             headers: {
@@ -97,24 +106,5 @@ export async function removeRuleForAccountPattern(accountPattern: string, action
             mode: "cors",
             credentials: 'include'
         })
-}
-
-/**
- * Turns a failed response into a message for the admin, using the backend's own message for a 400.
- */
-export async function errorMessageFor(response: Response): Promise<string> {
-    switch (response.status) {
-        case 400: {
-            const detail = await response.text()
-            return detail ? `The request is not valid: ${detail}` : "The request is not valid"
-        }
-        case 401:
-            return "Your session has expired, please log in again"
-        case 403:
-            return "You are not allowed to manage password lifecycle rules"
-        case 404:
-            return "The account does not exist"
-        default:
-            return `Unexpected error (HTTP ${response.status})`
-    }
+    return jsonOf<PasswordLifeCycleBulkResult>(response)
 }

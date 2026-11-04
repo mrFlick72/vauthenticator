@@ -61,7 +61,7 @@ test.describe('account rules', () => {
 
         await rules.saveRule('PASSWORD_RESET', {amount: '1', unit: 'days'});
 
-        await expect(rules.feedback).toHaveText('The account does not exist');
+        await expect(rules.feedback).toHaveText('The requested account was not found');
         await expect(rules.noRules).toBeVisible();
     });
 
