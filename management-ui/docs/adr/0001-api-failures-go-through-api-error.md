@@ -1,0 +1,22 @@
+# Api failures go through ApiError and are always shown to the admin
+
+For issue [#353](https://github.com/mrFlick72/vauthenticator/issues/353) the Keys page crashed and the Client Applications page showed an empty table when the api refused a call. The cause was not one bug but a pattern: every repository function handled the `Response` its own way. Some returned the raw `Response` and left each page to compare `status === 200` (or `204`); others called `response.json()` without looking at the status, which throws on a non-json error body and, with no `.catch`, fails silently. A reset of a client application secret even reported success when it failed. A fix per call site would leave the next repository function free to repeat the mistake, so every call follows one strategy.
+
+- **Repositories throw, pages catch.** Every repository function passes its `Response` to `src/utils/ApiError.ts`: `ensureOk(response)` throws an `ApiError` carrying the status and the body as text for any non-2xx status, and `jsonOf<T>(response)` parses the body only after that check. A repository function returns typed data, or `void` for a write; it never returns a `Response`, so no page compares a status for success.
+- **Success is any 2xx.** `response.ok`, not `=== 200`: the api answers 200, 201 or 204 depending on the call. A body is parsed only by the calls whose success carries one, so a 201 or 204 is never parsed.
+- **The error body is kept as text.** An error body may be json, plain text or empty, depending on whether the controller, Spring Security or the servlet container wrote it. Text never fails to read; a page that knows the body is json parses it itself, as the client application save does for its per-field messages.
+- **What the admin sees depends on what failed, not on the status.**
+  - A failed load shows an inline `Alert` in place of the table or form, and it stays until the next load: a toast that hides would leave the misleading empty table behind. A form that failed to load is not rendered at all, so an empty form cannot be saved over the stored client application, account or template.
+  - A failed write shows `components/ErrorToast`. A dialog stays open, with what the admin typed, until its call succeeds.
+- **One set of messages.** `errorMessageFor(error, managed, missing)` maps 400 to the backend's text, 401 to "your session has expired", 403 to "You are not allowed to manage <managed>", 404 to "The requested <missing> was not found", and anything else to "Unexpected error (HTTP <status>)". Each domain exports a wrapper with its two nouns (`clientAppsMessageFor`, `rolesMessageFor`, ...): a 403 names what the page manages, in the plural, a 404 the one thing looked up. Anything that is not an `ApiError` (a network failure, a rejected cors preflight) reads "the server could not be reached". A page overrides the mapping only where the generic text would lose information the api gives: the protected role delete (412, empty body) and the client application field errors.
+
+**Considered options:**
+- Fixing only the call sites named in the issue — rejected: the same unchecked `json()` and missing `else` branches were in most repositories, and nothing stopped new ones.
+- Keeping `Response` as the return type everywhere, with each page checking the status, as password lifecycle did — rejected: the check is repeated on every page, and forgetting it is exactly how these bugs happened. Password lifecycle now goes through `ApiError` as well.
+- Redirecting to the generic error page on any failure — rejected: it throws away the page the admin was working on, and the typed input with it.
+- Opening the Session expired dialog on a 401 — deferred to [#420](https://github.com/mrFlick72/vauthenticator/issues/420): it needs a way for a page's `ApiError` to reach `SessionManagement`; a 401 shows its message like any other status meanwhile.
+
+**Consequences:**
+- A new repository function must use `ensureOk` or `jsonOf`, and its page must catch: a call that skips them brings back the silent failures this replaced.
+- `ApiError` sets its prototype explicitly: babel compiles to es5, where a subclass of `Error` otherwise fails `instanceof`, and every failure would read as "the server could not be reached".
+- e2e scenarios stub an api failure with `e2e/support/api-failures.ts`, which answers the call and its cors preflight itself: a stubbed write never reaches the auth-server.
