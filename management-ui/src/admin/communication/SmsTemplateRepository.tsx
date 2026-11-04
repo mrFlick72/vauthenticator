@@ -1,7 +1,7 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader"
-import { ensureOk, errorMessageFor, jsonOf } from "../../utils/ApiError"
+import { ApiSubject, ensureOk, jsonOf } from "../../utils/ApiError"
 
-export const smsTemplatesMessageFor = (error: unknown) => errorMessageFor(error, "SMS templates", "SMS template")
+export const SMS_TEMPLATES: ApiSubject = { managed: "SMS templates", missing: "SMS template" }
 
 interface SmsTemplate {
     body: string

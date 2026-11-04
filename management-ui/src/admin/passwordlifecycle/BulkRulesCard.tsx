@@ -12,10 +12,11 @@ import {
     PasswordLifeCycleAction,
     passwordLifeCycleActionOptions,
     PasswordLifeCycleBulkResult,
-    passwordLifeCycleMessageFor,
+    PASSWORD_LIFECYCLE_RULES,
     removeRuleForAccountPattern,
     saveRuleForAccountPattern
 } from "./PasswordLifeCycleRepository";
+import {failureMessage} from "../../utils/ApiError";
 
 const defaultUnit = intervalUnitOptions.find(option => option.value === IntervalUnit.DAYS)!
 
@@ -76,7 +77,10 @@ const BulkRulesCard: React.FC = () => {
                 ? await saveRuleForAccountPattern(operation.pattern, operation.action, operation.intervalSeconds)
                 : await removeRuleForAccountPattern(operation.pattern, operation.action)
         } catch (error) {
-            setFeedback({severity: "error", message: passwordLifeCycleMessageFor(error)})
+            const action = operation.kind === "apply"
+                ? `register ${operation.action} for ${describePattern(operation.pattern)}`
+                : `remove ${operation.action} from ${describePattern(operation.pattern)}`
+            setFeedback({severity: "error", message: failureMessage(action, error, PASSWORD_LIFECYCLE_RULES)})
             return
         }
         setFeedback({

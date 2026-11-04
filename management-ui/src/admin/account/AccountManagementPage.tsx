@@ -4,10 +4,11 @@ import FormInputTextField from "../../components/FormInputTextField";
 import AdminTemplate from "../../components/AdminTemplate";
 import Separator from "../../components/Separator";
 import CheckboxesGroup from "../../components/CheckboxesGroup";
-import {accountsMessageFor, convertToMandatoryAction, findAccountFor, saveAccountFor} from "./AccountRepository";
+import {ACCOUNTS, convertToMandatoryAction, findAccountFor, saveAccountFor} from "./AccountRepository";
+import {failureMessage} from "../../utils/ApiError";
 import ErrorToast from "../../components/ErrorToast";
 import FormButton from "../../components/FormButton";
-import {findAllRoles} from "../roles/RoleRepository";
+import {findAllRoles, ROLES} from "../roles/RoleRepository";
 import LeftRightComponentRow from "../../components/LeftRightComponentRow";
 import {Alert, Card, CardContent, CardHeader, Typography} from "@mui/material";
 import {PeopleAlt} from "@mui/icons-material";
@@ -29,8 +30,20 @@ const AccountManagementPage : React.FC = () => {
 
     useEffect(() => {
             async function init() {
-                let roles = await findAllRoles()
-                let account = await findAccountFor(email!)
+                let roles
+                try {
+                    roles = await findAllRoles()
+                } catch (error) {
+                    setLoadFailure(failureMessage("load the roles", error, ROLES))
+                    return
+                }
+                let account
+                try {
+                    account = await findAccountFor(email!)
+                } catch (error) {
+                    setLoadFailure(failureMessage("load the account", error, ACCOUNTS))
+                    return
+                }
                 if (account) {
                     setEnabled({enabled: account.enabled})
                     setAccountLocked({accountLocked: account.accountLocked})
@@ -47,7 +60,7 @@ const AccountManagementPage : React.FC = () => {
                 }
             }
 
-            init().catch(error => setLoadFailure(accountsMessageFor(error)));
+            init();
         }, []
     )
 
@@ -62,7 +75,7 @@ const AccountManagementPage : React.FC = () => {
 
         saveAccountFor(account)
             .then(() => navigate(-1))
-            .catch(error => setWriteFailure(accountsMessageFor(error)))
+            .catch(error => setWriteFailure(failureMessage("save the account", error, ACCOUNTS)))
     }
 
     return (

@@ -1,7 +1,7 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader";
-import { ensureOk, errorMessageFor, jsonOf } from "../../utils/ApiError";
+import { ApiSubject, ensureOk, jsonOf } from "../../utils/ApiError";
 
-export const rolesMessageFor = (error: unknown) => errorMessageFor(error, "roles", "role")
+export const ROLES: ApiSubject = { managed: "roles", missing: "role" }
 
 export interface Role {
     name: string,

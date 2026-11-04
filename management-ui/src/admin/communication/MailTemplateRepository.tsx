@@ -1,7 +1,7 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader"
-import { ensureOk, errorMessageFor, jsonOf } from "../../utils/ApiError"
+import { ApiSubject, ensureOk, jsonOf } from "../../utils/ApiError"
 
-export const mailTemplatesMessageFor = (error: unknown) => errorMessageFor(error, "email templates", "email template")
+export const EMAIL_TEMPLATES: ApiSubject = { managed: "email templates", missing: "email template" }
 
 interface MailTemplate {
     body: string

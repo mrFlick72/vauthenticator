@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from "react-router";
 import {
-    clientAppsMessageFor,
+    CLIENT_APPLICATIONS,
     findClientApplicationFor,
     newClientApplicationRandomSecret,
     saveClientApplicationFor
@@ -21,7 +21,7 @@ import {
 } from "./AuthorizedGrantTypes";
 import vauthenticatorStyles from "../../../../theme/styles";
 import FormSelect, { SelectOption } from "../../../../components/FormSelect";
-import { findAllScopes } from "../../domain/ScopeRepository";
+import { findAllScopes, SCOPES } from "../../domain/ScopeRepository";
 import { Alert, Box, Card, CardContent, CardHeader, Snackbar, Tab, Tabs, Typography } from "@mui/material";
 import { Apps, Autorenew, ContentCopy } from "@mui/icons-material";
 import randomClientApplicationIdGenerator from "./RandomClientApplicationIdGenerator";
@@ -30,7 +30,7 @@ import copy from "copy-to-clipboard";
 import { ClientAppManagementPageDTO } from './ClientAppManagementPageTypes';
 import { ClientApplicationDetails } from "../../domain/ClientAppApiTypes";
 import ErrorToast from "../../../../components/ErrorToast";
-import { ApiError } from "../../../../utils/ApiError";
+import { ApiError, failureMessage } from "../../../../utils/ApiError";
 
 // a rejected save answers 400/404 with the failing fields as {"<field>": {"errorMessage": "..."}}
 function fieldErrorsOf(error: unknown): string | null {
@@ -116,7 +116,7 @@ const ClientAppManagementPage = () => {
         try {
             randomSecret = await newClientApplicationRandomSecret();
         } catch (error) {
-            setWriteFailure(clientAppsMessageFor(error))
+            setWriteFailure(failureMessage("generate a client application secret", error, CLIENT_APPLICATIONS))
             return
         }
         setClientApplication((clientApplication: ClientAppManagementPageDTO) => {
@@ -154,12 +154,24 @@ const ClientAppManagementPage = () => {
 
         saveClientApplicationFor(clientApplication.clientApplicationId!!, clientApp)
             .then(() => navigate(-1))
-            .catch(error => setWriteFailure(fieldErrorsOf(error) ?? clientAppsMessageFor(error)))
+            .catch(error => {
+                const fieldErrors = fieldErrorsOf(error)
+                setWriteFailure(fieldErrors
+                    ? `Could not save the client application:\n${fieldErrors}`
+                    : failureMessage("save the client application", error, CLIENT_APPLICATIONS))
+            })
     }
 
     useEffect(() => {
         async function init() {
-            let scopes = await findAllScopes()
+            let scopes
+            try {
+                scopes = await findAllScopes()
+            } catch (error) {
+                // the form cannot be filled in without the scopes to choose from
+                setLoadFailure(failureMessage("load the scopes", error, SCOPES))
+                return
+            }
             setAvailableScopes(scopes.map(scope => {
                 return { value: scope, label: scope }
             }))
@@ -169,7 +181,13 @@ const ClientAppManagementPage = () => {
                 return
             }
 
-            let clientApp = await findClientApplicationFor(clientAppId)
+            let clientApp
+            try {
+                clientApp = await findClientApplicationFor(clientAppId)
+            } catch (error) {
+                setLoadFailure(failureMessage("load the client application", error, CLIENT_APPLICATIONS))
+                return
+            }
 
             setClientApplication(
                 {
@@ -192,7 +210,7 @@ const ClientAppManagementPage = () => {
             )
         }
 
-        init().catch(error => setLoadFailure(clientAppsMessageFor(error)))
+        init().then()
     }, [])
 
     let pageTitle = clientApplication.clientApplicationId ? `: Client Application: ${clientApplication.clientApplicationId}` : "";

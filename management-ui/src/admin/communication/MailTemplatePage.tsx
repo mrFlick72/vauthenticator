@@ -4,7 +4,8 @@ import {Alert, Snackbar, Typography} from "@mui/material";
 
 import Separator from "../../components/Separator";
 import FormButton from "../../components/FormButton";
-import {getMailTemplateFor, mailTemplatesMessageFor, saveMailTemplateFor} from "./MailTemplateRepository";
+import {EMAIL_TEMPLATES, getMailTemplateFor, saveMailTemplateFor} from "./MailTemplateRepository";
+import {failureMessage} from "../../utils/ApiError";
 import ErrorToast from "../../components/ErrorToast";
 import FormSelect from "../../components/FormSelect";
 import TemplateEditor from "../../components/TemplateEditor";
@@ -27,7 +28,7 @@ const MailTemplatePage = () => {
             body: mailContent
         })
             .then(() => setOpenSucceeded(true))
-            .catch(error => setWriteFailure(mailTemplatesMessageFor(error)))
+            .catch(error => setWriteFailure(failureMessage("save the email template", error, EMAIL_TEMPLATES)))
     };
     return (
         <AdminTemplate maxWidth="xl" page={pageTitle}>
@@ -53,7 +54,7 @@ const MailTemplatePage = () => {
                                  })
                                  .catch(error => {
                                      setMailContent("")
-                                     setLoadFailure(mailTemplatesMessageFor(error))
+                                     setLoadFailure(failureMessage("load the email template", error, EMAIL_TEMPLATES))
                                  })
                          }}
                         options={[

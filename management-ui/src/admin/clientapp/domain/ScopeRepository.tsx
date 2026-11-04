@@ -1,5 +1,7 @@
 import { getIdpBaseUrl } from "../../../config/ConfigLoader";
-import { jsonOf } from "../../../utils/ApiError";
+import { ApiSubject, jsonOf } from "../../../utils/ApiError";
+
+export const SCOPES: ApiSubject = { managed: "scopes", missing: "scopes" }
 
 export async function findAllScopes(): Promise<string[]> {
         const baseUrl = await getIdpBaseUrl()

@@ -29,25 +29,47 @@ export async function jsonOf<T>(response: Response): Promise<T> {
 }
 
 /**
- * Turns a failed call into a message for the admin.
+ * What an api resource is called in a failure reason.
  *
- * @param managed what the page manages, used when access is denied, e.g. "client applications"
- * @param missing what was looked up, used when it does not exist, e.g. "client application"
+ * @property managed what the admin manages through it, used when access is denied, e.g. "client applications"
+ * @property missing what a single lookup returns, used when it does not exist, e.g. "client application"
  */
-export function errorMessageFor(error: unknown, managed: string, missing: string): string {
+export type ApiSubject = { managed: string, missing: string }
+
+/**
+ * Why a call failed, worded for the admin. A status listed in `reasons` overrides the default wording, for a
+ * status the api gives a meaning of its own, such as 412 for a protected role.
+ */
+export function failureReasonFor(error: unknown, subject: ApiSubject, reasons: Record<number, string> = {}): string {
     if (!(error instanceof ApiError)) {
-        return "Unexpected error, the server could not be reached"
+        return "the server could not be reached"
+    }
+    if (reasons[error.status]) {
+        return reasons[error.status]
     }
     switch (error.status) {
         case 400:
-            return error.body ? `The request is not valid: ${error.body}` : "The request is not valid"
+            return error.body || "the request is not valid"
         case 401:
-            return "Your session has expired, please log in again"
+            return "your session has expired, please log in again"
         case 403:
-            return `You are not allowed to manage ${managed}`
+            return `you are not allowed to manage ${subject.managed}`
         case 404:
-            return `The requested ${missing} was not found`
+            return `the requested ${subject.missing} was not found`
         default:
-            return `Unexpected error (HTTP ${error.status})`
+            return `unexpected error (HTTP ${error.status})`
     }
+}
+
+/**
+ * The message for a failed call: what the admin tried to do and why it failed,
+ * e.g. "Could not delete the role: it is a protected role".
+ *
+ * @param action what the call was doing, completing "Could not ...", e.g. "load the keys"
+ */
+export function failureMessage(action: string,
+                               error: unknown,
+                               subject: ApiSubject,
+                               reasons: Record<number, string> = {}): string {
+    return `Could not ${action}: ${failureReasonFor(error, subject, reasons)}`
 }

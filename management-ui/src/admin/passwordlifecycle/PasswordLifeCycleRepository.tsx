@@ -1,9 +1,8 @@
 import {getIdpBaseUrl} from "../../config/ConfigLoader";
-import {ensureOk, errorMessageFor, jsonOf} from "../../utils/ApiError";
+import {ApiSubject, ensureOk, jsonOf} from "../../utils/ApiError";
 
 // a 404 here means the account itself does not exist
-export const passwordLifeCycleMessageFor = (error: unknown) =>
-    errorMessageFor(error, "password lifecycle rules", "account")
+export const PASSWORD_LIFECYCLE_RULES: ApiSubject = {managed: "password lifecycle rules", missing: "account"}
 
 export enum PasswordLifeCycleAction {
     PASSWORD_RESET = "PASSWORD_RESET",

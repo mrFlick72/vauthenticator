@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
-import {rolesMessageFor, saveRoleFor} from "./RoleRepository";
+import {ROLES, saveRoleFor} from "./RoleRepository";
+import {failureMessage} from "../../utils/ApiError";
 import ErrorToast from "../../components/ErrorToast";
 import FormButton from "../../components/FormButton";
 import Separator from "../../components/Separator";
@@ -45,7 +46,7 @@ const RoleDialog: React.FC<RoleDialogProps> = ({onClose, open, title, role, setR
                         // on failure the dialog stays open with the typed role, so the admin can retry
                         saveRoleFor(role)
                             .then(() => onClose(true))
-                            .catch(error => setFailure(rolesMessageFor(error)))
+                            .catch(error => setFailure(failureMessage("save the role", error, ROLES)))
                     }}/>
                     <FormButton label="Cancel" onClickHandler={onClose}/>
                 </DialogActions>

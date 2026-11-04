@@ -1,14 +1,14 @@
 import React, {useEffect} from 'react';
 import AdminTemplate from "../../components/AdminTemplate";
 import StickyHeadTable, {StickyHeadTableColumn} from "../../components/StickyHeadTable";
-import {deleteRoleFor, findAllRoles, Role, rolesMessageFor} from "./RoleRepository";
+import {deleteRoleFor, findAllRoles, Role, ROLES} from "./RoleRepository";
 import FormButton from "../../components/FormButton";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import RolesDialog from "./RolesDialog";
 import {AssignmentInd, Delete, Edit} from "@mui/icons-material";
 import {Alert} from "@mui/material";
 import ErrorToast from "../../components/ErrorToast";
-import {ApiError} from "../../utils/ApiError";
+import {failureMessage} from "../../utils/ApiError";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'name', label: 'Role', minWidth: 170},
@@ -60,9 +60,7 @@ const RolesManagementPage = () => {
         deleteRoleFor(selectedRole)
             .catch(error => setWriteFailure(
                 // a protected role answers 412 with no body
-                error instanceof ApiError && error.status === 412
-                    ? "Delete this Role is not allowed it is a protected role"
-                    : rolesMessageFor(error)
+                failureMessage("delete the role", error, ROLES, {412: "it is a protected role"})
             ))
             .finally(() => handleCloseConfirmationDialog(true))
     }
@@ -84,7 +82,7 @@ const RolesManagementPage = () => {
             })
             .catch(error => {
                 setRoles([])
-                setLoadFailure(rolesMessageFor(error))
+                setLoadFailure(failureMessage("load the roles", error, ROLES))
             });
     }
 

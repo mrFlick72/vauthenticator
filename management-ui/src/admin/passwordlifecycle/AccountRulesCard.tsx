@@ -10,13 +10,14 @@ import IntervalInput from "./IntervalInput";
 import {describeIntervalSeconds, IntervalUnit, intervalUnitOptions, toIntervalSeconds} from "./PasswordLifeCycleInterval";
 import {
     findRulesFor,
-    passwordLifeCycleMessageFor,
+    PASSWORD_LIFECYCLE_RULES,
     PasswordLifeCycleAction,
     passwordLifeCycleActionOptions,
     PasswordLifeCycleRule,
     removeRuleFor,
     saveRuleFor
 } from "./PasswordLifeCycleRepository";
+import {failureMessage} from "../../utils/ApiError";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'action', label: 'Action', minWidth: 170},
@@ -56,7 +57,10 @@ const AccountRulesCard: React.FC<AccountRulesCardProps> = ({initialAccount}) => 
         } catch (error) {
             setRules([])
             setLoadedAccount("")
-            setFeedback({severity: "error", message: passwordLifeCycleMessageFor(error)})
+            setFeedback({
+                severity: "error",
+                message: failureMessage("load the password lifecycle rules", error, PASSWORD_LIFECYCLE_RULES)
+            })
         }
     }
 
@@ -75,7 +79,7 @@ const AccountRulesCard: React.FC<AccountRulesCardProps> = ({initialAccount}) => 
         try {
             await saveRuleFor(loadedAccount, action.value as PasswordLifeCycleAction, intervalSeconds)
         } catch (error) {
-            setFeedback({severity: "error", message: passwordLifeCycleMessageFor(error)})
+            setFeedback({severity: "error", message: failureMessage("save the password lifecycle rule", error, PASSWORD_LIFECYCLE_RULES)})
             return
         }
         await loadRulesFor(loadedAccount)
@@ -86,7 +90,7 @@ const AccountRulesCard: React.FC<AccountRulesCardProps> = ({initialAccount}) => 
         try {
             await removeRuleFor(loadedAccount, ruleAction)
         } catch (error) {
-            setFeedback({severity: "error", message: passwordLifeCycleMessageFor(error)})
+            setFeedback({severity: "error", message: failureMessage("remove the password lifecycle rule", error, PASSWORD_LIFECYCLE_RULES)})
             return
         }
         await loadRulesFor(loadedAccount)

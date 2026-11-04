@@ -1,5 +1,5 @@
 import React, {SyntheticEvent, useEffect, useState} from 'react';
-import {deleteKeyFor, findAllKeys, rotateKeyFor, VAuthenticatorKey} from "./KeyRepository";
+import {deleteKeyFor, findAllKeys, KEYS, rotateKeyFor, VAuthenticatorKey} from "./KeyRepository";
 import StickyHeadTable, {StickyHeadTableColumn} from "../../components/StickyHeadTable";
 import AdminTemplate from "../../components/AdminTemplate";
 import {Alert, Snackbar} from "@mui/material";
@@ -7,9 +7,7 @@ import {Delete} from "@mui/icons-material";
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import KeyDialog from "./KeyDialog";
 import ErrorToast from "../../components/ErrorToast";
-import {errorMessageFor} from "../../utils/ApiError";
-
-const keysMessageFor = (error: unknown) => errorMessageFor(error, "keys", "key")
+import {failureMessage} from "../../utils/ApiError";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'masterKey', label: 'Maser Key', minWidth: 170},
@@ -74,7 +72,7 @@ const KeysManagementPage = () => {
             })
             .catch(error => {
                 setKeys([])
-                setLoadFailure(keysMessageFor(error))
+                setLoadFailure(failureMessage("load the keys", error, KEYS))
             })
     }
 
@@ -93,7 +91,7 @@ const KeysManagementPage = () => {
                            setOpenDeleteDialog(false);
                            deleteKeyFor(kid)
                                .then(() => fetchAllKeys())
-                               .catch(error => setWriteFailure(keysMessageFor(error)))
+                               .catch(error => setWriteFailure(failureMessage("delete the key", error, KEYS)))
                        }}
             />
 
@@ -109,7 +107,7 @@ const KeysManagementPage = () => {
                            if (!already_rotated) {
                                rotateKeyFor(kid)
                                    .then(() => fetchAllKeys())
-                                   .catch(error => setWriteFailure(keysMessageFor(error)))
+                                   .catch(error => setWriteFailure(failureMessage("rotate the key", error, KEYS)))
                            } else {
                                setOpenWarning(true);
                            }

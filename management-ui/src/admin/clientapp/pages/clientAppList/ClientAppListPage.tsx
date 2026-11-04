@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Link, useNavigate} from "react-router";
 import {Apps, Delete, Edit, VpnKey} from "@mui/icons-material";
 import {
-    clientAppsMessageFor,
+    CLIENT_APPLICATIONS,
     deleteClientApplicationFor,
     findAllClientApplications
 } from "../../domain/ClientAppRepository";
@@ -13,6 +13,7 @@ import StickyHeadTable, {StickyHeadTableColumn} from '../../../../components/Sti
 import {ClientAppListPageTableRow} from "./ClientAppListTypes";
 import ResetClientAppSecretDialog from "./ResetClientAppSecretDialog";
 import ErrorToast from "../../../../components/ErrorToast";
+import {failureMessage} from "../../../../utils/ApiError";
 import {Alert} from "@mui/material";
 
 const columns: StickyHeadTableColumn[] = [
@@ -58,7 +59,7 @@ const ClientAppListPage = () => {
     const deleteClientApp = () => {
         deleteClientApplicationFor(currentClientAppId)
             .then(() => fetchAllApplications())
-            .catch(error => setWriteFailure(clientAppsMessageFor(error)))
+            .catch(error => setWriteFailure(failureMessage("delete the client application", error, CLIENT_APPLICATIONS)))
             .finally(() => handleCloseDeleteClientAppDialog())
     }
 
@@ -88,7 +89,7 @@ const ClientAppListPage = () => {
             })
             .catch(error => {
                 setApplications([])
-                setLoadFailure(clientAppsMessageFor(error))
+                setLoadFailure(failureMessage("load the client applications", error, CLIENT_APPLICATIONS))
             });
     }
 

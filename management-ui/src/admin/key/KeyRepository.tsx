@@ -1,5 +1,7 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader"
-import { ensureOk, jsonOf } from "../../utils/ApiError"
+import { ApiSubject, ensureOk, jsonOf } from "../../utils/ApiError"
+
+export const KEYS: ApiSubject = { managed: "keys", missing: "key" }
 
 const default_rotation_ttl = 604800
 

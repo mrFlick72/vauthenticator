@@ -1,9 +1,8 @@
 import { getIdpBaseUrl } from "../../../config/ConfigLoader";
 import { ClientApplicationDetails, ClientApplicationInList } from "./ClientAppApiTypes";
-import { ensureOk, errorMessageFor, jsonOf } from "../../../utils/ApiError";
+import { ApiSubject, ensureOk, jsonOf } from "../../../utils/ApiError";
 
-export const clientAppsMessageFor = (error: unknown) =>
-    errorMessageFor(error, "client applications", "client application")
+export const CLIENT_APPLICATIONS: ApiSubject = { managed: "client applications", missing: "client application" }
 
 export type RandomSecret = {
     pwd: string

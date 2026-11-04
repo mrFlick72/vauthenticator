@@ -4,7 +4,8 @@ import {Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} fr
 import FormInputTextField from "../../../../components/FormInputTextField";
 import Separator from "../../../../components/Separator";
 import FormButton from "../../../../components/FormButton";
-import {clientAppsMessageFor, resetSecretFor} from "../../domain/ClientAppRepository";
+import {CLIENT_APPLICATIONS, resetSecretFor} from "../../domain/ClientAppRepository";
+import {failureMessage} from "../../../../utils/ApiError";
 import ErrorToast from "../../../../components/ErrorToast";
 
 type ResetClientAppSecretDialogProps = {
@@ -15,8 +16,14 @@ type ResetClientAppSecretDialogProps = {
 const ResetClientAppSecretDialog: React.FC<ResetClientAppSecretDialogProps> = ({onClose, open, clientAppId}) => {
     const [secret, setSecret] = useState("")
     const [failure, setFailure] = useState<string | null>(null)
+    // closing forgets the typed secret, so the dialog never opens pre-filled for another client application
+    const close = () => {
+        setSecret("")
+        setFailure(null)
+        onClose()
+    }
     return (
-        <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={open} maxWidth="lg">
+        <Dialog onClose={close} aria-labelledby="simple-dialog-title" open={open} maxWidth="lg">
             <DialogTitle id="simple-dialog-title">Reset Client App <b>{clientAppId}</b> Secret-Key</DialogTitle>
             <DialogContent>
                 <DialogContentText id="alert-dialog-description">
@@ -37,13 +44,12 @@ const ResetClientAppSecretDialog: React.FC<ResetClientAppSecretDialogProps> = ({
                     <FormButton label="Save" onClickHandler={() => {
                         // on failure the dialog stays open with the typed secret, so the admin can retry
                         resetSecretFor(clientAppId, secret)
-                            .then(() => {
-                                setSecret("")
-                                onClose()
-                            })
-                            .catch(error => setFailure(clientAppsMessageFor(error)))
+                            .then(close)
+                            .catch(error => setFailure(
+                                failureMessage("reset the client application secret", error, CLIENT_APPLICATIONS)
+                            ))
                     }}/>
-                    <FormButton label="Close" onClickHandler={onClose}/>
+                    <FormButton label="Close" onClickHandler={close}/>
                 </DialogActions>
             </DialogContent>
             <ErrorToast message={failure} onClose={() => setFailure(null)}/>

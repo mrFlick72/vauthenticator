@@ -1,7 +1,7 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader";
-import { ensureOk, errorMessageFor } from "../../utils/ApiError";
+import { ApiSubject, ensureOk } from "../../utils/ApiError";
 
-export const accountsMessageFor = (error: unknown) => errorMessageFor(error, "accounts", "account")
+export const ACCOUNTS: ApiSubject = { managed: "accounts", missing: "account" }
 
 export enum MandatoryAction {
     NO_ACTION = "NO_ACTION",

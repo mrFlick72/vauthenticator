@@ -4,7 +4,8 @@ import {Alert, Snackbar, Typography} from "@mui/material";
 
 import Separator from "../../components/Separator";
 import FormButton from "../../components/FormButton";
-import {getSmsTemplateFor, smsTemplatesMessageFor, saveSmsTemplateFor} from "./SmsTemplateRepository";
+import {SMS_TEMPLATES, getSmsTemplateFor, saveSmsTemplateFor} from "./SmsTemplateRepository";
+import {failureMessage} from "../../utils/ApiError";
 import ErrorToast from "../../components/ErrorToast";
 import FormSelect from "../../components/FormSelect";
 import TemplateEditor from "../../components/TemplateEditor";
@@ -27,7 +28,7 @@ const SmsTemplatePage = () => {
             body: smsContent
         })
             .then(() => setOpenSucceeded(true))
-            .catch(error => setWriteFailure(smsTemplatesMessageFor(error)))
+            .catch(error => setWriteFailure(failureMessage("save the SMS template", error, SMS_TEMPLATES)))
     };
     return (
         <AdminTemplate maxWidth="xl" page={pageTitle}>
@@ -53,7 +54,7 @@ const SmsTemplatePage = () => {
                                  })
                                  .catch(error => {
                                      setSmsContent("")
-                                     setLoadFailure(smsTemplatesMessageFor(error))
+                                     setLoadFailure(failureMessage("load the SMS template", error, SMS_TEMPLATES))
                                  })
                          }}
                         options={[
