@@ -18,7 +18,8 @@ export class KeysPage {
         this.table = new StickyHeadTable(page);
         this.deleteDialog = page.getByRole('dialog', {name: 'Delete Key Dialog'});
         this.rotateDialog = page.getByRole('dialog', {name: 'Renew Key Dialog'});
-        this.failure = page.getByRole('alert');
+        // the "Key already rotated" warning is an alert too
+        this.failure = page.getByRole('alert').filter({hasNotText: 'Key already rotated'});
     }
 
     async goto() {

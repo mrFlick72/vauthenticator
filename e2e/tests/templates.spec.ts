@@ -114,7 +114,7 @@ test.describe('api failures', () => {
 
         await templates.type.select('MFA');
 
-        await expect(templates.failure).toHaveText('Unexpected error (HTTP 500)');
+        await expect(templates.failure).toHaveText('Could not load the email template: unexpected error (HTTP 500)');
         await expect(templates.saveButton).toBeHidden();
     });
 
@@ -127,7 +127,20 @@ test.describe('api failures', () => {
 
         await templates.saveButton.click();
 
-        await expect(templates.failure).toHaveText('You are not allowed to manage SMS templates');
+        await expect(templates.failure).toHaveText('Could not save the SMS template: you are not allowed to manage SMS templates');
+        await expect(templates.savedAlert).toBeHidden();
+    });
+
+    test('a refused email template save shows why', async ({page}) => {
+        const home = new AdminHomePage(page);
+        await home.goto();
+        const templates = await home.openEmailTemplates();
+        await templates.load('MFA');
+        await failApiCall(page, 'PUT', '/api/email-template', 500);
+
+        await templates.saveButton.click();
+
+        await expect(templates.failure).toHaveText('Could not save the email template: unexpected error (HTTP 500)');
         await expect(templates.savedAlert).toBeHidden();
     });
 });

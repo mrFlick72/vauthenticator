@@ -55,6 +55,10 @@ export class ClientApplicationEditorPage {
     readonly permissionTab: Locator;
     readonly uriTab: Locator;
 
+    static editPath(clientAppId: string) {
+        return `/secure/admin/client-applications/edit/${clientAppId}`;
+    }
+
     constructor(private readonly page: Page) {
         this.clientAppId = page.locator('#clientAppId');
         this.applicationType = new FormSelect(page, 'applicationType');
@@ -92,6 +96,11 @@ export class ClientApplicationEditorPage {
             await this.secret.fill(credentials.secret);
         }
         await this.clientAppName.fill(credentials.clientAppName);
+    }
+
+    // opens the editor of a client application straight from its url, without going through the list
+    async gotoEdit(clientAppId: string) {
+        await this.page.goto(ClientApplicationEditorPage.editPath(clientAppId));
     }
 
     async generateClientAppId() {

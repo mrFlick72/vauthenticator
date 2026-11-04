@@ -91,6 +91,8 @@ test('a rotated key cannot be deleted', async ({page}) => {
     // rotated key rule refusing it, not a malformed request
     expect(await keys.delete(kid)).toBe(400);
 
+    // the toast passes on the auth-server's own explanation
+    await expect(keys.failure).toContainText('Could not delete the key: The key with kid');
     expect((await adminApi.signatureKeys()).map(key => key.kid)).toContain(kid);
 });
 
@@ -99,6 +101,26 @@ test('a key list that fails to load shows why instead of the table', async ({pag
     await failApiCall(page, 'GET', '/api/keys', 403);
     await page.reload();
 
-    await expect(keys.failure).toHaveText('You are not allowed to manage keys');
+    await expect(keys.failure).toHaveText('Could not load the keys: you are not allowed to manage keys');
     await expect(keys.table.rowsPerPage).toBeHidden();
+});
+
+test('a refused key deletion keeps the key and shows why', async ({page}) => {
+    const kid = await aNewSignatureKey(page);
+    await failApiCall(page, 'DELETE', '/api/keys', 403);
+
+    expect(await keys.delete(kid)).toBe(403);
+
+    await expect(keys.failure).toHaveText('Could not delete the key: you are not allowed to manage keys');
+    expect((await adminApi.signatureKeys()).map(key => key.kid)).toContain(kid);
+});
+
+test('a failed key rotation leaves the key as it is and shows why', async ({page}) => {
+    const kid = await aNewSignatureKey(page);
+    await failApiCall(page, 'POST', '/api/keys/rotate', 500);
+
+    expect(await keys.rotate(kid)).toBe(500);
+
+    await expect(keys.failure).toHaveText('Could not rotate the key: unexpected error (HTTP 500)');
+    expect((await adminApi.signatureKeys()).find(key => key.kid === kid)!.ttl).toBe(0);
 });

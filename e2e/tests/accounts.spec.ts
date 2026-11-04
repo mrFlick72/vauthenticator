@@ -118,7 +118,7 @@ test.describe('api failures', () => {
 
         const editor = await accounts.openEditor(account.email);
 
-        await expect(editor.failure).toHaveText('You are not allowed to manage accounts');
+        await expect(editor.failure).toHaveText('Could not load the account: you are not allowed to manage accounts');
         await expect(editor.saveButton).toBeHidden();
     });
 
@@ -129,7 +129,17 @@ test.describe('api failures', () => {
 
         await editor.saveButton.click();
 
-        await expect(editor.failure).toHaveText('Unexpected error (HTTP 500)');
+        await expect(editor.failure).toHaveText('Could not save the account: unexpected error (HTTP 500)');
         await expect(page).toHaveURL(/\/accounts\/edit\//);
+    });
+
+    test('roles that fail to load show why instead of the form', async ({page, request}) => {
+        const account = await signUpActiveAccount(request);
+        await failApiCall(page, 'GET', '/api/roles', 403);
+
+        const editor = await accounts.openEditor(account.email);
+
+        await expect(editor.failure).toHaveText('Could not load the roles: you are not allowed to manage roles');
+        await expect(editor.saveButton).toBeHidden();
     });
 });
