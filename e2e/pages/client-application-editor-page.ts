@@ -75,8 +75,9 @@ export class ClientApplicationEditorPage {
         // the icon is the input's end adornment, a sibling of the <input> inside the same MUI input root
         this.generateClientAppIdButton = this.clientAppId.locator('..').locator('svg');
         this.generateSecretButton = this.secret.locator('..').locator('svg');
-        this.generatedSecretAlert = page.getByRole('alert').filter({hasText: 'Secret:'});
-        this.failure = page.getByRole('alert').filter({hasNotText: 'Secret:'});
+        // a string filter matches case-insensitively anywhere, and failure messages mention "secret:" too
+        this.generatedSecretAlert = page.getByRole('alert').filter({hasText: /^Secret:/});
+        this.failure = page.getByRole('alert').filter({hasNotText: /^Secret:/});
         this.nextTabButton = page.getByRole('button', {name: 'Next Tab'});
         this.saveButton = page.getByRole('button', {name: 'Save Client Application'});
         this.permissionTab = page.getByRole('tab', {name: /Permission Definition Section/});
