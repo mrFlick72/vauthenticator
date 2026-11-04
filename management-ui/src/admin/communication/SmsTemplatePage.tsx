@@ -4,7 +4,8 @@ import {Alert, Snackbar, Typography} from "@mui/material";
 
 import Separator from "../../components/Separator";
 import FormButton from "../../components/FormButton";
-import {getSmsTemplateFor, saveSmsTemplateFor} from "./SmsTemplateRepository";
+import {getSmsTemplateFor, smsTemplatesMessageFor, saveSmsTemplateFor} from "./SmsTemplateRepository";
+import ErrorToast from "../../components/ErrorToast";
 import FormSelect from "../../components/FormSelect";
 import TemplateEditor from "../../components/TemplateEditor";
 
@@ -13,11 +14,11 @@ const SmsTemplatePage = () => {
     const [smsContent, setSmsContent] = useState("")
     const [smsType, setSmsType] = useState("")
     const [openSucceeded, setOpenSucceeded] = React.useState(false);
-    const [openFailure, setOpenFailure] = React.useState(false);
+    const [loadFailure, setLoadFailure] = React.useState<string | null>(null);
+    const [writeFailure, setWriteFailure] = React.useState<string | null>(null);
 
     const handleClose = () => {
         setOpenSucceeded(false);
-        setOpenFailure(false);
     };
 
     let saveSmsTemplate = () => {
@@ -25,13 +26,8 @@ const SmsTemplatePage = () => {
             smsType: smsType,
             body: smsContent
         })
-            .then(r => {
-                if (r.status === 204) {
-                    setOpenSucceeded(true);
-                } else {
-                    setOpenFailure(true);
-                }
-            })
+            .then(() => setOpenSucceeded(true))
+            .catch(error => setWriteFailure(smsTemplatesMessageFor(error)))
     };
     return (
         <AdminTemplate maxWidth="xl" page={pageTitle}>
@@ -40,11 +36,7 @@ const SmsTemplatePage = () => {
                     SMS Template save succeeded
                 </Alert>
             </Snackbar>
-            <Snackbar open={openFailure} autoHideDuration={6000}>
-                <Alert onClose={handleClose} severity="error" sx={{width: '100%'}}>
-                    SMS Template save failed
-                </Alert>
-            </Snackbar>
+            <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)}/>
             <Typography variant="h2">
                 SMS Template
             </Typography>
@@ -55,7 +47,14 @@ const SmsTemplatePage = () => {
                         onChangeHandler={(event) => {
                              setSmsType(event.value)
                              getSmsTemplateFor(event.value)
-                                 .then(content => setSmsContent(content.body))
+                                 .then(content => {
+                                     setSmsContent(content.body)
+                                     setLoadFailure(null)
+                                 })
+                                 .catch(error => {
+                                     setSmsContent("")
+                                     setLoadFailure(smsTemplatesMessageFor(error))
+                                 })
                          }}
                         options={[
                              {value: "MFA", label: "MFA"}
@@ -64,11 +63,16 @@ const SmsTemplatePage = () => {
 
             <Separator/>
 
-            <TemplateEditor label="SMS Template" language="text" value={smsContent} onChange={setSmsContent}/>
+            {/* a template that failed to load is not shown, so it cannot be saved over the stored one */}
+            {loadFailure
+                ? <Alert severity="error">{loadFailure}</Alert>
+                : <>
+                <TemplateEditor label="SMS Template" language="text" value={smsContent} onChange={setSmsContent}/>
 
-            <Separator/>
+                <Separator/>
 
-            <FormButton label="Save" type="button" onClickHandler={saveSmsTemplate}/>
+                <FormButton label="Save" type="button" onClickHandler={saveSmsTemplate}/>
+                </>}
         </AdminTemplate>
     )
 }

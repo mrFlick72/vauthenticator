@@ -1,12 +1,14 @@
-import React, {SyntheticEvent, useEffect} from 'react';
+import React, {useEffect} from 'react';
 import AdminTemplate from "../../components/AdminTemplate";
 import StickyHeadTable, {StickyHeadTableColumn} from "../../components/StickyHeadTable";
-import {deleteRoleFor, findAllRoles, Role} from "./RoleRepository";
+import {deleteRoleFor, findAllRoles, Role, rolesMessageFor} from "./RoleRepository";
 import FormButton from "../../components/FormButton";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import RolesDialog from "./RolesDialog";
 import {AssignmentInd, Delete, Edit} from "@mui/icons-material";
-import {Alert, Snackbar} from "@mui/material";
+import {Alert} from "@mui/material";
+import ErrorToast from "../../components/ErrorToast";
+import {ApiError} from "../../utils/ApiError";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'name', label: 'Role', minWidth: 170},
@@ -23,10 +25,8 @@ const RolesManagementPage = () => {
     const [selectedRole, setSelectedRole] = React.useState("")
     const [role, setRole] = React.useState<Role>({name: "", description: ""})
     const [isRoleReadOnly, setIsRoleReadOnly] = React.useState(false)
-    const [openFailure, setOpenFailure] = React.useState(false);
-    const handleClose = (event: SyntheticEvent<Element, Event>) => {
-        setOpenFailure(false);
-    };
+    const [loadFailure, setLoadFailure] = React.useState<string | null>(null);
+    const [writeFailure, setWriteFailure] = React.useState<string | null>(null);
     const getEditLinkFor = (role: Role) => {
         return <Edit onClick={() => {
             setRole(role)
@@ -58,12 +58,13 @@ const RolesManagementPage = () => {
 
     const deleteRole = () => {
         deleteRoleFor(selectedRole)
-            .then(response => {
-                if (response.status !== 204) {
-                    setOpenFailure(true);
-                }
-                handleCloseConfirmationDialog(true)
-            })
+            .catch(error => setWriteFailure(
+                // a protected role answers 412 with no body
+                error instanceof ApiError && error.status === 412
+                    ? "Delete this Role is not allowed it is a protected role"
+                    : rolesMessageFor(error)
+            ))
+            .finally(() => handleCloseConfirmationDialog(true))
     }
 
     const fetchAllRoles = () => {
@@ -79,6 +80,11 @@ const RolesManagementPage = () => {
                 })
 
                 setRoles(rows)
+                setLoadFailure(null)
+            })
+            .catch(error => {
+                setRoles([])
+                setLoadFailure(rolesMessageFor(error))
             });
     }
 
@@ -110,13 +116,11 @@ const RolesManagementPage = () => {
                         labelPrefix={<AssignmentInd fontSize="large"/>}
                         label={"New Role"}/>
 
-            <StickyHeadTable columns={columns} rows={roles}/>
+            {loadFailure
+                ? <Alert severity="error">{loadFailure}</Alert>
+                : <StickyHeadTable columns={columns} rows={roles}/>}
 
-            <Snackbar open={openFailure} autoHideDuration={600}>
-                <Alert onClose={handleClose} severity="error" sx={{whiteSpace: 'pre-line'}}>
-                    Delete this Role is not allowed it is a default role
-                </Alert>
-            </Snackbar>
+            <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)}/>
         </AdminTemplate>
     )
 }

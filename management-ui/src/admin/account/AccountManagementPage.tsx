@@ -4,11 +4,12 @@ import FormInputTextField from "../../components/FormInputTextField";
 import AdminTemplate from "../../components/AdminTemplate";
 import Separator from "../../components/Separator";
 import CheckboxesGroup from "../../components/CheckboxesGroup";
-import {convertToMandatoryAction, findAccountFor, saveAccountFor} from "./AccountRepository";
+import {accountsMessageFor, convertToMandatoryAction, findAccountFor, saveAccountFor} from "./AccountRepository";
+import ErrorToast from "../../components/ErrorToast";
 import FormButton from "../../components/FormButton";
 import {findAllRoles} from "../roles/RoleRepository";
 import LeftRightComponentRow from "../../components/LeftRightComponentRow";
-import {Card, CardContent, CardHeader, Typography} from "@mui/material";
+import {Alert, Card, CardContent, CardHeader, Typography} from "@mui/material";
 import {PeopleAlt} from "@mui/icons-material";
 import FormSelect, {SelectOption} from "../../components/FormSelect";
 
@@ -21,6 +22,8 @@ const AccountManagementPage : React.FC = () => {
     const [mandatoryAction, setMandatoryAction] = useState<SelectOption>({value: "NO_ACTION", label: "NO_ACTION"})
     const [roles, setRoles] = useState<SelectOption[]>([])
     const [availableRoles, setAvailableRoles] = useState<SelectOption[]>([])
+    const [loadFailure, setLoadFailure] = useState<string | null>(null)
+    const [writeFailure, setWriteFailure] = useState<string | null>(null)
 
     let pageTitle = "Account Management";
 
@@ -44,7 +47,7 @@ const AccountManagementPage : React.FC = () => {
                 }
             }
 
-            init();
+            init().catch(error => setLoadFailure(accountsMessageFor(error)));
         }, []
     )
 
@@ -58,11 +61,8 @@ const AccountManagementPage : React.FC = () => {
         }
 
         saveAccountFor(account)
-            .then(response => {
-                if (response.status === 204) {
-                    navigate(-1);
-                }
-            })
+            .then(() => navigate(-1))
+            .catch(error => setWriteFailure(accountsMessageFor(error)))
     }
 
     return (
@@ -76,7 +76,10 @@ const AccountManagementPage : React.FC = () => {
                 Password lifecycle rules
             </Link>
 
-            <Card>
+            <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)}/>
+
+            {/* an account that failed to load is not shown, so it cannot be saved over the stored one */}
+            {loadFailure ? <Alert severity="error">{loadFailure}</Alert> : <Card>
                 <CardHeader title="Account definition" color="textSecondary"/>
                 <CardContent>
                     <FormInputTextField id="email"
@@ -135,7 +138,7 @@ const AccountManagementPage : React.FC = () => {
                     />
 
                 </CardContent>
-            </Card>
+            </Card>}
 
         </AdminTemplate>
     );

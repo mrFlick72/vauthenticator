@@ -1,14 +1,21 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader"
+import { ensureOk, errorMessageFor, jsonOf } from "../../utils/ApiError"
+
+export const smsTemplatesMessageFor = (error: unknown) => errorMessageFor(error, "SMS templates", "SMS template")
+
+interface SmsTemplate {
+    body: string
+}
 
 interface SmsTemplateRequest {
     smsType: string
     body?: string
 }
 
-export async function saveSmsTemplateFor(smsTemplate: SmsTemplateRequest) {
+export async function saveSmsTemplateFor(smsTemplate: SmsTemplateRequest): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/sms-template`,
+    const response = await fetch(`${baseUrl}/api/sms-template`,
         {
             method: "PUT",
             headers: {
@@ -19,12 +26,13 @@ export async function saveSmsTemplateFor(smsTemplate: SmsTemplateRequest) {
             credentials: 'include',
             body: JSON.stringify(smsTemplate),
         })
+    await ensureOk(response)
 }
 
-export async function getSmsTemplateFor(smsType: string) {
+export async function getSmsTemplateFor(smsType: string): Promise<SmsTemplate> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/sms-template/${smsType}`,
+    const response = await fetch(`${baseUrl}/api/sms-template/${smsType}`,
         {
             method: "GET",
             headers: {
@@ -33,5 +41,6 @@ export async function getSmsTemplateFor(smsType: string) {
             },
             mode: "cors",
             credentials: 'include'
-        }).then(r => r.json())
+        })
+    return jsonOf<SmsTemplate>(response)
 }

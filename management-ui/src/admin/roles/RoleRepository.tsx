@@ -1,11 +1,14 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader";
+import { ensureOk, errorMessageFor, jsonOf } from "../../utils/ApiError";
+
+export const rolesMessageFor = (error: unknown) => errorMessageFor(error, "roles", "role")
 
 export interface Role {
     name: string,
     description: string
 }
 
-export async function findAllRoles() {
+export async function findAllRoles(): Promise<Role[]> {
     const baseUrl = await getIdpBaseUrl()
 
     let response = await fetch(`${baseUrl}/api/roles`,
@@ -18,13 +21,13 @@ export async function findAllRoles() {
             mode: "cors",
             credentials: 'include',
         });
-    return await response.json() as Role[];
+    return jsonOf<Role[]>(response)
 }
 
-export async function deleteRoleFor(roleId: string) {
+export async function deleteRoleFor(roleId: string): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/roles/${roleId}`,
+    const response = await fetch(`${baseUrl}/api/roles/${roleId}`,
         {
             method: "DELETE",
             headers: {
@@ -33,12 +36,13 @@ export async function deleteRoleFor(roleId: string) {
             mode: "cors",
             credentials: 'include'
         })
+    await ensureOk(response)
 }
 
-export async function saveRoleFor(role: Role) {
+export async function saveRoleFor(role: Role): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/roles`,
+    const response = await fetch(`${baseUrl}/api/roles`,
         {
             method: "PUT",
             headers: {
@@ -49,4 +53,5 @@ export async function saveRoleFor(role: Role) {
             credentials: 'include',
             body: JSON.stringify(role)
         })
+    await ensureOk(response)
 }
