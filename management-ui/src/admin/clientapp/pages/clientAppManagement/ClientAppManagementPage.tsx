@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from "react-router";
 import {
+    clientAppsMessageFor,
     findClientApplicationFor,
     newClientApplicationRandomSecret,
     saveClientApplicationFor
@@ -28,6 +29,21 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import copy from "copy-to-clipboard";
 import { ClientAppManagementPageDTO } from './ClientAppManagementPageTypes';
 import { ClientApplicationDetails } from "../../domain/ClientAppApiTypes";
+import ErrorToast from "../../../../components/ErrorToast";
+import { ApiError } from "../../../../utils/ApiError";
+
+// a rejected save answers 400/404 with the failing fields as {"<field>": {"errorMessage": "..."}}
+function fieldErrorsOf(error: unknown): string | null {
+    if (!(error instanceof ApiError) || (error.status !== 400 && error.status !== 404)) {
+        return null
+    }
+    try {
+        const messages = Object.values(JSON.parse(error.body)).map((value: any) => value?.errorMessage).filter(Boolean)
+        return messages.length ? messages.join("\n") : null
+    } catch {
+        return null
+    }
+}
 
 function newClientApplicationPageDetails(
     clientAppId: string | undefined,
@@ -75,11 +91,8 @@ const ClientAppManagementPage = () => {
     const [availableClientApplicationTypes] = useState<SelectOption[]>([CONFIDENTIAL_CLIENT_APP_TYPE, PUBLIC_CLIENT_APP_TYPE])
     const [availableScopes, setAvailableScopes] = useState<SelectOption[]>([])
     const [openSecretAlert, setOpenSecretAlert] = useState(false)
-    const [openFailureAlert, setOpenFailureAlert] = useState(false);
-    const handleCloseFailureAlert = () => {
-        setOpenFailureAlert(false)
-    };
-    const [errorMessage, setErrorMessage] = useState("")
+    const [loadFailure, setLoadFailure] = useState<string | null>(null)
+    const [writeFailure, setWriteFailure] = useState<string | null>(null)
 
     const [tab, setTab] = React.useState('0');
     const handleTabChange = (event: React.SyntheticEvent, newValue: any) => {
@@ -99,7 +112,13 @@ const ClientAppManagementPage = () => {
 
 
     const generateRandomClientApplicationSecret = async () => {
-        let randomSecret = await newClientApplicationRandomSecret();
+        let randomSecret
+        try {
+            randomSecret = await newClientApplicationRandomSecret();
+        } catch (error) {
+            setWriteFailure(clientAppsMessageFor(error))
+            return
+        }
         setClientApplication((clientApplication: ClientAppManagementPageDTO) => {
             let copiedClientApplication = Object.assign({}, clientApplication)
             copiedClientApplication.secret = randomSecret.pwd
@@ -134,17 +153,8 @@ const ClientAppManagementPage = () => {
         }
 
         saveClientApplicationFor(clientApplication.clientApplicationId!!, clientApp)
-            .then(response => {
-                if (response.status === 204) {
-                    navigate(-1);
-                } else if (response.status === 400 || response.status === 404) {
-                    response.json().then(body => {
-                        setErrorMessage(Object.values(body).map((value: any) => value.errorMessage).join("\n"))
-                        setOpenFailureAlert(true)
-                    }
-                    )
-                }
-            })
+            .then(() => navigate(-1))
+            .catch(error => setWriteFailure(fieldErrorsOf(error) ?? clientAppsMessageFor(error)))
     }
 
     useEffect(() => {
@@ -182,7 +192,7 @@ const ClientAppManagementPage = () => {
             )
         }
 
-        init().then()
+        init().catch(error => setLoadFailure(clientAppsMessageFor(error)))
     }, [])
 
     let pageTitle = clientApplication.clientApplicationId ? `: Client Application: ${clientApplication.clientApplicationId}` : "";
@@ -200,17 +210,14 @@ const ClientAppManagementPage = () => {
             </Alert>
         </Snackbar>
 
-        <Snackbar open={openFailureAlert} autoHideDuration={600}>
-            <Alert onClose={handleCloseFailureAlert} severity="error" sx={{ whiteSpace: 'pre-line' }}>
-                {errorMessage}
-            </Alert>
-        </Snackbar>
+        <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)} />
 
         <Typography variant="h3" component="h3">
             <Apps fontSize="large" /> Client Application: {clientApplication.clientApplicationId}
         </Typography>
 
-        <Box style={classes.tabs}>
+        {/* a form that failed to load is not shown, so it cannot be saved over the stored client application */}
+        {loadFailure ? <Alert severity="error">{loadFailure}</Alert> : <Box style={classes.tabs}>
             <Tabs value={tab}
                 orientation="vertical"
                 onChange={handleTabChange}
@@ -452,7 +459,7 @@ const ClientAppManagementPage = () => {
                     rightComponents={<FormButton label="Save Client Application" direction="rtl"
                         onClickHandler={saveClientApp} />} />
             </TabPanel>
-        </Box>
+        </Box>}
     </AdminTemplate>
 }
 

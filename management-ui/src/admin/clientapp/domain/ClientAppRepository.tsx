@@ -1,5 +1,9 @@
 import { getIdpBaseUrl } from "../../../config/ConfigLoader";
 import { ClientApplicationDetails, ClientApplicationInList } from "./ClientAppApiTypes";
+import { ensureOk, errorMessageFor, jsonOf } from "../../../utils/ApiError";
+
+export const clientAppsMessageFor = (error: unknown) =>
+    errorMessageFor(error, "client applications", "client application")
 
 export type RandomSecret = {
     pwd: string
@@ -17,7 +21,7 @@ export async function newClientApplicationRandomSecret(): Promise<RandomSecret> 
             mode: "cors",
             credentials: 'include'
         });
-    return await response.json() as RandomSecret
+    return jsonOf<RandomSecret>(response)
 }
 
 export async function findAllClientApplications(): Promise<ClientApplicationInList[]> {
@@ -33,7 +37,7 @@ export async function findAllClientApplications(): Promise<ClientApplicationInLi
             mode: "cors",
             credentials: 'include'
         });
-    return await response.json() as ClientApplicationInList[]
+    return jsonOf<ClientApplicationInList[]>(response)
 }
 
 export async function findClientApplicationFor(clientAppId: string): Promise<ClientApplicationDetails> {
@@ -49,12 +53,12 @@ export async function findClientApplicationFor(clientAppId: string): Promise<Cli
             mode: "cors",
             credentials: 'include'
         });
-    return await response.json() as ClientApplicationDetails
+    return jsonOf<ClientApplicationDetails>(response)
 }
 
-export async function saveClientApplicationFor(clientAppId: string , clientApp: ClientApplicationDetails) {
+export async function saveClientApplicationFor(clientAppId: string , clientApp: ClientApplicationDetails): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
-    return fetch(`${baseUrl}/api/client-applications/${clientAppId}`,
+    const response = await fetch(`${baseUrl}/api/client-applications/${clientAppId}`,
         {
             method: "PUT",
             headers: {
@@ -66,12 +70,13 @@ export async function saveClientApplicationFor(clientAppId: string , clientApp: 
             credentials: 'include',
             body: JSON.stringify(clientApp),
         })
+    await ensureOk(response)
 }
 
-export async function resetSecretFor(clientAppId: string, secret: string) {
+export async function resetSecretFor(clientAppId: string, secret: string): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/client-applications/${clientAppId}/client-secret`,
+    const response = await fetch(`${baseUrl}/api/client-applications/${clientAppId}/client-secret`,
         {
             method: "PATCH",
             headers: {
@@ -83,12 +88,13 @@ export async function resetSecretFor(clientAppId: string, secret: string) {
             credentials: 'include',
             body: JSON.stringify({ "secret": secret }),
         })
+    await ensureOk(response)
 }
 
-export async function deleteClientApplicationFor(clientAppId: string) {
+export async function deleteClientApplicationFor(clientAppId: string): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/client-applications/${clientAppId}`,
+    const response = await fetch(`${baseUrl}/api/client-applications/${clientAppId}`,
         {
             method: "DELETE",
             headers: {
@@ -97,4 +103,5 @@ export async function deleteClientApplicationFor(clientAppId: string) {
             mode: "cors",
             credentials: 'include'
         })
+    await ensureOk(response)
 }

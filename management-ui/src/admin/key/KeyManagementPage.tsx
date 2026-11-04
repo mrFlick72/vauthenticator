@@ -6,6 +6,10 @@ import {Alert, Snackbar} from "@mui/material";
 import {Delete} from "@mui/icons-material";
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import KeyDialog from "./KeyDialog";
+import ErrorToast from "../../components/ErrorToast";
+import {errorMessageFor} from "../../utils/ApiError";
+
+const keysMessageFor = (error: unknown) => errorMessageFor(error, "keys", "key")
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'masterKey', label: 'Maser Key', minWidth: 170},
@@ -30,11 +34,11 @@ const KeysManagementPage = () => {
     const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
     const [openRenewDialog, setOpenRenewDialog] = useState(false)
 
-    const [keys, setKeys] = React.useState([])
-    const [openFailure, setOpenFailure] = React.useState(false);
+    const [keys, setKeys] = React.useState<any[]>([])
+    const [loadFailure, setLoadFailure] = React.useState<string | null>(null);
+    const [writeFailure, setWriteFailure] = React.useState<string | null>(null);
     const [openWarning, setOpenWarning] = React.useState(false);
     const handleClose = (event: SyntheticEvent<Element, Event>) => {
-        setOpenFailure(false);
         setOpenWarning(false);
     };
 
@@ -54,13 +58,6 @@ const KeysManagementPage = () => {
     }
     const fetchAllKeys = () => {
         findAllKeys()
-            .then(response => {
-                if (response.status === 200) {
-                    return response.json()
-                } else {
-                    setKeys([])
-                }
-            })
             .then(val => {
                 let rows = val.map((value: VAuthenticatorKey) => {
                     return {
@@ -73,6 +70,11 @@ const KeysManagementPage = () => {
                     }
                 })
                 setKeys(rows)
+                setLoadFailure(null)
+            })
+            .catch(error => {
+                setKeys([])
+                setLoadFailure(keysMessageFor(error))
             })
     }
 
@@ -90,13 +92,8 @@ const KeysManagementPage = () => {
                        handler={() => {
                            setOpenDeleteDialog(false);
                            deleteKeyFor(kid)
-                               .then(response => {
-                                   if (response.status === 204) {
-                                       fetchAllKeys()
-                                   } else {
-                                       setOpenFailure(true);
-                                   }
-                               })
+                               .then(() => fetchAllKeys())
+                               .catch(error => setWriteFailure(keysMessageFor(error)))
                        }}
             />
 
@@ -111,13 +108,8 @@ const KeysManagementPage = () => {
 
                            if (!already_rotated) {
                                rotateKeyFor(kid)
-                                   .then(response => {
-                                       if (response.status === 204) {
-                                           fetchAllKeys()
-                                       } else {
-                                           setOpenWarning(true);
-                                       }
-                                   })
+                                   .then(() => fetchAllKeys())
+                                   .catch(error => setWriteFailure(keysMessageFor(error)))
                            } else {
                                setOpenWarning(true);
                            }
@@ -125,18 +117,15 @@ const KeysManagementPage = () => {
                        }}
             />
 
-            <Snackbar open={openFailure} autoHideDuration={600}>
-                <Alert onClose={handleClose} severity="error" sx={{whiteSpace: 'pre-line'}}>
-                    Delete this key is not allowed where <br/>
-                    The key is already rotated either there is only one key available
-                </Alert>
-            </Snackbar>
+            <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)}/>
             <Snackbar open={openWarning} autoHideDuration={600}>
                 <Alert onClose={handleClose} severity="warning">
                     Key already rotated
                 </Alert>
             </Snackbar>
-            <StickyHeadTable columns={columns} rows={keys}/>
+            {loadFailure
+                ? <Alert severity="error">{loadFailure}</Alert>
+                : <StickyHeadTable columns={columns} rows={keys}/>}
         </AdminTemplate>
     )
 }

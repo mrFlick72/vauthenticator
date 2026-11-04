@@ -4,7 +4,8 @@ import {Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} fr
 import FormInputTextField from "../../../../components/FormInputTextField";
 import Separator from "../../../../components/Separator";
 import FormButton from "../../../../components/FormButton";
-import {resetSecretFor} from "../../domain/ClientAppRepository";
+import {clientAppsMessageFor, resetSecretFor} from "../../domain/ClientAppRepository";
+import ErrorToast from "../../../../components/ErrorToast";
 
 type ResetClientAppSecretDialogProps = {
     onClose: () => void
@@ -13,6 +14,7 @@ type ResetClientAppSecretDialogProps = {
 }
 const ResetClientAppSecretDialog: React.FC<ResetClientAppSecretDialogProps> = ({onClose, open, clientAppId}) => {
     const [secret, setSecret] = useState("")
+    const [failure, setFailure] = useState<string | null>(null)
     return (
         <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={open} maxWidth="lg">
             <DialogTitle id="simple-dialog-title">Reset Client App <b>{clientAppId}</b> Secret-Key</DialogTitle>
@@ -33,13 +35,18 @@ const ResetClientAppSecretDialog: React.FC<ResetClientAppSecretDialogProps> = ({
 
                 <DialogActions>
                     <FormButton label="Save" onClickHandler={() => {
+                        // on failure the dialog stays open with the typed secret, so the admin can retry
                         resetSecretFor(clientAppId, secret)
-                            .then(_ => setSecret(""))
-                            .then(_ => onClose())
+                            .then(() => {
+                                setSecret("")
+                                onClose()
+                            })
+                            .catch(error => setFailure(clientAppsMessageFor(error)))
                     }}/>
                     <FormButton label="Close" onClickHandler={onClose}/>
                 </DialogActions>
             </DialogContent>
+            <ErrorToast message={failure} onClose={() => setFailure(null)}/>
         </Dialog>
     );
 }

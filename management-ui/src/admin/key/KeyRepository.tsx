@@ -1,4 +1,5 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader"
+import { ensureOk, jsonOf } from "../../utils/ApiError"
 
 const default_rotation_ttl = 604800
 
@@ -9,10 +10,10 @@ export interface VAuthenticatorKey {
     expireIn: string
 }
 
-export async function findAllKeys() {
+export async function findAllKeys(): Promise<VAuthenticatorKey[]> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/keys`,
+    const response = await fetch(`${baseUrl}/api/keys`,
         {
             method: "GET",
             headers: {
@@ -22,12 +23,13 @@ export async function findAllKeys() {
             mode: "cors",
             credentials: 'include'
         })
+    return jsonOf<VAuthenticatorKey[]>(response)
 }
 
-export async function deleteKeyFor(kid: string) {
+export async function deleteKeyFor(kid: string): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/keys`,
+    const response = await fetch(`${baseUrl}/api/keys`,
         {
             method: "DELETE",
             headers: {
@@ -39,12 +41,13 @@ export async function deleteKeyFor(kid: string) {
             // a key_ttl of 0 deletes the key now; the api requires the field
             body: JSON.stringify({kid: kid, "key_purpose": "SIGNATURE", "key_ttl": 0})
         })
+    await ensureOk(response)
 }
 
-export async function rotateKeyFor(kid: string) {
+export async function rotateKeyFor(kid: string): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/keys/rotate`,
+    const response = await fetch(`${baseUrl}/api/keys/rotate`,
         {
             method: "POST",
             headers: {
@@ -55,4 +58,5 @@ export async function rotateKeyFor(kid: string) {
             credentials: 'include',
             body: JSON.stringify({kid: kid, "key_ttl": default_rotation_ttl})
         })
+    await ensureOk(response)
 }
