@@ -1,4 +1,7 @@
 import { getIdpBaseUrl } from "../../../config/ConfigLoader";
+import { ApiSubject, jsonOf } from "../../../utils/ApiError";
+
+export const SCOPES: ApiSubject = { managed: "scopes", missing: "scopes" }
 
 export async function findAllScopes(): Promise<string[]> {
         const baseUrl = await getIdpBaseUrl()
@@ -12,6 +15,6 @@ export async function findAllScopes(): Promise<string[]> {
             mode: "cors",
             credentials: 'include'
         });
-    const response_body = await response.json()
-    return response_body.scopes_supported as string[]
+    const response_body = await jsonOf<{ scopes_supported: string[] }>(response)
+    return response_body.scopes_supported
 }

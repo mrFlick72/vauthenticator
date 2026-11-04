@@ -1,14 +1,21 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader"
+import { ApiSubject, ensureOk, jsonOf } from "../../utils/ApiError"
+
+export const EMAIL_TEMPLATES: ApiSubject = { managed: "email templates", missing: "email template" }
+
+interface MailTemplate {
+    body: string
+}
 
 interface MailTemplateRequest {
     emailType: string
     body?: string
 }
 
-export async function saveMailTemplateFor(mailTemplate: MailTemplateRequest) {
+export async function saveMailTemplateFor(mailTemplate: MailTemplateRequest): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/email-template`,
+    const response = await fetch(`${baseUrl}/api/email-template`,
         {
             method: "PUT",
             headers: {
@@ -19,12 +26,13 @@ export async function saveMailTemplateFor(mailTemplate: MailTemplateRequest) {
             credentials: 'include',
             body: JSON.stringify(mailTemplate),
         })
+    await ensureOk(response)
 }
 
-export async function getMailTemplateFor(mailType: string) {
+export async function getMailTemplateFor(mailType: string): Promise<MailTemplate> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/email-template/${mailType}`,
+    const response = await fetch(`${baseUrl}/api/email-template/${mailType}`,
         {
             method: "GET",
             headers: {
@@ -33,5 +41,6 @@ export async function getMailTemplateFor(mailType: string) {
             },
             mode: "cors",
             credentials: 'include'
-        }).then(r => r.json())
+        })
+    return jsonOf<MailTemplate>(response)
 }

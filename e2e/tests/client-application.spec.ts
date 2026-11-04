@@ -1,7 +1,9 @@
 import {expect, test} from '@playwright/test';
 import {AdminHomePage} from '../pages/admin-home-page';
+import {ClientApplicationEditorPage} from '../pages/client-application-editor-page';
 import {ClientApplicationListPage} from '../pages/client-application-list-page';
 import {aClientApplication, requestClientCredentialsToken} from '../support/client-applications';
+import {failApiCall} from '../support/api-failures';
 
 let clientApplications: ClientApplicationListPage;
 
@@ -121,4 +123,86 @@ test('reset the secret of a client application', async ({request}) => {
 
     expect((await requestClientCredentialsToken(request, clientApplication.clientAppId, clientApplication.secret!)).status()).toBe(401);
     expect((await requestClientCredentialsToken(request, clientApplication.clientAppId, newSecret)).ok()).toBe(true);
+});
+
+test.describe('api failures', () => {
+    test('a client application list that fails to load shows why instead of the table', async ({page}) => {
+        // a non-json body: the list must not try to parse it
+        await failApiCall(page, 'GET', '/api/client-applications', 403, 'The client is not allowed');
+        await page.reload();
+
+        await expect(clientApplications.failure).toHaveText(
+            'Could not load the client applications: you are not allowed to manage client applications');
+        await expect(clientApplications.table.rowsPerPage).toBeHidden();
+    });
+
+    test('a failed secret reset keeps the dialog open with the typed secret', async ({page}) => {
+        const clientApplication = aClientApplication();
+        await clientApplications.createClientApplication(clientApplication);
+        await failApiCall(page, 'PATCH', `/api/client-applications/${clientApplication.clientAppId}/client-secret`, 500);
+
+        await clientApplications.submitSecret(clientApplication.clientAppId, 'a-new-secret');
+
+        await expect(clientApplications.failure).toHaveText('Could not reset the client application secret: unexpected error (HTTP 500)');
+        await expect(clientApplications.resetSecretDialog).toBeVisible();
+        await expect(clientApplications.resetSecretField).toHaveValue('a-new-secret');
+    });
+
+    test('a refused deletion keeps the client application and shows why', async ({page}) => {
+        const clientApplication = aClientApplication();
+        await clientApplications.createClientApplication(clientApplication);
+        await failApiCall(page, 'DELETE', `/api/client-applications/${clientApplication.clientAppId}`, 403);
+
+        await clientApplications.delete(clientApplication.clientAppId);
+
+        await expect(clientApplications.failure).toHaveText(
+            'Could not delete the client application: you are not allowed to manage client applications');
+        await expect(clientApplications.row(clientApplication.clientAppId)).toBeVisible();
+    });
+
+    test('a client application that fails to load shows why instead of the form', async ({page}) => {
+        // the lookup is stubbed, so no client application needs to exist
+        const clientAppId = aClientApplication().clientAppId;
+        await failApiCall(page, 'GET', `/api/client-applications/${clientAppId}`, 404);
+
+        const editor = new ClientApplicationEditorPage(page);
+        await editor.gotoEdit(clientAppId);
+
+        await expect(editor.failure).toHaveText(
+            'Could not load the client application: the requested client application was not found');
+        await expect(editor.saveButton).toBeHidden();
+    });
+
+    test('a refused save stays on the form and shows why', async ({page}) => {
+        const clientApplication = aClientApplication();
+        const editor = await clientApplications.newClientApplication();
+        await editor.fill(clientApplication);
+        await failApiCall(page, 'PUT', `/api/client-applications/${clientApplication.clientAppId}`, 403);
+
+        await editor.saveButton.click();
+
+        await expect(editor.failure).toHaveText(
+            'Could not save the client application: you are not allowed to manage client applications');
+        await expect(page).toHaveURL(/\/client-applications\/save$/);
+    });
+
+    test('a secret that fails to generate shows why', async ({page}) => {
+        const editor = await clientApplications.newClientApplication();
+        await failApiCall(page, 'POST', '/api/password', 500);
+
+        await editor.generateSecretButton.click();
+
+        await expect(editor.failure).toHaveText(
+            'Could not generate a client application secret: unexpected error (HTTP 500)');
+        await expect(editor.secret).toHaveValue('');
+    });
+
+    test('scopes that fail to load show why instead of the form', async ({page}) => {
+        await failApiCall(page, 'GET', '/.well-known/openid-configuration', 500);
+
+        const editor = await clientApplications.newClientApplication();
+
+        await expect(editor.failure).toHaveText('Could not load the scopes: unexpected error (HTTP 500)');
+        await expect(editor.saveButton).toBeHidden();
+    });
 });

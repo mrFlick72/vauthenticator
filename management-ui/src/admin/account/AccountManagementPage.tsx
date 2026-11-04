@@ -4,11 +4,13 @@ import FormInputTextField from "../../components/FormInputTextField";
 import AdminTemplate from "../../components/AdminTemplate";
 import Separator from "../../components/Separator";
 import CheckboxesGroup from "../../components/CheckboxesGroup";
-import {convertToMandatoryAction, findAccountFor, saveAccountFor} from "./AccountRepository";
+import {ACCOUNTS, convertToMandatoryAction, findAccountFor, saveAccountFor} from "./AccountRepository";
+import {failureMessage} from "../../utils/ApiError";
+import ErrorToast from "../../components/ErrorToast";
 import FormButton from "../../components/FormButton";
-import {findAllRoles} from "../roles/RoleRepository";
+import {findAllRoles, ROLES} from "../roles/RoleRepository";
 import LeftRightComponentRow from "../../components/LeftRightComponentRow";
-import {Card, CardContent, CardHeader, Typography} from "@mui/material";
+import {Alert, Card, CardContent, CardHeader, Typography} from "@mui/material";
 import {PeopleAlt} from "@mui/icons-material";
 import FormSelect, {SelectOption} from "../../components/FormSelect";
 
@@ -21,13 +23,27 @@ const AccountManagementPage : React.FC = () => {
     const [mandatoryAction, setMandatoryAction] = useState<SelectOption>({value: "NO_ACTION", label: "NO_ACTION"})
     const [roles, setRoles] = useState<SelectOption[]>([])
     const [availableRoles, setAvailableRoles] = useState<SelectOption[]>([])
+    const [loadFailure, setLoadFailure] = useState<string | null>(null)
+    const [writeFailure, setWriteFailure] = useState<string | null>(null)
 
     let pageTitle = "Account Management";
 
     useEffect(() => {
             async function init() {
-                let roles = await findAllRoles()
-                let account = await findAccountFor(email!)
+                let roles
+                try {
+                    roles = await findAllRoles()
+                } catch (error) {
+                    setLoadFailure(failureMessage("load the roles", error, ROLES))
+                    return
+                }
+                let account
+                try {
+                    account = await findAccountFor(email!)
+                } catch (error) {
+                    setLoadFailure(failureMessage("load the account", error, ACCOUNTS))
+                    return
+                }
                 if (account) {
                     setEnabled({enabled: account.enabled})
                     setAccountLocked({accountLocked: account.accountLocked})
@@ -58,11 +74,8 @@ const AccountManagementPage : React.FC = () => {
         }
 
         saveAccountFor(account)
-            .then(response => {
-                if (response.status === 204) {
-                    navigate(-1);
-                }
-            })
+            .then(() => navigate(-1))
+            .catch(error => setWriteFailure(failureMessage("save the account", error, ACCOUNTS)))
     }
 
     return (
@@ -76,7 +89,10 @@ const AccountManagementPage : React.FC = () => {
                 Password lifecycle rules
             </Link>
 
-            <Card>
+            <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)}/>
+
+            {/* an account that failed to load is not shown, so it cannot be saved over the stored one */}
+            {loadFailure ? <Alert severity="error">{loadFailure}</Alert> : <Card>
                 <CardHeader title="Account definition" color="textSecondary"/>
                 <CardContent>
                     <FormInputTextField id="email"
@@ -135,7 +151,7 @@ const AccountManagementPage : React.FC = () => {
                     />
 
                 </CardContent>
-            </Card>
+            </Card>}
 
         </AdminTemplate>
     );

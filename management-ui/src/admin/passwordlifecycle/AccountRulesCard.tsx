@@ -9,14 +9,15 @@ import StickyHeadTable, {StickyHeadTableColumn} from "../../components/StickyHea
 import IntervalInput from "./IntervalInput";
 import {describeIntervalSeconds, IntervalUnit, intervalUnitOptions, toIntervalSeconds} from "./PasswordLifeCycleInterval";
 import {
-    errorMessageFor,
     findRulesFor,
+    PASSWORD_LIFECYCLE_RULES,
     PasswordLifeCycleAction,
     passwordLifeCycleActionOptions,
     PasswordLifeCycleRule,
     removeRuleFor,
     saveRuleFor
 } from "./PasswordLifeCycleRepository";
+import {failureMessage} from "../../utils/ApiError";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'action', label: 'Action', minWidth: 170},
@@ -49,15 +50,17 @@ const AccountRulesCard: React.FC<AccountRulesCardProps> = ({initialAccount}) => 
             setFeedback({severity: "error", message: "Type the account email first"})
             return
         }
-        const response = await findRulesFor(account.trim())
-        if (response.status === 200) {
-            setRules(await response.json())
+        try {
+            setRules(await findRulesFor(account.trim()))
             setLoadedAccount(account.trim())
             setFeedback(null)
-        } else {
+        } catch (error) {
             setRules([])
             setLoadedAccount("")
-            setFeedback({severity: "error", message: await errorMessageFor(response)})
+            setFeedback({
+                severity: "error",
+                message: failureMessage("load the password lifecycle rules", error, PASSWORD_LIFECYCLE_RULES)
+            })
         }
     }
 
@@ -73,23 +76,25 @@ const AccountRulesCard: React.FC<AccountRulesCardProps> = ({initialAccount}) => 
             setFeedback({severity: "error", message: "The interval must be a positive whole number"})
             return
         }
-        const response = await saveRuleFor(loadedAccount, action.value as PasswordLifeCycleAction, intervalSeconds)
-        if (response.status === 204) {
-            await loadRulesFor(loadedAccount)
-            setFeedback({severity: "success", message: `${action.value} saved for ${loadedAccount}`})
-        } else {
-            setFeedback({severity: "error", message: await errorMessageFor(response)})
+        try {
+            await saveRuleFor(loadedAccount, action.value as PasswordLifeCycleAction, intervalSeconds)
+        } catch (error) {
+            setFeedback({severity: "error", message: failureMessage("save the password lifecycle rule", error, PASSWORD_LIFECYCLE_RULES)})
+            return
         }
+        await loadRulesFor(loadedAccount)
+        setFeedback({severity: "success", message: `${action.value} saved for ${loadedAccount}`})
     }
 
     const removeRule = async (ruleAction: PasswordLifeCycleAction) => {
-        const response = await removeRuleFor(loadedAccount, ruleAction)
-        if (response.status === 204) {
-            await loadRulesFor(loadedAccount)
-            setFeedback({severity: "success", message: `${ruleAction} removed for ${loadedAccount}`})
-        } else {
-            setFeedback({severity: "error", message: await errorMessageFor(response)})
+        try {
+            await removeRuleFor(loadedAccount, ruleAction)
+        } catch (error) {
+            setFeedback({severity: "error", message: failureMessage("remove the password lifecycle rule", error, PASSWORD_LIFECYCLE_RULES)})
+            return
         }
+        await loadRulesFor(loadedAccount)
+        setFeedback({severity: "success", message: `${ruleAction} removed for ${loadedAccount}`})
     }
 
     const rows = rules.map(rule => ({

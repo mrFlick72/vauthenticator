@@ -48,10 +48,16 @@ export class ClientApplicationEditorPage {
     readonly generateClientAppIdButton: Locator;
     readonly generateSecretButton: Locator;
     readonly generatedSecretAlert: Locator;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
     readonly nextTabButton: Locator;
     readonly saveButton: Locator;
     readonly permissionTab: Locator;
     readonly uriTab: Locator;
+
+    static editPath(clientAppId: string) {
+        return `/secure/admin/client-applications/edit/${clientAppId}`;
+    }
 
     constructor(private readonly page: Page) {
         this.clientAppId = page.locator('#clientAppId');
@@ -69,7 +75,9 @@ export class ClientApplicationEditorPage {
         // the icon is the input's end adornment, a sibling of the <input> inside the same MUI input root
         this.generateClientAppIdButton = this.clientAppId.locator('..').locator('svg');
         this.generateSecretButton = this.secret.locator('..').locator('svg');
-        this.generatedSecretAlert = page.getByRole('alert').filter({hasText: 'Secret:'});
+        // a string filter matches case-insensitively anywhere, and failure messages mention "secret:" too
+        this.generatedSecretAlert = page.getByRole('alert').filter({hasText: /^Secret:/});
+        this.failure = page.getByRole('alert').filter({hasNotText: /^Secret:/});
         this.nextTabButton = page.getByRole('button', {name: 'Next Tab'});
         this.saveButton = page.getByRole('button', {name: 'Save Client Application'});
         this.permissionTab = page.getByRole('tab', {name: /Permission Definition Section/});
@@ -89,6 +97,11 @@ export class ClientApplicationEditorPage {
             await this.secret.fill(credentials.secret);
         }
         await this.clientAppName.fill(credentials.clientAppName);
+    }
+
+    // opens the editor of a client application straight from its url, without going through the list
+    async gotoEdit(clientAppId: string) {
+        await this.page.goto(ClientApplicationEditorPage.editPath(clientAppId));
     }
 
     async generateClientAppId() {

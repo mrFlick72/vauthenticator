@@ -28,6 +28,7 @@ The package manifest is `src/package.json` and the webpack config is `src/webpac
 - `local`: docker-compose file and local client app provisioning for local static serving
 - `docker`: production nginx config template, `config.json.template`, and the entrypoint script used by the root `Dockerfile`
 - `dist`: generated frontend output
+- `docs/adr`: architecture decision records for this project
 - `changelog`: project release notes
 
 ## App Shape
@@ -146,6 +147,9 @@ Notes:
 - Keep runtime values in the `/config.json` response and `src/config/ConfigLoader.ts`; do not hardcode backend hosts or client IDs into feature components.
 - When changing authentication, token usage, or OIDC session management, verify the callback, logout, config cache, and session-storage flow together.
 - If a page fetches backend data, inspect the matching repository file first and keep request/response changes aligned with backend APIs.
+- Every repository call goes through `src/utils/ApiError.ts`: `ensureOk` throws an `ApiError` (status and body text) for any non-2xx status, `jsonOf` parses only a successful body. Never check `=== 200` or call `response.json()` directly, and never parse the body of a 201/204. See `docs/adr/0001-api-failures-go-through-api-error.md`.
+- Pages turn a failure into text with `failureMessage(action, error, subject)`: "Could not <action>: <reason>", e.g. "Could not delete the role: it is a protected role". The action names what the call was doing; the reason comes from the status, worded with the `ApiSubject` the repository exports (`CLIENT_APPLICATIONS`, `ROLES`, ...) for the resource that call reached, not for the page. A status with an api-specific meaning gets its reason as an override (`{412: "it is a protected role"}`).
+- A failed load shows an inline `Alert` in place of its table or form, so an unloaded form cannot be saved over stored data. A failed write shows `components/ErrorToast`; a dialog with input stays open, keeping the input, until its call succeeds, and closing it forgets the input. Confirmation dialogs (no input) close at once. Password lifecycle is the exception: each card reports success and failure alike in its own feedback `Alert`.
 - Avoid mixing `management-ui` edits with `auth-server` or Helm changes unless explicitly requested.
 
 ## Files Worth Reading First

@@ -1,5 +1,7 @@
-import React from 'react';
-import {saveRoleFor} from "./RoleRepository";
+import React, {useState} from 'react';
+import {ROLES, saveRoleFor} from "./RoleRepository";
+import {failureMessage} from "../../utils/ApiError";
+import ErrorToast from "../../components/ErrorToast";
 import FormButton from "../../components/FormButton";
 import Separator from "../../components/Separator";
 import FormInputTextField from "../../components/FormInputTextField";
@@ -15,6 +17,7 @@ interface RoleDialogProps {
 }
 
 const RoleDialog: React.FC<RoleDialogProps> = ({onClose, open, title, role, setRole, isRoleReadOnly}) => {
+    const [failure, setFailure] = useState<string | null>(null)
     return (
         <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={open} maxWidth="md">
             <DialogTitle id="simple-dialog-title">{title}</DialogTitle>
@@ -40,16 +43,15 @@ const RoleDialog: React.FC<RoleDialogProps> = ({onClose, open, title, role, setR
 
                 <DialogActions>
                     <FormButton label="Save" onClickHandler={() => {
+                        // on failure the dialog stays open with the typed role, so the admin can retry
                         saveRoleFor(role)
-                            .then(response => {
-                                if (response.status === 204) {
-                                    onClose(true)
-                                }
-                            })
+                            .then(() => onClose(true))
+                            .catch(error => setFailure(failureMessage("save the role", error, ROLES)))
                     }}/>
                     <FormButton label="Cancel" onClickHandler={onClose}/>
                 </DialogActions>
             </DialogContent>
+            <ErrorToast message={failure} onClose={() => setFailure(null)}/>
         </Dialog>
     );
 }

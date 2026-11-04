@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from "react-router";
 import {
+    CLIENT_APPLICATIONS,
     findClientApplicationFor,
     newClientApplicationRandomSecret,
     saveClientApplicationFor
@@ -20,7 +21,7 @@ import {
 } from "./AuthorizedGrantTypes";
 import vauthenticatorStyles from "../../../../theme/styles";
 import FormSelect, { SelectOption } from "../../../../components/FormSelect";
-import { findAllScopes } from "../../domain/ScopeRepository";
+import { findAllScopes, SCOPES } from "../../domain/ScopeRepository";
 import { Alert, Box, Card, CardContent, CardHeader, Snackbar, Tab, Tabs, Typography } from "@mui/material";
 import { Apps, Autorenew, ContentCopy } from "@mui/icons-material";
 import randomClientApplicationIdGenerator from "./RandomClientApplicationIdGenerator";
@@ -28,6 +29,21 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import copy from "copy-to-clipboard";
 import { ClientAppManagementPageDTO } from './ClientAppManagementPageTypes';
 import { ClientApplicationDetails } from "../../domain/ClientAppApiTypes";
+import ErrorToast from "../../../../components/ErrorToast";
+import { ApiError, failureMessage } from "../../../../utils/ApiError";
+
+// a rejected save answers 400/404 with the failing fields as {"<field>": {"errorMessage": "..."}}
+function fieldErrorsOf(error: unknown): string | null {
+    if (!(error instanceof ApiError) || (error.status !== 400 && error.status !== 404)) {
+        return null
+    }
+    try {
+        const messages = Object.values(JSON.parse(error.body)).map((value: any) => value?.errorMessage).filter(Boolean)
+        return messages.length ? messages.join("\n") : null
+    } catch {
+        return null
+    }
+}
 
 function newClientApplicationPageDetails(
     clientAppId: string | undefined,
@@ -75,11 +91,8 @@ const ClientAppManagementPage = () => {
     const [availableClientApplicationTypes] = useState<SelectOption[]>([CONFIDENTIAL_CLIENT_APP_TYPE, PUBLIC_CLIENT_APP_TYPE])
     const [availableScopes, setAvailableScopes] = useState<SelectOption[]>([])
     const [openSecretAlert, setOpenSecretAlert] = useState(false)
-    const [openFailureAlert, setOpenFailureAlert] = useState(false);
-    const handleCloseFailureAlert = () => {
-        setOpenFailureAlert(false)
-    };
-    const [errorMessage, setErrorMessage] = useState("")
+    const [loadFailure, setLoadFailure] = useState<string | null>(null)
+    const [writeFailure, setWriteFailure] = useState<string | null>(null)
 
     const [tab, setTab] = React.useState('0');
     const handleTabChange = (event: React.SyntheticEvent, newValue: any) => {
@@ -99,7 +112,13 @@ const ClientAppManagementPage = () => {
 
 
     const generateRandomClientApplicationSecret = async () => {
-        let randomSecret = await newClientApplicationRandomSecret();
+        let randomSecret
+        try {
+            randomSecret = await newClientApplicationRandomSecret();
+        } catch (error) {
+            setWriteFailure(failureMessage("generate a client application secret", error, CLIENT_APPLICATIONS))
+            return
+        }
         setClientApplication((clientApplication: ClientAppManagementPageDTO) => {
             let copiedClientApplication = Object.assign({}, clientApplication)
             copiedClientApplication.secret = randomSecret.pwd
@@ -134,22 +153,25 @@ const ClientAppManagementPage = () => {
         }
 
         saveClientApplicationFor(clientApplication.clientApplicationId!!, clientApp)
-            .then(response => {
-                if (response.status === 204) {
-                    navigate(-1);
-                } else if (response.status === 400 || response.status === 404) {
-                    response.json().then(body => {
-                        setErrorMessage(Object.values(body).map((value: any) => value.errorMessage).join("\n"))
-                        setOpenFailureAlert(true)
-                    }
-                    )
-                }
+            .then(() => navigate(-1))
+            .catch(error => {
+                const fieldErrors = fieldErrorsOf(error)
+                setWriteFailure(fieldErrors
+                    ? `Could not save the client application:\n${fieldErrors}`
+                    : failureMessage("save the client application", error, CLIENT_APPLICATIONS))
             })
     }
 
     useEffect(() => {
         async function init() {
-            let scopes = await findAllScopes()
+            let scopes
+            try {
+                scopes = await findAllScopes()
+            } catch (error) {
+                // the form cannot be filled in without the scopes to choose from
+                setLoadFailure(failureMessage("load the scopes", error, SCOPES))
+                return
+            }
             setAvailableScopes(scopes.map(scope => {
                 return { value: scope, label: scope }
             }))
@@ -159,7 +181,13 @@ const ClientAppManagementPage = () => {
                 return
             }
 
-            let clientApp = await findClientApplicationFor(clientAppId)
+            let clientApp
+            try {
+                clientApp = await findClientApplicationFor(clientAppId)
+            } catch (error) {
+                setLoadFailure(failureMessage("load the client application", error, CLIENT_APPLICATIONS))
+                return
+            }
 
             setClientApplication(
                 {
@@ -200,17 +228,14 @@ const ClientAppManagementPage = () => {
             </Alert>
         </Snackbar>
 
-        <Snackbar open={openFailureAlert} autoHideDuration={600}>
-            <Alert onClose={handleCloseFailureAlert} severity="error" sx={{ whiteSpace: 'pre-line' }}>
-                {errorMessage}
-            </Alert>
-        </Snackbar>
+        <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)} />
 
         <Typography variant="h3" component="h3">
             <Apps fontSize="large" /> Client Application: {clientApplication.clientApplicationId}
         </Typography>
 
-        <Box style={classes.tabs}>
+        {/* a form that failed to load is not shown, so it cannot be saved over the stored client application */}
+        {loadFailure ? <Alert severity="error">{loadFailure}</Alert> : <Box style={classes.tabs}>
             <Tabs value={tab}
                 orientation="vertical"
                 onChange={handleTabChange}
@@ -452,7 +477,7 @@ const ClientAppManagementPage = () => {
                     rightComponents={<FormButton label="Save Client Application" direction="rtl"
                         onClickHandler={saveClientApp} />} />
             </TabPanel>
-        </Box>
+        </Box>}
     </AdminTemplate>
 }
 

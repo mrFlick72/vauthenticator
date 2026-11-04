@@ -47,6 +47,9 @@ The hosts entries are a prerequisite, see `README.md`.
 - Use the shared component page objects in `pages/components/`: every `StickyHeadTable` paginates at 10 rows
   (`showAllRows()`), and every `FormSelect` gives its label and its select the same id (`FormSelect` targets
   `div#<id>`). Snackbars that hide after 600ms are not asserted: wait for the api response status instead.
+  The error toast and the inline load-failure alert stay long enough to assert: page objects expose them as `failure`.
+- Stub an api failure with `support/api-failures.ts` (`failApiCall`): it answers the call, and its cors preflight,
+  without reaching the auth-server, so a stubbed write changes nothing. Do not use `route.fetch()` for a write.
 - Prefer locating elements by the ids and labels the UI already renders. If a test needs a UI change to be
   locatable, that is a `management-ui` change and must be called out as cross-project.
 - `storageState` does not capture `sessionStorage`: do not try to reuse management UI tokens across tests.

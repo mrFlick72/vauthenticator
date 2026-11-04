@@ -14,12 +14,17 @@ export class ClientApplicationListPage {
     readonly table: StickyHeadTable;
     readonly deleteDialog: ConfirmationDialog;
     readonly resetSecretDialog: Locator;
+    readonly resetSecretField: Locator;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
 
     constructor(private readonly page: Page) {
         this.newClientApplicationButton = page.getByRole('button', {name: 'New Client Application'});
         this.table = new StickyHeadTable(page);
         this.deleteDialog = new ConfirmationDialog(page, 'Client App deletion');
         this.resetSecretDialog = page.getByRole('dialog', {name: /Reset Client App/});
+        this.resetSecretField = this.resetSecretDialog.locator('#resetSecretKeyField');
+        this.failure = page.getByRole('alert');
     }
 
     async showAllRows() {
@@ -60,11 +65,16 @@ export class ClientApplicationListPage {
     }
 
     async resetSecret(clientAppId: string, secret: string) {
+        await this.submitSecret(clientAppId, secret);
+        // the dialog closes only once the api accepted the secret
+        await expect(this.resetSecretDialog).toBeHidden();
+    }
+
+    // submits the secret and leaves the dialog as the api answer left it
+    async submitSecret(clientAppId: string, secret: string) {
         await this.table.actionIcon(clientAppId, RESET_SECRET_COLUMN).click();
         await expect(this.resetSecretDialog).toBeVisible();
-        await this.resetSecretDialog.locator('#resetSecretKeyField').fill(secret);
+        await this.resetSecretField.fill(secret);
         await this.resetSecretDialog.getByRole('button', {name: 'Save'}).click();
-        // the dialog closes only once the api call has completed
-        await expect(this.resetSecretDialog).toBeHidden();
     }
 }

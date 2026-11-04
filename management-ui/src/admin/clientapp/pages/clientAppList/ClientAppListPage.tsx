@@ -1,13 +1,20 @@
 import React, {useEffect, useState} from 'react';
 import {Link, useNavigate} from "react-router";
 import {Apps, Delete, Edit, VpnKey} from "@mui/icons-material";
-import {deleteClientApplicationFor, findAllClientApplications} from "../../domain/ClientAppRepository";
+import {
+    CLIENT_APPLICATIONS,
+    deleteClientApplicationFor,
+    findAllClientApplications
+} from "../../domain/ClientAppRepository";
 import AdminTemplate from "../../../../components/AdminTemplate";
 import ConfirmationDialog from '../../../../components/ConfirmationDialog';
 import FormButton from "../../../../components/FormButton";
 import StickyHeadTable, {StickyHeadTableColumn} from '../../../../components/StickyHeadTable';
 import {ClientAppListPageTableRow} from "./ClientAppListTypes";
 import ResetClientAppSecretDialog from "./ResetClientAppSecretDialog";
+import ErrorToast from "../../../../components/ErrorToast";
+import {failureMessage} from "../../../../utils/ApiError";
+import {Alert} from "@mui/material";
 
 const columns: StickyHeadTableColumn[] = [
     {id: 'clientAppName', label: 'Client Application Name', minWidth: 170},
@@ -24,6 +31,8 @@ const ClientAppListPage = () => {
     const [openResetClientAppSecretDialog, setOpenResetClientAppSecretDialog] = useState(false)
     const [openDeleteClientAppDialog, setOpenDeleteClientAppDialog] = useState(false)
     const [currentClientAppId, setCurrentClientAppId] = useState("")
+    const [loadFailure, setLoadFailure] = useState<string | null>(null)
+    const [writeFailure, setWriteFailure] = useState<string | null>(null)
 
     const navigate = useNavigate()
 
@@ -49,12 +58,9 @@ const ClientAppListPage = () => {
     }
     const deleteClientApp = () => {
         deleteClientApplicationFor(currentClientAppId)
-            .then(response => {
-                if (response.status === 204) {
-                    handleCloseDeleteClientAppDialog()
-                    fetchAllApplications()
-                }
-            })
+            .then(() => fetchAllApplications())
+            .catch(error => setWriteFailure(failureMessage("delete the client application", error, CLIENT_APPLICATIONS)))
+            .finally(() => handleCloseDeleteClientAppDialog())
     }
 
     const resetSecretKeyFor = (clientAppId: string) => {
@@ -79,10 +85,17 @@ const ClientAppListPage = () => {
                     }
                 })
                 setApplications(rows)
+                setLoadFailure(null)
+            })
+            .catch(error => {
+                setApplications([])
+                setLoadFailure(failureMessage("load the client applications", error, CLIENT_APPLICATIONS))
             });
     }
 
-    useEffect(() => fetchAllApplications(), []);
+    useEffect(() => {
+        fetchAllApplications()
+    }, []);
 
     return (
         <AdminTemplate maxWidth="xl" page=": Client Application Admin">
@@ -102,7 +115,11 @@ const ClientAppListPage = () => {
                             label={"New Client Application"}/>
             </Link>
 
-            <StickyHeadTable columns={columns} rows={applications}/>
+            <ErrorToast message={writeFailure} onClose={() => setWriteFailure(null)}/>
+
+            {loadFailure
+                ? <Alert severity="error">{loadFailure}</Alert>
+                : <StickyHeadTable columns={columns} rows={applications}/>}
 
         </AdminTemplate>
     );

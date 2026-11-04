@@ -1,4 +1,7 @@
 import { getIdpBaseUrl } from "../../config/ConfigLoader";
+import { ApiSubject, ensureOk } from "../../utils/ApiError";
+
+export const ACCOUNTS: ApiSubject = { managed: "accounts", missing: "account" }
 
 export enum MandatoryAction {
     NO_ACTION = "NO_ACTION",
@@ -17,7 +20,7 @@ type Account = {
     authorities: string[],
 }
 
-export async function findAccountFor(email: string) {
+export async function findAccountFor(email: string): Promise<Account | undefined> {
     const baseUrl = await getIdpBaseUrl()
 
     let response = await fetch(`${baseUrl}/api/admin/accounts/${email}/email`,
@@ -31,15 +34,14 @@ export async function findAccountFor(email: string) {
             credentials: 'include'
         });
     // an unknown account comes back as 200 with an empty body
-    let body = await response.text();
+    let body = await (await ensureOk(response)).text();
     return body ? JSON.parse(body) as Account : undefined
 }
 
-// todo change result type
-export async function saveAccountFor(account: Account)  {
+export async function saveAccountFor(account: Account): Promise<void> {
     const baseUrl = await getIdpBaseUrl()
 
-    return fetch(`${baseUrl}/api/admin/accounts`,
+    const response = await fetch(`${baseUrl}/api/admin/accounts`,
         {
             method: "PUT",  
             headers: {
@@ -51,5 +53,6 @@ export async function saveAccountFor(account: Account)  {
             credentials: 'include',
             body: JSON.stringify(account),
         })
+    await ensureOk(response)
 
 }

@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/test';
 import {AdminHomePage} from '../pages/admin-home-page';
 import {EmailTemplatePage, SmsTemplatePage} from '../pages/template-pages';
 import {AdminApi, TemplateKind} from '../support/admin-api';
+import {failApiCall} from '../support/api-failures';
 
 // templates are global to the auth-server: only the MFA templates are edited, nothing in the suite sends
 // an MFA message, and each scenario puts the original back through the api
@@ -101,4 +102,45 @@ test('edit the MFA SMS template', async ({page, request}) => {
     await home.goto();
 
     await expectEditable(page, await AdminApi.create(request), 'sms', await home.openSmsTemplates());
+});
+
+// the stubbed answers reach no template on the auth-server
+test.describe('api failures', () => {
+    test('an email template that fails to load shows why instead of the editor', async ({page}) => {
+        const home = new AdminHomePage(page);
+        await home.goto();
+        const templates = await home.openEmailTemplates();
+        await failApiCall(page, 'GET', '/api/email-template/MFA', 500);
+
+        await templates.type.select('MFA');
+
+        await expect(templates.failure).toHaveText('Could not load the email template: unexpected error (HTTP 500)');
+        await expect(templates.saveButton).toBeHidden();
+    });
+
+    test('a refused SMS template save shows why', async ({page}) => {
+        const home = new AdminHomePage(page);
+        await home.goto();
+        const templates = await home.openSmsTemplates();
+        await templates.load('MFA');
+        await failApiCall(page, 'PUT', '/api/sms-template', 403);
+
+        await templates.saveButton.click();
+
+        await expect(templates.failure).toHaveText('Could not save the SMS template: you are not allowed to manage SMS templates');
+        await expect(templates.savedAlert).toBeHidden();
+    });
+
+    test('a refused email template save shows why', async ({page}) => {
+        const home = new AdminHomePage(page);
+        await home.goto();
+        const templates = await home.openEmailTemplates();
+        await templates.load('MFA');
+        await failApiCall(page, 'PUT', '/api/email-template', 500);
+
+        await templates.saveButton.click();
+
+        await expect(templates.failure).toHaveText('Could not save the email template: unexpected error (HTTP 500)');
+        await expect(templates.savedAlert).toBeHidden();
+    });
 });

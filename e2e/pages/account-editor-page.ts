@@ -14,6 +14,8 @@ export class AccountEditorPage {
     readonly passwordLifecycleLink: Locator;
     readonly saveButton: Locator;
     readonly backButton: Locator;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
 
     constructor(private readonly page: Page) {
         this.email = page.locator('#email');
@@ -24,6 +26,7 @@ export class AccountEditorPage {
         this.passwordLifecycleLink = page.getByRole('link', {name: 'Password lifecycle rules'});
         this.saveButton = page.getByRole('button', {name: 'Save'});
         this.backButton = page.getByRole('button', {name: 'Back'});
+        this.failure = page.getByRole('alert');
     }
 
     // the account loads after the page renders and then overwrites the form: every account has ROLE_USER,
