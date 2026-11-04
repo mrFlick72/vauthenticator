@@ -9,6 +9,7 @@ import {
     loginInFreshBrowser,
     signUpActiveAccount
 } from '../support/accounts';
+import {failApiCall} from '../support/api-failures';
 
 // every scenario edits an account of its own, never the admin: locking or disabling the admin would end
 // the run. Effects are proven by logging in as that account from a separate browser.
@@ -108,4 +109,27 @@ test('the account page links to its password lifecycle rules', async ({request})
     await expect(lifecycle.accountRules.account).toHaveValue(account.email);
     await expect(lifecycle.accountRules.rulesHeading).toHaveText(`Rules of ${account.email}`);
     await expect(lifecycle.accountRules.noRules).toBeVisible();
+});
+
+test.describe('api failures', () => {
+    test('an account that fails to load shows why instead of the form', async ({page}) => {
+        const account = anAccount();
+        await failApiCall(page, 'GET', `/api/admin/accounts/${account.email}/email`, 403);
+
+        const editor = await accounts.openEditor(account.email);
+
+        await expect(editor.failure).toHaveText('You are not allowed to manage accounts');
+        await expect(editor.saveButton).toBeHidden();
+    });
+
+    test('a failed save stays on the account and shows why', async ({page, request}) => {
+        const account = await signUpActiveAccount(request);
+        const editor = await accounts.find(account.email);
+        await failApiCall(page, 'PUT', '/api/admin/accounts', 500);
+
+        await editor.saveButton.click();
+
+        await expect(editor.failure).toHaveText('Unexpected error (HTTP 500)');
+        await expect(page).toHaveURL(/\/accounts\/edit\//);
+    });
 });

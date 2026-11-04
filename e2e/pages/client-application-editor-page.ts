@@ -48,6 +48,8 @@ export class ClientApplicationEditorPage {
     readonly generateClientAppIdButton: Locator;
     readonly generateSecretButton: Locator;
     readonly generatedSecretAlert: Locator;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
     readonly nextTabButton: Locator;
     readonly saveButton: Locator;
     readonly permissionTab: Locator;
@@ -70,6 +72,7 @@ export class ClientApplicationEditorPage {
         this.generateClientAppIdButton = this.clientAppId.locator('..').locator('svg');
         this.generateSecretButton = this.secret.locator('..').locator('svg');
         this.generatedSecretAlert = page.getByRole('alert').filter({hasText: 'Secret:'});
+        this.failure = page.getByRole('alert').filter({hasNotText: 'Secret:'});
         this.nextTabButton = page.getByRole('button', {name: 'Next Tab'});
         this.saveButton = page.getByRole('button', {name: 'Save Client Application'});
         this.permissionTab = page.getByRole('tab', {name: /Permission Definition Section/});

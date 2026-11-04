@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/test';
 import {AdminHomePage} from '../pages/admin-home-page';
 import {Role, RolesPage} from '../pages/roles-page';
 import {uniqueId} from '../support/unique';
+import {failApiCall} from '../support/api-failures';
 
 let roles: RolesPage;
 
@@ -80,8 +81,33 @@ test('delete a role', async ({page}) => {
 test('a default role cannot be deleted', async ({page}) => {
     // 412 is the auth-server's answer for a role protected from deletion
     expect(await roles.delete('ROLE_USER')).toBe(412);
+    await expect(roles.failure).toHaveText('Delete this Role is not allowed it is a protected role');
 
     await page.reload();
     await roles.table.showAllRows();
     await expect(roles.row('ROLE_USER')).toBeVisible();
+});
+
+test.describe('api failures', () => {
+    test('a role list that fails to load shows why instead of the table', async ({page}) => {
+        await failApiCall(page, 'GET', '/api/roles', 401);
+        await page.reload();
+
+        await expect(roles.failure).toHaveText('Your session has expired, please log in again');
+        await expect(roles.table.rowsPerPage).toBeHidden();
+    });
+
+    test('a refused role keeps the dialog open with what was typed', async ({page}) => {
+        const role = aRole();
+        await failApiCall(page, 'PUT', '/api/roles', 400, 'the role name is not valid');
+
+        await roles.openNewRole();
+        await roles.name.fill(role.name);
+        await roles.description.fill(role.description);
+        await roles.submitDialog();
+
+        await expect(roles.failure).toHaveText('The request is not valid: the role name is not valid');
+        await expect(roles.roleDialog).toBeVisible();
+        await expect(roles.name).toHaveValue(role.name);
+    });
 });

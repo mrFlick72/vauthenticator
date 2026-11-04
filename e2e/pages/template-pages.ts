@@ -7,12 +7,15 @@ class TemplatePage {
     readonly body: Locator;
     readonly saveButton: Locator;
     readonly savedAlert: Locator;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
 
     constructor(protected readonly page: Page, private readonly path: string, typeSelectId: string, editorLabel: string, savedMessage: string) {
         this.type = new FormSelect(page, typeSelectId);
         this.body = page.getByRole('textbox', {name: editorLabel});
         this.saveButton = page.getByRole('button', {name: 'Save'});
         this.savedAlert = page.getByRole('alert').filter({hasText: savedMessage});
+        this.failure = page.getByRole('alert').filter({hasNotText: savedMessage});
     }
 
     async goto() {

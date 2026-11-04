@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/test';
 import {AdminHomePage} from '../pages/admin-home-page';
 import {KeysPage} from '../pages/keys-page';
 import {AdminApi} from '../support/admin-api';
+import {failApiCall} from '../support/api-failures';
 
 // signature keys are global to the auth-server: this spec runs in the "keys" project, alone and after every
 // other scenario, and only ever rotates or deletes keys it created itself, never a seeded one
@@ -91,4 +92,13 @@ test('a rotated key cannot be deleted', async ({page}) => {
     expect(await keys.delete(kid)).toBe(400);
 
     expect((await adminApi.signatureKeys()).map(key => key.kid)).toContain(kid);
+});
+
+// the stubbed answer changes nothing on the auth-server
+test('a key list that fails to load shows why instead of the table', async ({page}) => {
+    await failApiCall(page, 'GET', '/api/keys', 403);
+    await page.reload();
+
+    await expect(keys.failure).toHaveText('You are not allowed to manage keys');
+    await expect(keys.table.rowsPerPage).toBeHidden();
 });

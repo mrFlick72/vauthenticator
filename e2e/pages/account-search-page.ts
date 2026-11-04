@@ -17,12 +17,17 @@ export class AccountSearchPage {
     }
 
     async find(email: string) {
+        const editor = await this.openEditor(email);
+        await editor.waitForAccount();
+        return editor;
+    }
+
+    // opens the editor without waiting for the account to load
+    async openEditor(email: string) {
         await this.email.fill(email);
         await this.findButton.click();
         await expect(this.page).toHaveURL(new RegExp(`/accounts/edit/${email}$`));
-        const editor = new AccountEditorPage(this.page);
-        await editor.waitForAccount();
-        return editor;
+        return new AccountEditorPage(this.page);
     }
 
     // an unknown account sends the editor straight back here

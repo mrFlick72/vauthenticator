@@ -146,6 +146,8 @@ Notes:
 - Keep runtime values in the `/config.json` response and `src/config/ConfigLoader.ts`; do not hardcode backend hosts or client IDs into feature components.
 - When changing authentication, token usage, or OIDC session management, verify the callback, logout, config cache, and session-storage flow together.
 - If a page fetches backend data, inspect the matching repository file first and keep request/response changes aligned with backend APIs.
+- Every repository call goes through `src/utils/ApiError.ts`: `ensureOk` throws an `ApiError` (status and body text) for any non-2xx status, `jsonOf` parses only a successful body. Never check `=== 200` or call `response.json()` directly, and never parse the body of a 201/204.
+- Pages turn an `ApiError` into text with `errorMessageFor` (each domain exports a wrapper such as `clientAppsMessageFor`). A failed load shows an inline `Alert` in place of its table or form, so an unloaded form cannot be saved over stored data; a failed write shows `components/ErrorToast`, and a dialog stays open with its input until the call succeeds.
 - Avoid mixing `management-ui` edits with `auth-server` or Helm changes unless explicitly requested.
 
 ## Files Worth Reading First

@@ -15,6 +15,8 @@ export class RolesPage {
     readonly name: Locator;
     readonly description: Locator;
     readonly deleteDialog: ConfirmationDialog;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
 
     constructor(private readonly page: Page) {
         this.newRoleButton = page.getByRole('button', {name: 'New Role'});
@@ -23,6 +25,7 @@ export class RolesPage {
         this.name = this.roleDialog.locator('#name');
         this.description = this.roleDialog.locator('#description');
         this.deleteDialog = new ConfirmationDialog(page, 'Role delete');
+        this.failure = page.getByRole('alert');
     }
 
     row(roleName: string) {
@@ -35,8 +38,18 @@ export class RolesPage {
 
     // the dialog closes, and the list is refetched, only once the api accepted the role
     async saveDialog() {
-        await this.roleDialog.getByRole('button', {name: 'Save'}).click();
+        await this.submitDialog();
         await expect(this.roleDialog).toBeHidden();
+    }
+
+    // submits the role and leaves the dialog as the api answer left it
+    async submitDialog() {
+        await this.roleDialog.getByRole('button', {name: 'Save'}).click();
+    }
+
+    async openNewRole() {
+        await this.newRoleButton.click();
+        await expect(this.roleDialog).toBeVisible();
     }
 
     async cancelDialog() {
@@ -63,7 +76,7 @@ export class RolesPage {
         await this.saveDialog();
     }
 
-    // resolves to the http status of the delete call: the failure snackbar hides after 600ms, too soon to assert
+    // resolves to the http status of the delete call; a refused delete shows an error toast as well
     async delete(roleName: string) {
         await this.table.actionIcon(roleName, DELETE_COLUMN).click();
         const response = this.page.waitForResponse(r => r.request().method() === 'DELETE' && r.url().includes('/api/roles/'));

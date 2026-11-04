@@ -11,11 +11,14 @@ export class KeysPage {
     readonly table: StickyHeadTable;
     readonly deleteDialog: Locator;
     readonly rotateDialog: Locator;
+    // a failed load shows an inline alert in place of the content, a failed write an error toast
+    readonly failure: Locator;
 
     constructor(private readonly page: Page) {
         this.table = new StickyHeadTable(page);
         this.deleteDialog = page.getByRole('dialog', {name: 'Delete Key Dialog'});
         this.rotateDialog = page.getByRole('dialog', {name: 'Renew Key Dialog'});
+        this.failure = page.getByRole('alert');
     }
 
     async goto() {
@@ -34,7 +37,7 @@ export class KeysPage {
         return this.page.waitForResponse(r => r.request().method() === method && new URL(r.url()).pathname === path);
     }
 
-    // both dialogs confirm with "Save"; the result snackbars hide after 600ms, so callers get the http status
+    // both dialogs confirm with "Save" and close at once, whatever the api answers: callers get the http status
     private async confirm(dialog: Locator, call: Promise<Response>) {
         await dialog.getByRole('button', {name: 'Save'}).click();
         await expect(dialog).toBeHidden();
