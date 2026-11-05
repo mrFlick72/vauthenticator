@@ -2,7 +2,8 @@ import React, {useEffect, useMemo, useState} from "react";
 import {Box, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from "@mui/material";
 import {Security} from "@mui/icons-material";
 import {applicationConfigLoader} from "../config/ConfigLoader";
-import {checkOfSession, invalidateSession, isAuthenticated} from "./Authenticator";
+import {checkOfSession, invalidateSession, logInAgain, renewAccess} from "./Authenticator";
+import {ACCESS_REJECTED_EVENT} from "../utils/ApiError";
 
 const SESSION_STATE_STORAGE_KEY = "SESSION_STATE";
 const OP_IFRAME_ID = "op";
@@ -15,6 +16,10 @@ type SessionManagementEvent = {
     type: typeof SESSION_MANAGEMENT_EVENT_TYPE;
     status: SessionManagementStatus;
 };
+
+// "session": the OP iframe reported the session ended. "access": the api rejected the access token; the session
+// may still be alive, and renewing tells, so the dialog does not claim either way
+type Expiry = "session" | "access";
 
 type SessionManagementConfig = {
     clientApplicationId: string;
@@ -111,7 +116,7 @@ const SessionManagement: React.FC = () => {
     const [sessionState, setSessionState] = useState<string | null>(() =>
         window.sessionStorage.getItem(SESSION_STATE_STORAGE_KEY)
     );
-    const [sessionExpired, setSessionExpired] = useState(false);
+    const [expiry, setExpiry] = useState<Expiry | null>(null);
 
     useEffect(() => {
         let active = true;
@@ -143,14 +148,9 @@ const SessionManagement: React.FC = () => {
                 return;
             }
 
-            if (status === "changed") {
+            if (status === "changed" || status === "error") {
                 invalidateSession();
-                setSessionExpired(true);
-            }
-
-            if (status === "error") {
-                invalidateSession();
-                setSessionExpired(true);
+                setExpiry("session");
             }
         };
 
@@ -170,9 +170,13 @@ const SessionManagement: React.FC = () => {
         };
     }, []);
 
-    const relogin = () => {
-        isAuthenticated().then();
-    };
+    // a rejected api call: a burst of them opens a single dialog, and never replaces a "session" one
+    useEffect(() => {
+        const onAccessRejected = () => setExpiry(current => current ?? "access");
+
+        window.addEventListener(ACCESS_REJECTED_EVENT, onAccessRejected);
+        return () => window.removeEventListener(ACCESS_REJECTED_EVENT, onAccessRejected);
+    }, []);
 
     const iframeData = useMemo(() => {
         if (!config || !sessionState) {
@@ -215,7 +219,7 @@ const SessionManagement: React.FC = () => {
             <Dialog
                 aria-labelledby="session-expired-dialog-title"
                 aria-describedby="session-expired-dialog-description"
-                open={sessionExpired}
+                open={expiry !== null}
                 maxWidth="sm"
             >
                 <DialogTitle id="session-expired-dialog-title">
@@ -235,18 +239,24 @@ const SessionManagement: React.FC = () => {
                         >
                             <Security aria-hidden="true" fontSize="small"/>
                         </Box>
-                        <span>Session expired</span>
+                        <span>{expiry === "access" ? "Access expired" : "Session expired"}</span>
                     </Box>
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText id="session-expired-dialog-description">
-                        Your session is over. Log in again to continue.
+                        {expiry === "access"
+                            ? "Your access to the admin interface has expired. Continue to renew it; you may be asked to log in again. Unsaved changes on this page will be lost."
+                            : "Your session is over. Log in again to continue."}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button variant="contained" color="primary" onClick={relogin}>
-                        Log in again
-                    </Button>
+                    {expiry === "access"
+                        ? <Button variant="contained" color="primary" onClick={() => renewAccess().then()}>
+                            Continue
+                        </Button>
+                        : <Button variant="contained" color="primary" onClick={() => logInAgain().then()}>
+                            Log in again
+                        </Button>}
                 </DialogActions>
             </Dialog>
         </>

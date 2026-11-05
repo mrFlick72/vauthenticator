@@ -48,25 +48,67 @@ const isVAuthenticatorLoginUrl = (url: string, idpBaseUrl: string) => {
     return redirectUrl.origin === idpUrl.origin && redirectUrl.pathname === "/login"
 }
 
+/**
+ * The check every admin page runs on mount. Missing, malformed or expired tokens are renewed from the session at
+ * once, without asking: a page that has just loaded holds nothing the admin could lose. When the session has
+ * ended too, the authorization server shows its login form.
+ *
+ * It reads the access token's own expiry instead of asking the authorization server, so a server that is down
+ * cannot send it into a redirect loop. A token rejected for another reason, such as a revoked one, still meets
+ * the "Access expired" dialog on its first api call.
+ */
 export const isAuthenticated = async () => {
-    window.sessionStorage.setItem("returnTo", window.location.href);
-    if (!await hasValidTokens()) {
-        window.location.href = await getAuthorizeUrlFor("login")
+    if (!hasUsableTokens()) {
+        await renewAccess()
     }
 }
 
-const hasValidTokens = async () => {
-    const oauth2Config = await applicationConfigLoader()
+// renewing a little before the expiry keeps a call made right after the check from being rejected
+const EXPIRY_MARGIN_SECONDS = 30
+
+const hasUsableTokens = (): boolean => {
     const idToken = window.sessionStorage.getItem("ID_TOKEN");
     const accessToken = window.sessionStorage.getItem("ACCESS_TOKEN");
-
-    if (idToken && accessToken) {
-        let response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`)
-        return response.status != 403
-    } else {
+    if (!idToken || !accessToken) {
         return false
     }
+    const expiresAt = expiryOf(accessToken)
+    return expiresAt !== null && expiresAt - EXPIRY_MARGIN_SECONDS > Date.now() / 1000
 }
+
+// the exp claim of a jwt, in seconds; null when the token is not a readable jwt
+const expiryOf = (jwt: string): number | null => {
+    try {
+        const payload = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
+        const exp = JSON.parse(window.atob(payload)).exp
+        return typeof exp === "number" ? exp : null
+    } catch {
+        return null
+    }
+}
+
+/**
+ * Expired Access: fresh tokens from the living session, without credentials, then back to this page.
+ */
+export const renewAccess = async () => {
+    window.sessionStorage.setItem("returnTo", window.location.href);
+    window.location.href = await getAuthorizeUrlFor("none")
+}
+
+/**
+ * Expired Session: the admin logs in again with their credentials, then comes back to this page.
+ */
+export const logInAgain = async () => {
+    window.sessionStorage.setItem("returnTo", window.location.href);
+    window.location.href = await getAuthorizeUrlFor("login")
+}
+
+/**
+ * The errors an authorization request with prompt=none answers when only an interactive login can continue.
+ */
+export const isInteractionRequired = (error: string | null) =>
+    error === "login_required" || error === "interaction_required" ||
+    error === "consent_required" || error === "account_selection_required"
 
 export const authenticate = async (code: string) => {
     let oauth2Config = await applicationConfigLoader()
@@ -129,12 +171,3 @@ export const checkOfSession = async (): Promise<boolean> => {
     }
 }
 
-export const authenticationChecker = () => {
-    applicationConfigLoader()
-        .then(config => {
-            setInterval(() => {
-                isAuthenticated().then()
-            }, config.authenticationCheckInterval * 1000)
-        })
-
-}

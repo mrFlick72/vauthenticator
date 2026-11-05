@@ -65,6 +65,10 @@ Runtime configuration is loaded by `src/config/ConfigLoader.ts` from `GET /confi
 
 OIDC Session Management is implemented in `src/auth/SessionManagement.tsx`. It uses the OP iframe at `${idpBaseUrl}/session/management`, stores the current `SESSION_STATE`, and shows a relogin dialog when the OP reports `changed` or `error` and the silent session check fails.
 
+The terms below are defined in `CONTEXT.md`. A 401 from the management api makes `ensureOk` dispatch `ACCESS_REJECTED_EVENT`, and `SessionManagement` opens a single "Access expired" dialog for a burst of them. It does not claim whether the **Session** is still alive: its "Continue" redirects with `prompt=none`, which renews an **Expired Access** silently and shows the login form for an **Expired Session**, then returns to the page through `returnTo`. On mount, `isAuthenticated()` reads the access token's `exp` claim, with no network call: a missing, malformed or expired token renews at once with `prompt=none`. `Callback.tsx` turns an interaction-required `prompt=none` answer into a `prompt=login` redirect, and lands home when `returnTo` is missing.
+
+Two limits of the browser shape this (#420). `checkOfSession()` fetches the authorize endpoint and follows a cross-origin redirect back to `/callback`, which the browser blocks, so it reports a live session as ended: only the OP iframe path still uses it. `/userinfo` cannot take a bearer token cross-origin, because its preflight gets no CORS headers from the auth-server.
+
 Important session keys:
 
 - `ID_TOKEN`
@@ -167,4 +171,4 @@ Notes:
 
 - This project already contains generated output in `dist/`; do not edit generated files by hand.
 - `src/node_modules` is present inside the project tree, so be careful to avoid noisy searches or accidental edits there.
-- The auth check interval value is multiplied by `1000` in `Authenticator.ts`, so verify the intended unit before changing it.
+- `AUTHENTICATION_CHECK_INTERVAL` still reaches `config.json`, but nothing reads it since the periodic check was removed (#420); dropping it touches the Helm chart.

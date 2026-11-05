@@ -17,7 +17,7 @@ For issue [#353](https://github.com/mrFlick72/vauthenticator/issues/353) the Key
 - Fixing only the call sites named in the issue — rejected: the same unchecked `json()` and missing `else` branches were in most repositories, and nothing stopped new ones.
 - Keeping `Response` as the return type everywhere, with each page checking the status, as password lifecycle did — rejected: the check is repeated on every page, and forgetting it is exactly how these bugs happened. Password lifecycle now goes through `ApiError` as well.
 - Redirecting to the generic error page on any failure — rejected: it throws away the page the admin was working on, and the typed input with it.
-- Opening the Session expired dialog on a 401 — deferred to [#420](https://github.com/mrFlick72/vauthenticator/issues/420): it needs a way for a page's `ApiError` to reach `SessionManagement`; a 401 shows its message like any other status meanwhile.
+- Handling a 401 page by page — rejected in [#420](https://github.com/mrFlick72/vauthenticator/issues/420): `ensureOk` dispatches one window event on a 401 and `SessionManagement` opens a single "Access expired" dialog, whose renewal logs the admin in again only if the session has ended too. The page still shows its "your access has expired" message, so the admin knows which action to redo.
 
 **Consequences:**
 - A new repository function must use `ensureOk` or `jsonOf`, and its page must catch: a call that skips them brings back the silent failures this replaced.
