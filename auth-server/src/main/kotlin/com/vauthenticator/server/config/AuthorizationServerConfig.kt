@@ -177,7 +177,12 @@ class AuthorizationServerConfig {
 
         val authorizationServerConfigurer = OAuth2AuthorizationServerConfigurer()
         http
-            .securityMatcher(authorizationServerConfigurer.endpointsMatcher)
+            .securityMatcher(
+                authorizationServerRequestMatcher(
+                    authorizationServerConfigurer.endpointsMatcher,
+                    providerSettings.oidcUserInfoEndpoint
+                )
+            )
             .with(
                 authorizationServerConfigurer, { it.oidc(Customizer.withDefaults()) }// Enable OpenID Connect 1.0
             )
