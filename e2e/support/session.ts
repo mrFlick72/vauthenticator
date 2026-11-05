@@ -9,7 +9,7 @@ export async function accessToken(page: Page) {
     return page.evaluate(() => window.sessionStorage.getItem('ACCESS_TOKEN'));
 }
 
-// an unsigned jwt the management ui reads as expired: the ui only looks at its exp claim before using it
+// an unsigned, expired jwt: the auth-server rejects it, so the ui must renew it on load
 export function expiredJwt() {
     const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
     return `${encode({alg: 'none'})}.${encode({exp: Math.floor(Date.now() / 1000) - 60})}.`;

@@ -17,8 +17,6 @@ export class RolesPage {
     readonly deleteDialog: ConfirmationDialog;
     // a failed load shows an inline alert in place of the content, a failed write an error toast
     readonly failure: Locator;
-    // a session expiry dialog is modal and hides the rest of the page from the accessibility tree
-    readonly failureBehindDialog: Locator;
 
     constructor(private readonly page: Page) {
         this.newRoleButton = page.getByRole('button', {name: 'New Role'});
@@ -28,7 +26,6 @@ export class RolesPage {
         this.description = this.roleDialog.locator('#description');
         this.deleteDialog = new ConfirmationDialog(page, 'Role delete');
         this.failure = page.getByRole('alert');
-        this.failureBehindDialog = page.getByRole('alert', {includeHidden: true});
     }
 
     row(roleName: string) {
