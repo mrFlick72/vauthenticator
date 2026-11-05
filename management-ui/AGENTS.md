@@ -101,7 +101,6 @@ production and Helm. Values come from `local/.env` (copy `local/.env.example`):
 - `REDIRECT_URI`
 - `CLIENT_APPLICATION_ID`
 - `IDP_BASE_URL`
-- `AUTHENTICATION_CHECK_INTERVAL`
 - `API_BASE_URL`
 
 Local defaults point to:
@@ -116,7 +115,7 @@ The root `Dockerfile` builds the SPA (`npm run production-build`) and copies it 
 rendered at container start via the official nginx image's envsubst-on-templates
 mechanism. A second startup step, `docker/40-generate-app-config.sh` (installed into
 `/docker-entrypoint.d/`, the base image's own extension hook), runs `envsubst` over
-`docker/config.json.template` to produce `/usr/share/nginx/html/config.json` from the five
+`docker/config.json.template` to produce `/usr/share/nginx/html/config.json` from the four
 env vars above — sourced from a ConfigMap in the `helm-charts/charts/management-ui` chart
 via `envFrom`. `GET /config.json` is served with `Cache-Control: no-store` so a redeploy's
 new values are never served stale. See `helm-charts/charts/management-ui/README.md` for
@@ -171,4 +170,3 @@ Notes:
 
 - This project already contains generated output in `dist/`; do not edit generated files by hand.
 - `src/node_modules` is present inside the project tree, so be careful to avoid noisy searches or accidental edits there.
-- `AUTHENTICATION_CHECK_INTERVAL` still reaches `config.json`, but nothing reads it since the periodic check was removed (#420); dropping it touches the Helm chart.
