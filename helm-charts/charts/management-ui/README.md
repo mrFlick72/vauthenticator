@@ -20,13 +20,11 @@ helm lint charts/management-ui \
   --set application.idpBaseUrl=http://localhost:9090 \
   --set application.clientApplicationId=vauthenticator-management-ui \
   --set application.redirectUri=http://localhost:8085/callback \
-  --set application.authenticationCheckInterval=15000 \
   --set application.apiBaseUrl=http://localhost:9090/api
 helm template management-ui charts/management-ui \
   --set application.idpBaseUrl=http://localhost:9090 \
   --set application.clientApplicationId=vauthenticator-management-ui \
   --set application.redirectUri=http://localhost:8085/callback \
-  --set application.authenticationCheckInterval=15000 \
   --set application.apiBaseUrl=http://localhost:9090/api
 ```
 
@@ -130,7 +128,6 @@ application:
   idpBaseUrl: http://application-example-host.com
   clientApplicationId: vauthenticator-management-ui
   redirectUri: http://management-ui-example-host.com/callback
-  authenticationCheckInterval: "15000"
   apiBaseUrl: http://application-example-host.com/api
 ```
 
@@ -139,11 +136,10 @@ application:
 | `application.idpBaseUrl` | `IDP_BASE_URL` | Base URL of the authorization server. | placeholder |
 | `application.clientApplicationId` | `CLIENT_APPLICATION_ID` | OAuth2 client ID the SPA authenticates as. | placeholder |
 | `application.redirectUri` | `REDIRECT_URI` | OAuth2 authorization code redirect URI, must match the client app's registered callback. | placeholder |
-| `application.authenticationCheckInterval` | `AUTHENTICATION_CHECK_INTERVAL` | Milliseconds between OIDC session-management checks. | `"15000"` |
 | `application.apiBaseUrl` | `API_BASE_URL` | Base URL the admin SPA calls for management API requests. | placeholder |
 
 This chart renders these into a `ConfigMap` (`templates/configmap.yaml`), wired into the
-Deployment via `envFrom`. All five are required by the ConfigMap template (`required`
+Deployment via `envFrom`. All four are required by the ConfigMap template (`required`
 fails `helm template`/`helm install` with a clear error instead of deploying a pod that
 serves broken config).
 

@@ -30,13 +30,11 @@ helm lint charts/management-ui \
   --set application.idpBaseUrl=http://localhost \
   --set application.clientApplicationId=vauthenticator-management-ui \
   --set application.redirectUri=http://localhost/callback \
-  --set application.authenticationCheckInterval=15000 \
   --set application.apiBaseUrl=http://localhost/api
 helm template management-ui charts/management-ui \
   --set application.idpBaseUrl=http://localhost \
   --set application.clientApplicationId=vauthenticator-management-ui \
   --set application.redirectUri=http://localhost/callback \
-  --set application.authenticationCheckInterval=15000 \
   --set application.apiBaseUrl=http://localhost/api
 ```
 

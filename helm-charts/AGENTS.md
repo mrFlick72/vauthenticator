@@ -24,10 +24,8 @@ This directory holds two independent charts.
 - `charts/vauthenticator/Chart.yaml`: chart metadata and dependencies
 - `charts/vauthenticator/values.yaml`: default values
 - `charts/vauthenticator/templates`: rendered Kubernetes resources, including the workload `ConfigMap` in `configmap.yaml` and the `Deployment` in `deployment.yaml`
-- `changelog`: `charts/vauthenticator` release notes
 - `charts/management-ui/Chart.yaml`, `charts/management-ui/values.yaml`, `charts/management-ui/templates`: the `management-ui` chart
 - `charts/management-ui/README.md`: values and chart configuration documentation for `charts/management-ui`
-- `charts/management-ui/changelog`: `charts/management-ui` release notes
 
 ## Workloads
 
@@ -51,13 +49,14 @@ From `helm-charts`:
 - `helm dependency update charts/vauthenticator`
 - `helm lint charts/vauthenticator --set ingress.host=localhost --set application.datasource.url=jdbc:postgresql://localhost:5432/`
 - `helm template vauthenticator charts/vauthenticator --set ingress.host=localhost --set application.datasource.url=jdbc:postgresql://localhost:5432/`
-- `helm lint charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.authenticationCheckInterval=15000 --set application.apiBaseUrl=http://localhost/api`
-- `helm template management-ui charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.authenticationCheckInterval=15000 --set application.apiBaseUrl=http://localhost/api`
+- `helm lint charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.apiBaseUrl=http://localhost/api`
+- `helm template management-ui charts/management-ui --set application.idpBaseUrl=http://localhost --set application.clientApplicationId=vauthenticator-management-ui --set application.redirectUri=http://localhost/callback --set application.apiBaseUrl=http://localhost/api`
 
 ## Conventions For Changes
 
 - Keep `values.yaml`, templates, and `charts/README.md` in sync whenever a value is added, renamed, or removed.
-- Bump `Chart.yaml` chart version and add a changelog entry for chart behavior changes.
+- Do not bump `Chart.yaml` `version` or `appVersion` by hand: `.github/workflows/release.yml` sets both charts to the release version.
+- Release notes, including chart upgrade notes, go in the general changelog (`changelog/<version>.md` at the repo root), written at release time. Record an upgrade note in the PR description and its issue meanwhile.
 - Do not put secrets directly in default values; document secret integration or value overrides instead.
 - Preserve existing value names unless the migration is explicitly requested. Some keys, such as `lables`, are misspelled but part of the current chart API.
 - Use helpers from `_helpers.tpl` for names, labels, and selector labels.
