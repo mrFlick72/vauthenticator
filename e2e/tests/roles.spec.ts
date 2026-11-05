@@ -93,7 +93,8 @@ test.describe('api failures', () => {
         await failApiCall(page, 'GET', '/api/roles', 401);
         await page.reload();
 
-        await expect(roles.failure).toHaveText('Could not load the roles: your session has expired, please log in again');
+        // the access expired dialog opens over the page as well, see session-expiry.spec.ts
+        await expect(roles.failureBehindDialog).toHaveText('Could not load the roles: your access has expired');
         await expect(roles.table.rowsPerPage).toBeHidden();
     });
 
