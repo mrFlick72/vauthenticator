@@ -4,7 +4,7 @@
   "description": "VAuthenticator UI Asset library",
   "scripts": {
     "build": "webpack --config webpack.config.js --mode=development",
-    "production-build": "webpack --config webpack.config.js --mode=production",
+    "production-build": "NODE_ENV=production webpack --config webpack.config.js --mode=production",
     "watch": "webpack --watch",
     "typecheck": "tsc --noEmit"
   },
