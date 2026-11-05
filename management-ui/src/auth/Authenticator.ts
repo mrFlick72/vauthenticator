@@ -48,25 +48,60 @@ const isVAuthenticatorLoginUrl = (url: string, idpBaseUrl: string) => {
     return redirectUrl.origin === idpUrl.origin && redirectUrl.pathname === "/login"
 }
 
+/**
+ * The check every admin page runs on mount. The authorization server validates the access token (signature,
+ * expiry, revocation) through userinfo; a missing or rejected token is renewed from the session at once,
+ * without asking: a page that has just loaded holds nothing the admin could lose. When the session has ended
+ * too, the authorization server shows its login form.
+ */
 export const isAuthenticated = async () => {
-    window.sessionStorage.setItem("returnTo", window.location.href);
-    if (!await hasValidTokens()) {
-        window.location.href = await getAuthorizeUrlFor("login")
+    if (await tokensState() === "rejected") {
+        await renewAccess()
     }
 }
 
-const hasValidTokens = async () => {
-    const oauth2Config = await applicationConfigLoader()
+type TokensState = "accepted" | "rejected" | "unknown"
+
+// "unknown" when the authorization server cannot tell (5xx, network failure): renewing then could loop while
+// it is down, so the page loads and its api calls report the failure instead
+const tokensState = async (): Promise<TokensState> => {
     const idToken = window.sessionStorage.getItem("ID_TOKEN");
     const accessToken = window.sessionStorage.getItem("ACCESS_TOKEN");
+    if (!idToken || !accessToken) {
+        return "rejected"
+    }
 
-    if (idToken && accessToken) {
-        let response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`)
-        return response.status != 403
-    } else {
-        return false
+    try {
+        const oauth2Config = await applicationConfigLoader()
+        const response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`, {
+            headers: {'Authorization': `Bearer ${accessToken}`},
+            mode: "cors",
+        })
+        if (response.ok) {
+            return "accepted"
+        }
+        return response.status === 401 ? "rejected" : "unknown"
+    } catch (e) {
+        console.error("Token check failed", e)
+        return "unknown"
     }
 }
+
+/**
+ * Fresh tokens from the living session, without credentials, then back to this page. When the session has
+ * ended too, the authorization server shows its login form instead.
+ */
+export const renewAccess = async () => {
+    window.sessionStorage.setItem("returnTo", window.location.href);
+    window.location.href = await getAuthorizeUrlFor("none")
+}
+
+/**
+ * The errors an authorization request with prompt=none answers when only an interactive login can continue.
+ */
+export const isInteractionRequired = (error: string | null) =>
+    error === "login_required" || error === "interaction_required" ||
+    error === "consent_required" || error === "account_selection_required"
 
 export const authenticate = async (code: string) => {
     let oauth2Config = await applicationConfigLoader()
@@ -129,12 +164,3 @@ export const checkOfSession = async (): Promise<boolean> => {
     }
 }
 
-export const authenticationChecker = () => {
-    applicationConfigLoader()
-        .then(config => {
-            setInterval(() => {
-                isAuthenticated().then()
-            }, config.authenticationCheckInterval * 1000)
-        })
-
-}

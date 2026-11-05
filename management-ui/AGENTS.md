@@ -65,6 +65,10 @@ Runtime configuration is loaded by `src/config/ConfigLoader.ts` from `GET /confi
 
 OIDC Session Management is implemented in `src/auth/SessionManagement.tsx`. It uses the OP iframe at `${idpBaseUrl}/session/management`, stores the current `SESSION_STATE`, and shows a relogin dialog when the OP reports `changed` or `error` and the silent session check fails.
 
+On mount, `isAuthenticated()` sends the access token to `/userinfo`, so the authorization server validates it (signature, expiry, revocation). Missing tokens or a 401 renew at once with `prompt=none` (an **Expired Access**, see `CONTEXT.md`): the session renews silently, or the authorization server shows its login form for an **Expired Session**, then the page is back through `returnTo`. Any other failure does not redirect, so a down auth-server cannot cause a redirect loop. This depends on the auth-server answering the `/userinfo` CORS preflight (#422). `Callback.tsx` turns an interaction-required `prompt=none` answer into a `prompt=login` redirect, and lands home when `returnTo` is missing. A 401 from an api call while the page is open only shows the page's message.
+
+`checkOfSession()`, used by the OP iframe path, fetches the authorize endpoint and follows a cross-origin redirect back to `/callback`, which the browser blocks, so it reports a live session as ended (#420).
+
 Important session keys:
 
 - `ID_TOKEN`
@@ -167,4 +171,4 @@ Notes:
 
 - This project already contains generated output in `dist/`; do not edit generated files by hand.
 - `src/node_modules` is present inside the project tree, so be careful to avoid noisy searches or accidental edits there.
-- The auth check interval value is multiplied by `1000` in `Authenticator.ts`, so verify the intended unit before changing it.
+- `AUTHENTICATION_CHECK_INTERVAL` still reaches `config.json`, but nothing reads it since the periodic check was removed (#420); dropping it touches the Helm chart.
