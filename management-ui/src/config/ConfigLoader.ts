@@ -4,8 +4,6 @@ type ApplicationConfig = {
     clientApplicationId: string,
     idpBaseUrl: string
     apiBaseUrl: string
-    authenticationCheckInterval: number
-
 }
 
 type ApplicationConfigResponse = {
@@ -13,7 +11,6 @@ type ApplicationConfigResponse = {
     clientApplicationId: string,
     idpBaseUrl: string
     apiBaseUrl: string
-    authenticationCheckInterval: string | number
 }
 
 const appConfigStorageKey = "appConfig"
@@ -32,7 +29,6 @@ const toApplicationConfig = (configData: ApplicationConfigResponse): Application
     clientApplicationId: configData.clientApplicationId,
     idpBaseUrl: configData.idpBaseUrl,
     apiBaseUrl: configData.apiBaseUrl,
-    authenticationCheckInterval: Number(configData.authenticationCheckInterval),
 })
 
 const loadApplicationConfigFromCache = (): ApplicationConfig | null => {

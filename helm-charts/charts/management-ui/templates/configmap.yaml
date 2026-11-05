@@ -7,5 +7,4 @@ data:
   IDP_BASE_URL: {{ required "application.idpBaseUrl must be set" .Values.application.idpBaseUrl | quote }}
   CLIENT_APPLICATION_ID: {{ required "application.clientApplicationId must be set" .Values.application.clientApplicationId | quote }}
   REDIRECT_URI: {{ required "application.redirectUri must be set" .Values.application.redirectUri | quote }}
-  AUTHENTICATION_CHECK_INTERVAL: {{ required "application.authenticationCheckInterval must be set" .Values.application.authenticationCheckInterval | quote }}
   API_BASE_URL: {{ required "application.apiBaseUrl must be set" .Values.application.apiBaseUrl | quote }}
