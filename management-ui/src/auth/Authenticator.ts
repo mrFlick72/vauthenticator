@@ -49,58 +49,51 @@ const isVAuthenticatorLoginUrl = (url: string, idpBaseUrl: string) => {
 }
 
 /**
- * The check every admin page runs on mount. Missing, malformed or expired tokens are renewed from the session at
- * once, without asking: a page that has just loaded holds nothing the admin could lose. When the session has
- * ended too, the authorization server shows its login form.
- *
- * It reads the access token's own expiry instead of asking the authorization server, so a server that is down
- * cannot send it into a redirect loop. A token rejected for another reason, such as a revoked one, still meets
- * the "Access expired" dialog on its first api call.
+ * The check every admin page runs on mount. The authorization server validates the access token (signature,
+ * expiry, revocation) through userinfo; a missing or rejected token is renewed from the session at once,
+ * without asking: a page that has just loaded holds nothing the admin could lose. When the session has ended
+ * too, the authorization server shows its login form.
  */
 export const isAuthenticated = async () => {
-    if (!hasUsableTokens()) {
+    if (await tokensState() === "rejected") {
         await renewAccess()
     }
 }
 
-// renewing a little before the expiry keeps a call made right after the check from being rejected
-const EXPIRY_MARGIN_SECONDS = 30
+type TokensState = "accepted" | "rejected" | "unknown"
 
-const hasUsableTokens = (): boolean => {
+// "unknown" when the authorization server cannot tell (5xx, network failure): renewing then could loop while
+// it is down, so the page loads and its api calls report the failure instead
+const tokensState = async (): Promise<TokensState> => {
     const idToken = window.sessionStorage.getItem("ID_TOKEN");
     const accessToken = window.sessionStorage.getItem("ACCESS_TOKEN");
     if (!idToken || !accessToken) {
-        return false
+        return "rejected"
     }
-    const expiresAt = expiryOf(accessToken)
-    return expiresAt !== null && expiresAt - EXPIRY_MARGIN_SECONDS > Date.now() / 1000
-}
 
-// the exp claim of a jwt, in seconds; null when the token is not a readable jwt
-const expiryOf = (jwt: string): number | null => {
     try {
-        const payload = jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")
-        const exp = JSON.parse(window.atob(payload)).exp
-        return typeof exp === "number" ? exp : null
-    } catch {
-        return null
+        const oauth2Config = await applicationConfigLoader()
+        const response = await fetch(`${oauth2Config.idpBaseUrl}/userinfo`, {
+            headers: {'Authorization': `Bearer ${accessToken}`},
+            mode: "cors",
+        })
+        if (response.ok) {
+            return "accepted"
+        }
+        return response.status === 401 ? "rejected" : "unknown"
+    } catch (e) {
+        console.error("Token check failed", e)
+        return "unknown"
     }
 }
 
 /**
- * Expired Access: fresh tokens from the living session, without credentials, then back to this page.
+ * Fresh tokens from the living session, without credentials, then back to this page. When the session has
+ * ended too, the authorization server shows its login form instead.
  */
 export const renewAccess = async () => {
     window.sessionStorage.setItem("returnTo", window.location.href);
     window.location.href = await getAuthorizeUrlFor("none")
-}
-
-/**
- * Expired Session: the admin logs in again with their credentials, then comes back to this page.
- */
-export const logInAgain = async () => {
-    window.sessionStorage.setItem("returnTo", window.location.href);
-    window.location.href = await getAuthorizeUrlFor("login")
 }
 
 /**

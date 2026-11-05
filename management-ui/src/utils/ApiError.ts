@@ -12,19 +12,10 @@ export class ApiError extends Error {
 }
 
 /**
- * The window event a 401 from the management api raises, before its ApiError is thrown: SessionManagement
- * listens for it and offers to renew the access.
- */
-export const ACCESS_REJECTED_EVENT = "vauthenticator:access-rejected"
-
-/**
  * Throws an ApiError unless the response status is 2xx (200, 201, 204...). It never reads a successful body.
  */
 export async function ensureOk(response: Response): Promise<Response> {
     if (!response.ok) {
-        if (response.status === 401) {
-            window.dispatchEvent(new CustomEvent(ACCESS_REJECTED_EVENT))
-        }
         throw new ApiError(response.status, await response.text())
     }
     return response
@@ -60,8 +51,7 @@ export function failureReasonFor(error: unknown, subject: ApiSubject, reasons: R
         case 400:
             return error.body || "the request is not valid"
         case 401:
-            // the session may have ended too: the access expired dialog renews whichever it is
-            return "your access has expired"
+            return "your session has expired, please log in again"
         case 403:
             return `you are not allowed to manage ${subject.managed}`
         case 404:
