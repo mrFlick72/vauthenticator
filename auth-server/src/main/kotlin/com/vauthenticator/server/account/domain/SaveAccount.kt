@@ -2,7 +2,10 @@ package com.vauthenticator.server.account.domain
 
 import java.security.Principal
 
-class SaveAccount(private val accountRepository: AccountRepository) {
+class SaveAccount(
+    private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration
+) {
     fun execute(principal: Principal, account: Account) {
         ownershipCheck(principal, account)
         accountRepository.accountFor(principal.name)?.let {
@@ -13,6 +16,7 @@ class SaveAccount(private val accountRepository: AccountRepository) {
                 phone = account.phone,
                 locale = account.locale,
             )
+            accountAdministration.checkSave(it, accountToBeSaved)
             accountRepository.save(accountToBeSaved)
         }
     }

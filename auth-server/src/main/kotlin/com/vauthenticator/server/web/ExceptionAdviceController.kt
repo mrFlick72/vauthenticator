@@ -1,6 +1,7 @@
 package com.vauthenticator.server.web
 
 import com.vauthenticator.server.oauth2.clientapp.domain.InsufficientClientApplicationScopeException
+import com.vauthenticator.server.role.domain.AdministrationRequiredException
 import com.vauthenticator.server.role.domain.JwtAuthenticationRequiredException
 import com.vauthenticator.server.role.domain.ClientApplicationNotResolvedException
 import org.springframework.http.HttpHeaders
@@ -18,6 +19,10 @@ class ExceptionAdviceController {
 
     @ExceptionHandler(ClientApplicationNotResolvedException::class)
     fun clientApplicationNotResolvedExceptionHandler(ex: ClientApplicationNotResolvedException) =
+        ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.message)
+
+    @ExceptionHandler(AdministrationRequiredException::class)
+    fun administrationRequiredExceptionHandler(ex: AdministrationRequiredException) =
         ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.message)
 
     @ExceptionHandler(JwtAuthenticationRequiredException::class)

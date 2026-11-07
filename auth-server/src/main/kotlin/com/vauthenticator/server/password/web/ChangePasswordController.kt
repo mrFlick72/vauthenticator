@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.web
 
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountMandatoryAction
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.i18n.I18nMessageInjector
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam
 class ChangePasswordController(
     private val i18nMessageInjector: I18nMessageInjector,
     private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration,
     private val publisher: ApplicationEventPublisher,
     private val changePassword: ChangePassword,
     private val loginWorkflowEngine: LoginWorkflowEngine,
@@ -65,9 +67,9 @@ class ChangePasswordController(
 
     private fun resetMandatoryActionToNoAction(authentication: Authentication) {
         accountRepository.accountFor(authentication.name)?.let {
-            accountRepository.save(
-                it.copy(mandatoryAction = AccountMandatoryAction.NO_ACTION)
-            )
+            val updated = it.copy(mandatoryAction = AccountMandatoryAction.NO_ACTION)
+            accountAdministration.checkSave(it, updated)
+            accountRepository.save(updated)
         }
     }
 }

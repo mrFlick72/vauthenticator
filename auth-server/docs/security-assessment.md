@@ -60,7 +60,7 @@ react-router/react-router-dom).
 | VA-SEC-12 | **Low** | Jinjava email templates = privileged code execution surface (document & gate) |
 | VA-SEC-13 | **Low** | Possible flag-mapping bug: `accountNonLocked` decoded from `credentialsNonExpired` |
 | VA-SEC-14 | **Medium** | `WebSecurityConfig` scope rule for email-template read never matches; falls back to authenticated-only |
-| VA-SEC-15 | **Medium** | `admin:account-writer` can self-grant `VAUTHENTICATOR_ADMIN` via caller-supplied `authorities` |
+| VA-SEC-15 | **Medium** | `admin:account-writer` can self-grant `VAUTHENTICATOR_ADMIN` via caller-supplied `authorities`; `admin:client-app-writer` can take over or grant the Full-Access Scope |
 | VA-SEC-16 | **Low** | `WebSecurityConfig` `/api/accounts` `permitAll()` matcher had no HTTP-method qualifier, covering self-service `PUT` too |
 | VA-SEC-17 | **High** | Self-service `PUT /api/accounts` took `username`, `groups` and mandatory action from the request body |
 | VA-SEC-18 | **Medium** | `PUT /api/reset-password/{ticket}` redeemed tickets issued for any flow, including MFA enrolment |
@@ -327,6 +327,11 @@ have no purpose and are rejected.
 identity and only takes profile fields from the body (`account/domain/SaveAccount.kt`, after VA-SEC-17).
 Signup should do likewise — strip or whitelist authorities on creation.
 
+**Partly mitigated (#365, ADR 0017):** signup checks administration before creating the account,
+so a signup that carries `VAUTHENTICATOR_ADMIN` from a caller that is not an Administrator now
+gets `403`. Signup still takes other caller-supplied roles and groups, so this
+finding stays open.
+
 ---
 
 ### VA-SEC-07 — Fail-open authorization in session/client path
@@ -422,35 +427,45 @@ this route.
 
 ---
 
-### VA-SEC-15 — `admin:account-writer` can self-grant admin authorities
+### VA-SEC-15 — Administration could be granted, removed or taken over by callers that are not Administrators
 
-- [ ] Fixed
-- [ ] Tests added
+- [x] Fixed
+- [x] Tests added
 
-**Where:**
-- `account/domain/AccountUpdateAdminAction.kt:13` — `execute()` copies `request.authorities` onto
-  the stored account unconditionally.
-- `account/api/AdminApiAccountEndPoint.kt:21` — `PUT /api/admin/accounts`, now gated by
-  `admin:account-writer` (VA-SEC-01 fix).
+**Where (before #365):**
+- `account/domain/AccountUpdateAdminAction.kt` — `execute()` copied `request.authorities` onto the
+  stored account unconditionally; `PUT /api/admin/accounts` needs only `admin:account-writer`.
+- `oauth2/clientapp/api/ClientApplicationEndPoint.kt` — `PUT /api/client-applications/{id}` stored
+  the request's `scopes`, `PATCH .../client-secret` set any secret and `DELETE` removed any app, with
+  only `admin:client-app-writer` / `admin:client-app-eraser`.
 
-**Problem:** `admin:account-writer` was designed to cover account-admin duties like lock/unlock and
-enable/disable, but it's the same scope that authorizes overwriting `authorities` — there's no
-separate gate on granting `VAUTHENTICATOR_ADMIN` / `admin:full-access` specifically. Structurally
-the same shape as **VA-SEC-06** (signup trusting caller-supplied `authorities`).
+**Problem:** the `VAUTHENTICATOR_ADMIN` role on a token passes every scope check, and so does the
+`admin:full-access` scope. The granular writer scopes could grant either one with no separate gate,
+the same shape as **VA-SEC-06**.
 
-**Impact:** Any caller holding plain `admin:account-writer` can grant itself or any other account
-`VAUTHENTICATOR_ADMIN` via `PUT /api/admin/accounts`, escalating from an account-admin-scoped
-identity to full admin.
+**Impact:**
+- Any caller holding `admin:account-writer` could give itself or any account `VAUTHENTICATOR_ADMIN`,
+  or take it away from every Administrator.
+- Any caller holding `admin:client-app-writer` could give a client app `admin:full-access`. It could
+  also take over the default `admin` client app with its scopes left untouched, by setting a secret of
+  its choice through `PATCH .../client-secret` or `PUT` with `storePassword`, then acting as `admin`
+  through `client_credentials`.
+- `admin:client-app-eraser` could delete it.
 
-**Why deferred rather than fixed alongside VA-SEC-01:** identified during the #364 grill/design
-session (see ADR `docs/adr/0002-admin-account-scope-authorization.md`, "Considered options"). Fixing
-it requires `AccountUpdateAdminAction` to diff the incoming `authorities` against the stored
-account and demand a stricter scope only when they differ — real logic, not just a scope annotation
-— so it was deliberately scoped out of #364 to keep that PR focused. Tracked in issue
-[#365](https://github.com/mrFlick72/vauthenticator/issues/365).
+**Fix (#365, ADR 0017):**
+- Only an Administrator can make someone an Administrator, or stop them being one. An Administrator
+  is a JWT with `admin:full-access` or `VAUTHENTICATOR_ADMIN` (`JwtAuthenticationToken.isAdministrator()`);
+  a browser session never is.
+- Every use case that writes accounts or client apps checks before writing:
+  - `AccountAdministration` rejects a `save`/`create` that adds or removes the role;
+  - `ClientApplicationAdministration` rejects any `save`/`delete` of an app that has, or would get,
+    the scope.
+- `AdministrationArchitectureTest` fails the build if a writer skips the check.
+- A rejection is `AdministrationRequiredException` → `403`, with nothing saved.
+- Tenant setup is the single exemption, wired on `TenantSetUpAdministration` in `TenantInitConfig`.
 
-**Fix:** see issue #365's proposed direction — gate `authorities` changes behind an additional,
-stricter scope (e.g. `admin:account-authorities-writer`) on top of `admin:account-writer`.
+**Related:** further admin operations and scope grants are reviewed in #428 and #429. Keep
+`VAUTHENTICATOR_ADMIN` in `vauthenticator.role.protected-from-delete` (the default).
 
 ---
 

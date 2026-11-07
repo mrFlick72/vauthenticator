@@ -1,6 +1,8 @@
 package com.vauthenticator.server.account.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.vauthenticator.server.account.domain.AccountAdministration
+import com.vauthenticator.server.role.adapter.security.SecurityContextAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Phone
 import com.vauthenticator.server.account.domain.SaveAccount
@@ -21,6 +23,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
+import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -76,7 +79,7 @@ internal class AccountEndPointTest {
             AccountEndPoint(
                 PermissionValidator(clientApplicationRepository),
                 signUpUse,
-                SaveAccount(accountRepository)
+                SaveAccount(accountRepository, AccountAdministration(SecurityContextAdministration()))
             )
         )
             .setControllerAdvice(ExceptionAdviceController())
@@ -242,5 +245,36 @@ internal class AccountEndPointTest {
             .andExpect(MockMvcResultMatchers.status().isNoContent)
 
         verify { accountRepository.save(expected) }
+    }
+
+    @Test
+    internal fun `signing up with the administrator role is forbidden for a caller that is not an administrator`() {
+        val clientAppId = ClientAppId(A_CLIENT_APP_ID)
+        every { clientApplicationRepository.findOne(clientAppId) } returns
+            ClientAppFixture.aClientApp(clientAppId).copy(scopes = Scopes.from(Scope.SIGN_UP))
+        every { accountRepository.accountFor(EMAIL) } returns null
+        val signUpThroughTheRealRepository = MockMvcBuilders.standaloneSetup(
+            AccountEndPoint(
+                PermissionValidator(clientApplicationRepository),
+                SignUpUse(
+                    mockk(relaxed = true),
+                    accountRepository,
+                    AccountAdministration(SecurityContextAdministration()),
+                    mockk(relaxed = true),
+                    mockk(relaxed = true)
+                ),
+                SaveAccount(accountRepository, AccountAdministration(SecurityContextAdministration()))
+            )
+        ).setControllerAdvice(ExceptionAdviceController()).build()
+
+        signUpThroughTheRealRepository.perform(
+            post(ENDPOINT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .sessionAttr("clientId", A_CLIENT_APP_ID)
+                .content(objectMapper.writeValueAsString(representation.copy(authorities = listOf(VAUTHENTICATOR_ADMIN))))
+        )
+            .andExpect(MockMvcResultMatchers.status().isForbidden)
+
+        verify(exactly = 0) { accountRepository.create(any()) }
     }
 }

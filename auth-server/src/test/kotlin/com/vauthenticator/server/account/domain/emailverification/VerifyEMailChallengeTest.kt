@@ -1,5 +1,7 @@
 package com.vauthenticator.server.account.domain.emailverification
 
+import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.emailverification.VerifyEMailChallenge
 import com.vauthenticator.server.mfa.domain.MfaAssociationFailureException
@@ -45,6 +47,7 @@ internal class VerifyEMailChallengeTest {
         underTest = VerifyEMailChallenge(
             ticketRepository,
             accountRepository,
+            accountAdministrationFor(notAnAdministrator),
             mfaMethodsEnrollmentAssociation
         )
     }

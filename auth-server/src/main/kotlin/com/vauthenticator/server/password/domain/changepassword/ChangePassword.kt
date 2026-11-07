@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.domain.changepassword
 
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
@@ -20,7 +21,8 @@ class ChangePassword(
     private val eventsDispatcher: VAuthenticatorEventsDispatcher,
     private val passwordPolicy: PasswordPolicy,
     private val passwordEncoder: VAuthenticatorPasswordEncoder,
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration
 ) {
     fun resetPasswordFor(principal: Principal, request: ChangePasswordRequest) {
         passwordPolicy.accept(principal.name, request.newPassword)
@@ -29,6 +31,7 @@ class ChangePassword(
 
         val newEncodedPassword = passwordEncoder.encode(request.newPassword)
         val updatedAccount = account.copy(password = newEncodedPassword)
+        accountAdministration.checkSave(account, updatedAccount)
         accountRepository.save(updatedAccount)
         eventsDispatcher.dispatch(
             ChangePasswordEvent(

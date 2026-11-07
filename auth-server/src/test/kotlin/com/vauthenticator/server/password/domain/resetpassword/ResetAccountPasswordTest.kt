@@ -1,5 +1,7 @@
 package com.vauthenticator.server.password.domain.resetpassword
 
+import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import io.mockk.verify
 import com.vauthenticator.server.ticket.domain.TicketContext
 import com.vauthenticator.server.ticket.domain.Ticket
@@ -51,6 +53,7 @@ class ResetAccountPasswordTest {
             ResetAccountPassword(
                 eventsDispatcher,
                 accountRepository,
+                accountAdministrationFor(notAnAdministrator),
                 vAuthenticatorPasswordEncoder,
                 passwordPolicy,
                 ticketRepository

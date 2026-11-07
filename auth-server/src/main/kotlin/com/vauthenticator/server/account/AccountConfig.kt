@@ -3,6 +3,7 @@ package com.vauthenticator.server.account
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.server.account.adapter.CachedAccountRepository
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
 import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
@@ -27,6 +28,7 @@ import com.vauthenticator.server.mfa.domain.MfaMethodsEnrollmentAssociation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
+import com.vauthenticator.server.role.domain.Administration
 import com.vauthenticator.server.ticket.domain.TicketRepository
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
@@ -42,16 +44,21 @@ import java.time.Clock
 class AccountConfig {
 
     @Bean
+    fun accountAdministration(administration: Administration): AccountAdministration =
+        AccountAdministration(administration)
+
+    @Bean
     fun changeAccountEnabling(
         accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration,
         eventsDispatcher: VAuthenticatorEventsDispatcher,
         clock: Clock
     ): AccountUpdateAdminAction =
-        AccountUpdateAdminAction(accountRepository, eventsDispatcher, clock)
+        AccountUpdateAdminAction(accountRepository, accountAdministration, eventsDispatcher, clock)
 
     @Bean
-    fun saveAccount(accountRepository: AccountRepository): SaveAccount =
-        SaveAccount(accountRepository)
+    fun saveAccount(accountRepository: AccountRepository, accountAdministration: AccountAdministration): SaveAccount =
+        SaveAccount(accountRepository, accountAdministration)
 
 }
 
@@ -124,12 +131,14 @@ class EMailVerificationConfig {
     @Bean
     fun verifyMailChallengeSent(
         accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration,
         ticketRepository: TicketRepository,
         mfaMethodsEnrollmentAssociation: MfaMethodsEnrollmentAssociation
     ) =
         VerifyEMailChallenge(
             ticketRepository,
             accountRepository,
+            accountAdministration,
             mfaMethodsEnrollmentAssociation
         )
 
@@ -164,12 +173,14 @@ class SingUpConfig {
         passwordPolicy: PasswordPolicy,
         clientAccountRepository: ClientApplicationRepository,
         accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration,
         vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
         vAuthenticatorEventsDispatcher : VAuthenticatorEventsDispatcher
     ): SignUpUse =
         SignUpUse(
             passwordPolicy,
             accountRepository,
+            accountAdministration,
             vAuthenticatorPasswordEncoder,
             vAuthenticatorEventsDispatcher
         )

@@ -25,7 +25,13 @@ fun JwtAuthenticationToken.clientAppId(): ClientAppId {
 
 fun JwtAuthenticationToken.hasEnoughScopes(scopes: Scopes) =
     scopes.content.stream().allMatch { (this.tokenAttributes["scope"] as List<String>).contains(it.content) }
-        .or((this.tokenAttributes["scope"] as List<String>).contains(Scope.ADMIN_FULL_ACCESS.content))
+        .or(isAdministrator())
+
+/**
+ * An Administrator: a client app acting with the Full-Access Scope, or an account holder with the Administrator Role.
+ */
+fun JwtAuthenticationToken.isAdministrator() =
+    (this.tokenAttributes["scope"] as List<String>).contains(Scope.ADMIN_FULL_ACCESS.content)
         .or(this.authorities.contains(SimpleGrantedAuthority(Role.adminRole().name)))
 
 

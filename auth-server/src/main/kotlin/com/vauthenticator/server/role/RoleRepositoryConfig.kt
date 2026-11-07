@@ -7,6 +7,8 @@ import com.vauthenticator.server.role.adapter.cache.AccountCacheEvictingGroupRep
 import com.vauthenticator.server.role.adapter.cache.AccountCacheEvictingRoleRepository
 import com.vauthenticator.server.role.adapter.jdbc.JdbcGroupRepository
 import com.vauthenticator.server.role.adapter.jdbc.JdbcRoleRepository
+import com.vauthenticator.server.role.adapter.security.SecurityContextAdministration
+import com.vauthenticator.server.role.domain.Administration
 import com.vauthenticator.server.role.domain.GroupRepository
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.role.domain.RoleCacheContentConverter
@@ -58,4 +60,11 @@ class PermissionConfig {
     @Bean
     fun permissionValidator(clientApplicationRepository: ClientApplicationRepository) =
         PermissionValidator(clientApplicationRepository)
+}
+
+@Configuration(proxyBeanMethods = false)
+class AdministrationConfig {
+
+    @Bean
+    fun administration(): Administration = SecurityContextAdministration()
 }

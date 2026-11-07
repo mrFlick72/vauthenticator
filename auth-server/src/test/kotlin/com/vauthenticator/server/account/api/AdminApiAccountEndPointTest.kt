@@ -1,6 +1,8 @@
 package com.vauthenticator.server.account.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.vauthenticator.server.account.domain.AccountAdministration
+import com.vauthenticator.server.role.adapter.security.SecurityContextAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.AdminAccountApiRequest
@@ -21,10 +23,12 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.MediaType.APPLICATION_JSON
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
@@ -55,10 +59,20 @@ internal class AdminApiAccountEndPointTest {
         mokMvc = MockMvcBuilders.standaloneSetup(
             AdminApiAccountEndPoint(
                 accountRepository,
-                AccountUpdateAdminAction(accountRepository, eventsDispatcher, Clock.systemUTC()),
+                AccountUpdateAdminAction(
+                    accountRepository,
+                    AccountAdministration(SecurityContextAdministration()),
+                    eventsDispatcher,
+                    Clock.systemUTC()
+                ),
                 PermissionValidator(clientApplicationRepository)
             )
         ).setControllerAdvice(ExceptionAdviceController()).build()
+    }
+
+    @AfterEach
+    internal fun tearDown() {
+        SecurityContextHolder.clearContext()
     }
 
     @Test
@@ -112,6 +126,7 @@ internal class AdminApiAccountEndPointTest {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_ACCOUNT.content))
 
         every { accountRepository.accountFor("anemail@domain.com") } returns AccountTestFixture.anAccount()
+        every { accountRepository.accountFor(EMAIL) } returns AccountTestFixture.anAccount()
         every { accountRepository.save(masterAccount) } just runs
 
         mokMvc.perform(
@@ -179,6 +194,30 @@ internal class AdminApiAccountEndPointTest {
                 .content(objectMapper.writeValueAsString(representation))
                 .principal(sessionUser)
         ).andExpect(status().isUnauthorized)
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+    }
+
+    @Test
+    internal fun `giving an account the administrator role is forbidden for a caller that is not an administrator`() {
+        val representation = AdminAccountApiRequest(
+            email = "anemail@domain.com",
+            accountLocked = false,
+            authorities = setOf(VAUTHENTICATOR_ADMIN)
+        )
+        val accountWriter = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_ACCOUNT.content))
+        // the security filter chain fills the context in production; standalone MockMvc does not
+        SecurityContextHolder.getContext().authentication = accountWriter
+
+        every { accountRepository.accountFor("anemail@domain.com") } returns AccountTestFixture.anAccount()
+        every { accountRepository.accountFor(EMAIL) } returns AccountTestFixture.anAccount()
+
+        mokMvc.perform(
+            put("/api/admin/accounts")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(representation))
+                .principal(accountWriter)
+        ).andExpect(status().isForbidden)
 
         verify(exactly = 0) { accountRepository.save(any()) }
     }
