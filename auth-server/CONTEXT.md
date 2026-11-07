@@ -119,6 +119,18 @@ _Avoid_: SMS message (for the template)
 
 ### Roles
 
+**Administrator**:
+A caller with unrestricted admin power, acting through an access token: either a client app acting with the **Full-Access Scope**, or an account holder who has the **Administrator Role**. An administrator passes every admin permission check. Someone logged in to the authorization server in a browser, without an access token, is never an administrator, even if their account has the **Administrator Role**. Only an administrator can make someone else an administrator, or stop them being one, whether by giving or taking away an account's **Administrator Role** or a client app's **Full-Access Scope**. The tenant setup provides the first administrators: a default admin client app and a default admin account.
+_Avoid_: super user, root (for anything other than the setup-provided administrators)
+
+**Administrator Role**:
+The role that makes an account holder an **Administrator**. It is a **Protected Role** in the default configuration; deleting it would take administration away from every account holder at once.
+_Avoid_: admin authority
+
+**Full-Access Scope**:
+The client app scope that makes a client app an **Administrator**. It is a scope, not a role: putting its name among an account's roles grants nothing.
+_Avoid_: admin scope
+
 **Protected Role**:
 A role that cannot be deleted because the system depends on it, such as the administrator role. Which roles are protected is set by configuration, not by an admin.
 _Avoid_: system role, default role

@@ -22,6 +22,7 @@
         <kotlin.version>2.3.21</kotlin.version>
 
         <io.mockk.version>1.14.6</io.mockk.version>
+        <archunit.version>1.4.1</archunit.version>
         <aws.sdk.version>2.44.6</aws.sdk.version>
         <greenmail.version>2.1.7</greenmail.version>
         <wiremock.version>3.0.1</wiremock.version>
@@ -210,6 +211,13 @@
             <groupId>io.mockk</groupId>
             <artifactId>mockk-jvm</artifactId>
             <version>${io.mockk.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
 

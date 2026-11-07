@@ -1,5 +1,6 @@
 package com.vauthenticator.server.account.domain.emailverification
 
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.mfa.domain.MfaAssociationFailureException
@@ -14,6 +15,7 @@ import org.slf4j.LoggerFactory
 class VerifyEMailChallenge(
     private val ticketRepository: TicketRepository,
     private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration,
     private val mfaMethodsEnrollmentAssociation: MfaMethodsEnrollmentAssociation
 ) {
 
@@ -38,6 +40,7 @@ class VerifyEMailChallenge(
         accountRepository.accountFor(email)
             ?.let { account ->
                 val enabledAccount = makeAnAccountEnableForm(account)
+                accountAdministration.checkSave(account, enabledAccount)
                 accountRepository.save(enabledAccount)
                 enabledAccount
             } ?: throw InvalidTicketException("The ticket associated with the username $email is not a valid ticket")

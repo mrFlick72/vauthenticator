@@ -19,6 +19,7 @@ data class AdminAccountApiRequest(
 
 class AccountUpdateAdminAction(
     private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration,
     private val eventsDispatcher: EventsDispatcher,
     private val clock: Clock
 ) {
@@ -27,13 +28,13 @@ class AccountUpdateAdminAction(
         clientAppId: ClientAppId
     ) {
         accountRepository.accountFor(request.email)?.let { account ->
-            accountRepository.save(
-                lockStateFor(account, request.accountLocked).copy(
-                    enabled = request.enabled,
-                    authorities = request.authorities,
-                    mandatoryAction = request.mandatoryAction
-                )
+            val updated = lockStateFor(account, request.accountLocked).copy(
+                enabled = request.enabled,
+                authorities = request.authorities,
+                mandatoryAction = request.mandatoryAction
             )
+            accountAdministration.checkSave(account, updated)
+            accountRepository.save(updated)
             releasedFailedLoginLock(account, request.accountLocked, clientAppId)
         }
     }

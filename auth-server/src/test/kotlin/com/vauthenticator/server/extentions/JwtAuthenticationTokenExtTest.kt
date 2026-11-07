@@ -3,6 +3,8 @@ package com.vauthenticator.server.extentions
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.ADMIN_FULL_ACCESS
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.MFA_ALWAYS
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.RESET_PASSWORD
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.SAVE_ACCOUNT
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.SAVE_CLIENT_APPLICATION
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.SIGN_UP
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.Role
@@ -51,6 +53,26 @@ class JwtAuthenticationTokenExtTest {
             )
         )
         assertTrue { uut.hasEnoughScopes(Scopes(setOf(MFA_ALWAYS))) }
+    }
+
+    @Test
+    fun `a client app acting with the full access scope is an administrator`() {
+        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", scopes = listOf(ADMIN_FULL_ACCESS.content))
+        assertTrue { uut.isAdministrator() }
+    }
+
+    @Test
+    fun `an account holder with the administrator role is an administrator`() {
+        val uut = principalFor(
+            "A_CLIENT_APP_ID", email = "admin@email.com", authorities = listOf(Role.adminRole().name)
+        )
+        assertTrue { uut.isAdministrator() }
+    }
+
+    @Test
+    fun `a caller with only granular admin scopes is not an administrator`() {
+        val uut = m2mPrincipalFor("A_CLIENT_APP_ID", scopes = listOf(SAVE_ACCOUNT.content, SAVE_CLIENT_APPLICATION.content))
+        assertFalse { uut.isAdministrator() }
     }
 
     @Test

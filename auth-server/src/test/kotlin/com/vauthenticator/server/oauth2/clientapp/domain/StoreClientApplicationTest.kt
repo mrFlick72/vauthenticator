@@ -1,6 +1,10 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.ADMIN_FULL_ACCESS
+import com.vauthenticator.server.role.domain.AdministrationRequiredException
+import com.vauthenticator.server.support.AdministrationFixture.clientApplicationAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.support.ClientAppFixture.aClientApp
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -26,7 +30,11 @@ class StoreClientApplicationTest {
 
     @BeforeEach
     fun setUp() {
-        uut = StoreClientApplication(clientApplicationRepository, passwordEncoder)
+        uut = StoreClientApplication(
+            clientApplicationRepository,
+            clientApplicationAdministrationFor(notAnAdministrator),
+            passwordEncoder
+        )
     }
 
     @Test
@@ -44,6 +52,7 @@ class StoreClientApplicationTest {
     fun `store a client application for public client with empty password`() {
         val aClientApp = aClientApp(clientAppId = ClientAppId("AN_ID"), confidential = false, password = Secret(""))
 
+        every { clientApplicationRepository.findOne(aClientApp.clientAppId) } returns null
         every { passwordEncoder.encode(aClientApp.secret.content) } returns aClientApp.secret.content
         every { clientApplicationRepository.save(aClientApp) } just runs
 
@@ -65,6 +74,7 @@ class StoreClientApplicationTest {
     fun `store a client application with password`() {
         val aClientApp = aClientApp(ClientAppId("AN_ID"))
 
+        every { clientApplicationRepository.findOne(aClientApp.clientAppId) } returns null
         every { passwordEncoder.encode(aClientApp.secret.content) } returns aClientApp.secret.content
         every { clientApplicationRepository.save(aClientApp) } just runs
 
@@ -127,5 +137,32 @@ class StoreClientApplicationTest {
         assertThrows(ClientApplicationNotFound::class.java) {
             uut.resetPassword(clientAppId, Secret("A_NEW_PASSWORD"))
         }
+    }
+
+    @Test
+    fun `a caller that is not an administrator cannot store a client app with the full access scope`() {
+        val anAdministratorClientApp = aClientApp(ClientAppId("AN_ID")).copy(scopes = Scopes.from(ADMIN_FULL_ACCESS))
+        every { clientApplicationRepository.findOne(anAdministratorClientApp.clientAppId) } returns null
+        every { passwordEncoder.encode(anAdministratorClientApp.secret.content) } returns "encoded"
+
+        assertThrows(AdministrationRequiredException::class.java) {
+            uut.store(anAdministratorClientApp, true)
+        }
+
+        verify(exactly = 0) { clientApplicationRepository.save(any()) }
+    }
+
+    @Test
+    fun `a caller that is not an administrator cannot reset the secret of an administrator client app`() {
+        val clientAppId = ClientAppId("admin")
+        every { clientApplicationRepository.findOne(clientAppId) } returns
+                aClientApp(clientAppId).copy(scopes = Scopes.from(ADMIN_FULL_ACCESS))
+        every { passwordEncoder.encode("a secret of my choice") } returns "encoded"
+
+        assertThrows(AdministrationRequiredException::class.java) {
+            uut.resetPassword(clientAppId, Secret("a secret of my choice"))
+        }
+
+        verify(exactly = 0) { clientApplicationRepository.save(any()) }
     }
 }
