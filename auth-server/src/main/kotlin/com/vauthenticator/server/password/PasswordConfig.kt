@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password
 
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
@@ -94,9 +95,10 @@ class PasswordConfig {
         eventsDispatcher: VAuthenticatorEventsDispatcher,
         passwordPolicy: PasswordPolicy,
         passwordEncoder: VAuthenticatorPasswordEncoder,
-        accountRepository: AccountRepository
+        accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration
     ) =
-        ChangePassword(eventsDispatcher, passwordPolicy, passwordEncoder, accountRepository)
+        ChangePassword(eventsDispatcher, passwordPolicy, passwordEncoder, accountRepository, accountAdministration)
 
     @Bean
     fun passwordGenerator(passwordGeneratorCriteria: PasswordGeneratorCriteria) =
@@ -132,6 +134,7 @@ class ResetPasswordConfig {
     fun resetPasswordChallengeSent(
         eventsDispatcher: VAuthenticatorEventsDispatcher,
         accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration,
         vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
         passwordPolicy: PasswordPolicy,
         ticketRepository: TicketRepository
@@ -139,6 +142,7 @@ class ResetPasswordConfig {
         ResetAccountPassword(
             eventsDispatcher,
             accountRepository,
+            accountAdministration,
             vAuthenticatorPasswordEncoder,
             passwordPolicy,
             ticketRepository
@@ -181,6 +185,7 @@ class PasswordLifeCycleConfig {
     fun passwordLifeCycleExecutor(
         clock: Clock,
         accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration,
         passwordLifeCycleRepository: PasswordLifeCycleRepository,
         eventsDispatcher: VAuthenticatorEventsDispatcher,
     ) = PasswordLifeCycleExecutor(
@@ -188,6 +193,7 @@ class PasswordLifeCycleConfig {
             BasePasswordLifeCycleStrategy(
                 clock,
                 accountRepository,
+                accountAdministration,
                 passwordLifeCycleRepository,
                 eventsDispatcher,
                 PasswordResetPasswordLifeCycleStrategyImplementation()
@@ -195,6 +201,7 @@ class PasswordLifeCycleConfig {
             BasePasswordLifeCycleStrategy(
                 clock,
                 accountRepository,
+                accountAdministration,
                 passwordLifeCycleRepository,
                 eventsDispatcher,
                 AccountLockPasswordLifeCycleStrategyImplementation()

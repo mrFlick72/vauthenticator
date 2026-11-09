@@ -6,7 +6,11 @@ import com.vauthenticator.server.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRelease
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockReleaseReason
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
+import com.vauthenticator.server.role.domain.AdministrationRequiredException
+import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
+import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -15,6 +19,7 @@ import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,7 +52,12 @@ class AccountUpdateAdminActionTest {
 
     @BeforeEach
     fun setUp() {
-        underTest = AccountUpdateAdminAction(accountRepository, eventsDispatcher, Clock.fixed(NOW, ZoneOffset.UTC))
+        underTest = AccountUpdateAdminAction(
+            accountRepository,
+            accountAdministrationFor(notAnAdministrator),
+            eventsDispatcher,
+            Clock.fixed(NOW, ZoneOffset.UTC)
+        )
     }
 
     @Test
@@ -60,6 +70,18 @@ class AccountUpdateAdminActionTest {
 
         verify { accountRepository.accountFor(account.email) }
         verify { accountRepository.save(account) }
+    }
+
+    @Test
+    fun `a caller that is not an administrator cannot give an account the administrator role`() {
+        every { accountRepository.accountFor(anAccount.email) } returns anAccount()
+
+        assertThrows(AdministrationRequiredException::class.java) {
+            underTest.execute(request.copy(authorities = setOf(Role.adminRole().name)), ADMIN_CLIENT_APP_ID)
+        }
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+        verify(exactly = 0) { eventsDispatcher.dispatch(any()) }
     }
 
     @Test

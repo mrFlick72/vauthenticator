@@ -1,5 +1,7 @@
 package com.vauthenticator.server.account.domain
 
+import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.SecurityFixture
 import io.mockk.every
@@ -25,7 +27,7 @@ class SaveAccountTest {
 
     @BeforeEach
     fun setUp() {
-        underTest = SaveAccount(accountRepository)
+        underTest = SaveAccount(accountRepository, accountAdministrationFor(notAnAdministrator))
     }
 
     @Test

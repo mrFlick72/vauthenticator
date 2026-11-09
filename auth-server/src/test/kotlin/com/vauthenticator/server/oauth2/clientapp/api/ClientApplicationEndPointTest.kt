@@ -2,6 +2,7 @@ package com.vauthenticator.server.oauth2.clientapp.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.oauth2.clientapp.domain.*
+import com.vauthenticator.server.role.domain.AdministrationRequiredException
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.A_CLIENT_APP_ID
 import com.vauthenticator.server.support.ClientAppFixture.aClientApp
@@ -41,6 +42,9 @@ class ClientApplicationEndPointTest {
     @MockK
     lateinit var readClientApplication: ReadClientApplication
 
+    @MockK
+    lateinit var deleteClientApplication: DeleteClientApplication
+
 
     val objectMapper = ObjectMapper()
 
@@ -48,8 +52,8 @@ class ClientApplicationEndPointTest {
     internal fun setUp() {
         mockMvc = standaloneSetup(
             ClientApplicationEndPoint(
-                clientApplicationRepository,
                 storeClientApplication,
+                deleteClientApplication,
                 readClientApplication,
                 PermissionValidator(clientApplicationRepository)
             )
@@ -287,7 +291,7 @@ class ClientApplicationEndPointTest {
     fun `delete a specific client app`() {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.DELETE_CLIENT_APPLICATION.content))
 
-        every { clientApplicationRepository.delete(ClientAppId("clientApp")) } just runs
+        every { deleteClientApplication.delete(ClientAppId("clientApp")) } just runs
 
         mockMvc.perform(
             delete("/api/client-applications/clientApp")
@@ -300,7 +304,7 @@ class ClientApplicationEndPointTest {
     fun `delete a specific client app fails for insufficient scope`() {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.MFA_ENROLLMENT.content))
 
-        every { clientApplicationRepository.delete(ClientAppId("clientApp")) } just runs
+        every { deleteClientApplication.delete(ClientAppId("clientApp")) } just runs
 
         mockMvc.perform(
             delete("/api/client-applications/clientApp")
@@ -374,12 +378,42 @@ class ClientApplicationEndPointTest {
     fun `delete a specific client app is unauthorized for a session user`() {
         val sessionUser = principalFor(EMAIL, listOf(VAUTHENTICATOR_ADMIN))
 
-        every { clientApplicationRepository.delete(ClientAppId("clientApp")) } just runs
+        every { deleteClientApplication.delete(ClientAppId("clientApp")) } just runs
 
         mockMvc.perform(
             delete("/api/client-applications/clientApp")
                 .principal(sessionUser)
         )
             .andExpect(status().isUnauthorized)
+    }
+
+    @Test
+    fun `resetting the secret of an administrator client app is forbidden for a caller that is not an administrator`() {
+        val clientAppWriter = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_CLIENT_APPLICATION.content))
+
+        every {
+            storeClientApplication.resetPassword(ClientAppId("admin"), Secret("a secret of my choice"))
+        } throws AdministrationRequiredException("only an administrator can change administration")
+
+        mockMvc.perform(
+            patch("/api/client-applications/admin/client-secret")
+                .content(objectMapper.writeValueAsString(ClientAppSecretRepresentation("a secret of my choice")))
+                .contentType(MediaType.APPLICATION_JSON)
+                .principal(clientAppWriter)
+        ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `deleting an administrator client app is forbidden for a caller that is not an administrator`() {
+        val clientAppEraser = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.DELETE_CLIENT_APPLICATION.content))
+
+        every {
+            deleteClientApplication.delete(ClientAppId("admin"))
+        } throws AdministrationRequiredException("only an administrator can change administration")
+
+        mockMvc.perform(
+            delete("/api/client-applications/admin")
+                .principal(clientAppEraser)
+        ).andExpect(status().isForbidden)
     }
 }
