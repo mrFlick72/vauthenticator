@@ -1,6 +1,7 @@
 package com.vauthenticator.server.account.domain.signup
 
 import com.vauthenticator.server.account.domain.Account
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.SignUpEvent
@@ -15,6 +16,7 @@ import java.time.Instant
 open class SignUpUse(
     private val passwordPolicy: PasswordPolicy,
     private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration,
     private val vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
     private val eventsDispatcher: VAuthenticatorEventsDispatcher
 ) {
@@ -25,6 +27,7 @@ open class SignUpUse(
             authorities = account.authorities + setOf(Role.defaultRole().name),
             password = encodedPassword
         )
+        accountAdministration.checkCreate(registeredAccount)
         accountRepository.create(registeredAccount)
 
         eventsDispatcher.dispatch(

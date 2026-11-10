@@ -1,5 +1,7 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
+import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
@@ -51,6 +53,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
         uut = BasePasswordLifeCycleStrategy(
             clock,
             accountRepository,
+            accountAdministrationFor(notAnAdministrator),
             passwordLifeCycleRepository,
             eventsDispatcher,
             initImplementation()

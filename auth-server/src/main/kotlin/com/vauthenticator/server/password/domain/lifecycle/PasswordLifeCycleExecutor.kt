@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountMandatoryAction
 import com.vauthenticator.server.account.domain.AccountNotFoundException
@@ -41,6 +42,7 @@ interface PasswordLifeCycleStrategyImplementation {
 class BasePasswordLifeCycleStrategy(
     private val clock: Clock,
     private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration,
     private val passwordLifeCycleRepository: PasswordLifeCycleRepository,
     private val eventsDispatcher: EventsDispatcher,
     private val implementation: PasswordLifeCycleStrategyImplementation
@@ -59,6 +61,7 @@ class BasePasswordLifeCycleStrategy(
         }
 
         implementation.apply(account)?.let { updatedAccount ->
+            accountAdministration.checkSave(account, updatedAccount)
             accountRepository.save(updatedAccount)
             eventsDispatcher.dispatch(
                 PasswordLifeCycleActionAppliedEvent(

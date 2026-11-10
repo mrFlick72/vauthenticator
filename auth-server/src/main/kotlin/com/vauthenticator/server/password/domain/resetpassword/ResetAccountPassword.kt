@@ -1,5 +1,6 @@
 package com.vauthenticator.server.password.domain.resetpassword
 
+import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.ResetPasswordEvent
@@ -18,6 +19,7 @@ import java.time.Instant
 class ResetAccountPassword(
     private val eventsDispatcher: VAuthenticatorEventsDispatcher,
     private val accountRepository: AccountRepository,
+    private val accountAdministration: AccountAdministration,
     private val vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
     private val passwordPolicy: PasswordPolicy,
     private val ticketRepository: TicketRepository
@@ -43,6 +45,7 @@ class ResetAccountPassword(
     private fun passwordResetFor(ticket: Ticket, request: ResetPasswordRequest) {
         accountRepository.accountFor(ticket.userName)?.let {
             val newAccount = it.copy(password = request.newPassword)
+            accountAdministration.checkSave(it, newAccount)
             accountRepository.save(newAccount)
         }
     }

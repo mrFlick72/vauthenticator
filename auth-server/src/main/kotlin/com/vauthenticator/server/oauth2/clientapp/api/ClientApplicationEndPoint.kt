@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 class ClientApplicationEndPoint(
-    private val clientApplicationRepository: ClientApplicationRepository,
     private var storeClientApplication: StoreClientApplication,
+    private val deleteClientApplication: DeleteClientApplication,
     private val readClientApplication: ReadClientApplication,
     private val permissionValidator: PermissionValidator
 ) {
@@ -74,7 +74,7 @@ class ClientApplicationEndPoint(
     ): ResponseEntity<Unit> {
         permissionValidator.validate(authentication, Scopes.from(Scope.DELETE_CLIENT_APPLICATION))
 
-        clientApplicationRepository.delete(ClientAppId(clientAppId))
+        deleteClientApplication.delete(ClientAppId(clientAppId))
         return ResponseEntity.noContent().build()
     }
 
