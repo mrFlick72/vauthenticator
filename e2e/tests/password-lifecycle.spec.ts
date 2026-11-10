@@ -2,6 +2,7 @@ import {expect, test} from '@playwright/test';
 import {AdminHomePage} from '../pages/admin-home-page';
 import {PasswordLifecyclePage} from '../pages/password-lifecycle-page';
 import {anAccount, signUpActiveAccount} from '../support/accounts';
+import {failApiCall} from '../support/api-failures';
 import {uniqueId} from '../support/unique';
 
 let lifecycle: PasswordLifecyclePage;
@@ -115,6 +116,18 @@ test.describe('bulk rules', () => {
         await expect(bulk.feedback).toBeHidden();
         await lifecycle.accountRules.load(accounts[0].email);
         await expect(lifecycle.accountRules.noRules).toBeVisible();
+    });
+
+    // the seeded admin is an Administrator and never gets a 207: the answer of a caller that is not one is stubbed
+    test('a partly applied bulk rule warns that some accounts were skipped without saying which', async ({page}) => {
+        await failApiCall(page, 'POST', '/api/admin/accounts/password/lifecycle/PASSWORD_RESET/bulk', 207, '{"matchedAccounts": 1}');
+        const bulk = lifecycle.bulkRules;
+
+        await bulk.apply(`*@${uniqueId()}.e2e.example.com`, 'PASSWORD_RESET', {amount: '7', unit: 'days'});
+
+        await expect(bulk.feedback).toHaveText(
+            'PASSWORD_RESET registered for 1 accounts. Some accounts were skipped because only an administrator can manage them.'
+        );
     });
 
     test('a bulk rule requires a pattern', async () => {

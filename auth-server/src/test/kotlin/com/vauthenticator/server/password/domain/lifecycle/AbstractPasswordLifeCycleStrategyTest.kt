@@ -59,7 +59,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
             initImplementation()
         )
         every { passwordLifeCycleRepository.updateLastEvaluationDate(any(), any()) } just runs
-        every { passwordLifeCycleRepository.delete(any(), any()) } just runs
+        every { passwordLifeCycleRepository.delete(any(), any()) } returns 1
     }
 
     abstract fun initImplementation(): PasswordLifeCycleStrategyImplementation

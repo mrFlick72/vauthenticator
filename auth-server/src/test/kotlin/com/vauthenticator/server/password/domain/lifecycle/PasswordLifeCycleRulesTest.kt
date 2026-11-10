@@ -3,7 +3,12 @@ package com.vauthenticator.server.password.domain.lifecycle
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.account.domain.AccountRepository
+import com.vauthenticator.server.role.domain.AdministrationRequiredException
+import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
+import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
+import com.vauthenticator.server.support.AdministrationFixture.anAdministrator
+import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.support.passwordLifeCycleRule
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -27,6 +32,7 @@ class PasswordLifeCycleRulesTest {
 
     private val clock = Clock.fixed(Instant.parse("2026-10-07T10:00:00Z"), ZoneOffset.UTC)
     private val account = anAccount()
+    private val anAdministratorAccount = anAccount().copy(username = "admin@email.com", email = "admin@email.com", authorities = setOf(Role.adminRole().name))
 
     @MockK
     lateinit var accountRepository: AccountRepository
@@ -38,7 +44,7 @@ class PasswordLifeCycleRulesTest {
 
     @BeforeEach
     fun setUp() {
-        uut = PasswordLifeCycleRules(clock, accountRepository, passwordLifeCycleRepository)
+        uut = PasswordLifeCycleRules(clock, accountRepository, accountAdministrationFor(notAnAdministrator), passwordLifeCycleRepository)
     }
 
     @Test
@@ -59,6 +65,27 @@ class PasswordLifeCycleRulesTest {
                 )
             )
         }
+    }
+
+    @Test
+    fun `a caller that is not an administrator cannot register a rule for an administrator account`() {
+        every { accountRepository.accountFor(anAdministratorAccount.username) } returns anAdministratorAccount
+
+        assertThrows<AdministrationRequiredException> {
+            uut.register(anAdministratorAccount.username, PasswordLifeCycleAction.ACCOUNT_LOCK, Duration.ofDays(90))
+        }
+        verify(exactly = 0) { passwordLifeCycleRepository.store(any()) }
+    }
+
+    @Test
+    fun `an administrator registers a rule for an administrator account`() {
+        uut = PasswordLifeCycleRules(clock, accountRepository, accountAdministrationFor(anAdministrator), passwordLifeCycleRepository)
+        every { accountRepository.accountFor(anAdministratorAccount.username) } returns anAdministratorAccount
+        every { passwordLifeCycleRepository.store(any()) } just runs
+
+        uut.register(anAdministratorAccount.username, PasswordLifeCycleAction.ACCOUNT_LOCK, Duration.ofDays(90))
+
+        verify { passwordLifeCycleRepository.store(match { it.userName == anAdministratorAccount.username }) }
     }
 
     @Test
@@ -99,8 +126,19 @@ class PasswordLifeCycleRulesTest {
     }
 
     @Test
+    fun `a caller that is not an administrator cannot remove a rule from an administrator account`() {
+        every { accountRepository.accountFor(anAdministratorAccount.username) } returns anAdministratorAccount
+
+        assertThrows<AdministrationRequiredException> {
+            uut.remove(anAdministratorAccount.username, PasswordLifeCycleAction.ACCOUNT_LOCK)
+        }
+        verify(exactly = 0) { passwordLifeCycleRepository.delete(any(), any()) }
+    }
+
+    @Test
     fun `when a rule is removed`() {
-        every { passwordLifeCycleRepository.delete(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK) } just runs
+        every { accountRepository.accountFor(account.username) } returns account
+        every { passwordLifeCycleRepository.delete(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 1
 
         uut.remove(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK)
 
@@ -115,11 +153,12 @@ class PasswordLifeCycleRulesTest {
         every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns firstPage
         every { accountRepository.findUserNamesMatching(pattern, firstPage.last(), 100) } returns secondPage
         every { accountRepository.findUserNamesMatching(pattern, "zed@gmail.com", 100) } returns emptyList()
+        every { accountRepository.accountFor(any()) } answers { anAccount().copy(username = firstArg(), email = firstArg()) }
         every { passwordLifeCycleRepository.store(any()) } just runs
 
-        val matched = uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90))
+        val outcome = uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90))
 
-        assertEquals(101, matched)
+        assertEquals(PasswordLifeCycleBulkOutcome(applied = 101, skipped = 0), outcome)
         (firstPage + secondPage).forEach { userName ->
             verify {
                 passwordLifeCycleRepository.store(
@@ -136,11 +175,44 @@ class PasswordLifeCycleRulesTest {
     }
 
     @Test
+    fun `a caller that is not an administrator registers a rule for a pattern skipping the administrator accounts`() {
+        val pattern = AccountPattern("*@email.com")
+        every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns listOf(anAdministratorAccount.username, account.username)
+        every { accountRepository.findUserNamesMatching(pattern, account.username, 100) } returns emptyList()
+        every { accountRepository.accountFor(anAdministratorAccount.username) } returns anAdministratorAccount
+        every { accountRepository.accountFor(account.username) } returns account
+        every { passwordLifeCycleRepository.store(any()) } just runs
+
+        val outcome = uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90))
+
+        assertEquals(PasswordLifeCycleBulkOutcome(applied = 1, skipped = 1), outcome)
+        verify { passwordLifeCycleRepository.store(match { it.userName == account.username }) }
+        verify(exactly = 0) { passwordLifeCycleRepository.store(match { it.userName == anAdministratorAccount.username }) }
+    }
+
+    @Test
+    fun `an administrator registers a rule for a pattern on every matching account without loading them`() {
+        uut = PasswordLifeCycleRules(clock, accountRepository, accountAdministrationFor(anAdministrator), passwordLifeCycleRepository)
+        val pattern = AccountPattern("*@email.com")
+        every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns listOf(anAdministratorAccount.username, account.username)
+        every { accountRepository.findUserNamesMatching(pattern, account.username, 100) } returns emptyList()
+        every { passwordLifeCycleRepository.store(any()) } just runs
+
+        val outcome = uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90))
+
+        assertEquals(PasswordLifeCycleBulkOutcome(applied = 2, skipped = 0), outcome)
+        verify(exactly = 0) { accountRepository.accountFor(any()) }
+    }
+
+    @Test
     fun `when a rule is registered for a pattern that matches no account`() {
         val pattern = AccountPattern("*@gmial.com")
         every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns emptyList()
 
-        assertEquals(0, uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90)))
+        assertEquals(
+            PasswordLifeCycleBulkOutcome(applied = 0, skipped = 0),
+            uut.registerAll(pattern, PasswordLifeCycleAction.PASSWORD_RESET, Duration.ofDays(90))
+        )
         verify(exactly = 0) { passwordLifeCycleRepository.store(any()) }
     }
 
@@ -157,9 +229,37 @@ class PasswordLifeCycleRulesTest {
 
     @Test
     fun `when the rules of every account matching a pattern are removed`() {
+        uut = PasswordLifeCycleRules(clock, accountRepository, accountAdministrationFor(anAdministrator), passwordLifeCycleRepository)
         val pattern = AccountPattern("*@gmail.com")
-        every { passwordLifeCycleRepository.deleteMatching(pattern, PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 7
+        val firstPage = (1..100).map { "user$it@gmail.com" }
+        val secondPage = listOf("zed@gmail.com")
+        every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns firstPage
+        every { accountRepository.findUserNamesMatching(pattern, firstPage.last(), 100) } returns secondPage
+        every { accountRepository.findUserNamesMatching(pattern, "zed@gmail.com", 100) } returns emptyList()
+        every { passwordLifeCycleRepository.delete(any(), PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 0
+        every { passwordLifeCycleRepository.delete("user1@gmail.com", PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 1
+        every { passwordLifeCycleRepository.delete("zed@gmail.com", PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 1
 
-        assertEquals(7, uut.removeAll(pattern, PasswordLifeCycleAction.ACCOUNT_LOCK))
+        assertEquals(
+            PasswordLifeCycleBulkOutcome(applied = 2, skipped = 0),
+            uut.removeAll(pattern, PasswordLifeCycleAction.ACCOUNT_LOCK)
+        )
+        (firstPage + secondPage).forEach { verify { passwordLifeCycleRepository.delete(it, PasswordLifeCycleAction.ACCOUNT_LOCK) } }
+    }
+
+    @Test
+    fun `a caller that is not an administrator removes the rules for a pattern skipping the administrator accounts`() {
+        val pattern = AccountPattern("*@email.com")
+        every { accountRepository.findUserNamesMatching(pattern, null, 100) } returns listOf(anAdministratorAccount.username, account.username)
+        every { accountRepository.findUserNamesMatching(pattern, account.username, 100) } returns emptyList()
+        every { accountRepository.accountFor(anAdministratorAccount.username) } returns anAdministratorAccount
+        every { accountRepository.accountFor(account.username) } returns account
+        every { passwordLifeCycleRepository.delete(account.username, PasswordLifeCycleAction.ACCOUNT_LOCK) } returns 1
+
+        assertEquals(
+            PasswordLifeCycleBulkOutcome(applied = 1, skipped = 1),
+            uut.removeAll(pattern, PasswordLifeCycleAction.ACCOUNT_LOCK)
+        )
+        verify(exactly = 0) { passwordLifeCycleRepository.delete(anAdministratorAccount.username, any()) }
     }
 }

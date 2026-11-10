@@ -26,7 +26,7 @@ import java.time.Clock
  * Administrator.
  */
 private object TenantSetUpAdministration : Administration {
-    override fun requireAdministrator() {}
+    override fun isAdministrator() = true
 }
 
 @Configuration(proxyBeanMethods = false)

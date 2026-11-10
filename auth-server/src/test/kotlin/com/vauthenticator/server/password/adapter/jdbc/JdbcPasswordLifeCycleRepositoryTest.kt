@@ -1,8 +1,6 @@
 package com.vauthenticator.server.password.adapter.jdbc
 
-import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
-import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.PASSWORD_RESET
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.JdbcUtils.jdbcTemplate
@@ -103,17 +101,10 @@ class JdbcPasswordLifeCycleRepositoryTest {
     }
 
     @Test
-    fun `when the rules of an action matching an account pattern are deleted`() {
-        val gmailReset = resetRule.copy(userName = "Alice@Gmail.com")
-        val gmailLock = lockRule.copy(userName = "bob@gmail.com")
-        val exampleReset = resetRule.copy(userName = "carol@example.com")
-        listOf(gmailReset, gmailLock, exampleReset).forEach { uut.store(it) }
+    fun `when a rule is deleted it tells how many rules were deleted`() {
+        uut.store(lockRule)
 
-        val deleted = uut.deleteMatching(AccountPattern("*@gmail.com"), PASSWORD_RESET)
-
-        assertEquals(1, deleted)
-        assertEquals(emptyList<Any>(), uut.findRulesFor("Alice@Gmail.com"))
-        assertEquals(listOf(gmailLock), uut.findRulesFor("bob@gmail.com"))
-        assertEquals(listOf(exampleReset), uut.findRulesFor("carol@example.com"))
+        assertEquals(1, uut.delete(lockRule.userName, ACCOUNT_LOCK))
+        assertEquals(0, uut.delete(lockRule.userName, ACCOUNT_LOCK))
     }
 }

@@ -77,8 +77,8 @@ fails if any `Administration` other than `SecurityContextAdministration` and
   Administrator part of VA-SEC-06: signup still takes other caller-supplied roles and groups.
 - The `VAUTHENTICATOR_ADMIN` role must stay in `vauthenticator.role.protected-from-delete`, as it
   does by default (local, e2e, Helm `values.yaml`): deleting a role is not an account write.
-- Only administration itself is gated here. Further admin operations and scope grants are reviewed
-  in #428 and #429.
+- Only administration itself is gated here. ADR 0018 (#428) extends it: an Administrator account can
+  be managed only by an Administrator. Scope grants are reviewed in #429.
 - The domain services and use cases are tested with a stand-in `Administration`
   (`AdministrationFixture`). Which callers count as Administrators is tested on
   `SecurityContextAdministration`, setting `SecurityContextHolder` directly, because standalone

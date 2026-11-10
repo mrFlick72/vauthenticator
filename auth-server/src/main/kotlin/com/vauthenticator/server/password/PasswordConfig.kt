@@ -178,8 +178,9 @@ class PasswordLifeCycleConfig {
     fun passwordLifeCycleRules(
         clock: Clock,
         accountRepository: AccountRepository,
+        accountAdministration: AccountAdministration,
         passwordLifeCycleRepository: PasswordLifeCycleRepository,
-    ) = PasswordLifeCycleRules(clock, accountRepository, passwordLifeCycleRepository)
+    ) = PasswordLifeCycleRules(clock, accountRepository, accountAdministration, passwordLifeCycleRepository)
 
     @Bean
     fun passwordLifeCycleExecutor(

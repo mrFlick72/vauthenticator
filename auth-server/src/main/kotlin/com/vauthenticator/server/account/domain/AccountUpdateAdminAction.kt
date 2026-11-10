@@ -33,6 +33,7 @@ class AccountUpdateAdminAction(
                 authorities = request.authorities,
                 mandatoryAction = request.mandatoryAction
             )
+            accountAdministration.checkManage(account)
             accountAdministration.checkSave(account, updated)
             accountRepository.save(updated)
             releasedFailedLoginLock(account, request.accountLocked, clientAppId)

@@ -85,6 +85,22 @@ class AccountUpdateAdminActionTest {
     }
 
     @Test
+    fun `a caller that is not an administrator cannot manage an administrator account`() {
+        val anAdministratorAccount = anAccount.copy(authorities = setOf(Role.adminRole().name))
+        every { accountRepository.accountFor(anAccount.email) } returns anAdministratorAccount
+
+        assertThrows(AdministrationRequiredException::class.java) {
+            underTest.execute(
+                request.copy(enabled = false, accountLocked = false, authorities = anAdministratorAccount.authorities),
+                ADMIN_CLIENT_APP_ID
+            )
+        }
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+        verify(exactly = 0) { eventsDispatcher.dispatch(any()) }
+    }
+
+    @Test
     fun `when the account is not found`() {
         val account = anAccount.lock().copy(enabled = true, authorities = setOf("A_ROLE"))
         every { accountRepository.accountFor(account.email) } returns null

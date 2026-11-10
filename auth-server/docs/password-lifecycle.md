@@ -27,10 +27,14 @@ password on day 9 is still forced to reset it on day 10. See [ADR 0005](adr/0005
 The rules can also be managed from the management UI, in the Password Lifecycle section (`/secure/admin/password-lifecycle`).
 It lists, adds, replaces and removes the rules of a single account, and applies or removes a rule in bulk by account
 pattern, asking for confirmation first. The account page links to it with the account preselected.
+When a bulk call answers `207`, the card adds a warning that some accounts were skipped because only an administrator
+can manage them.
 
 ## How to
 
-All the endpoints require the scope ```admin:password-lifecycle-editor```.
+All the endpoints require the scope ```admin:password-lifecycle-editor```. An Administrator account (one with the
+`VAUTHENTICATOR_ADMIN` role) can be given or relieved of rules only by an Administrator (ADR 0018): the single-account
+`PUT` and `DELETE` return `403 Forbidden` for it, and the bulk calls skip it.
 
 ### Register or replace a rule
 
@@ -58,6 +62,7 @@ All the endpoints require the scope ```admin:password-lifecycle-editor```.
 - ```204 No Content```: the rule is registered
 - ```400 Bad Request```: the interval or the action is not valid
 - ```404 Not Found```: the account does not exist
+- ```403 Forbidden```: the account is an Administrator account and the caller is not an Administrator
 
 ### Read the rules of an account
 
@@ -83,7 +88,7 @@ An account with no rules returns `[]`.
 
 *URI:* ```DELETE /api/admin/accounts/{userName}/password/lifecycle/{action}```
 
-*Response Status:* ```204 No Content```, whether the rule existed or not
+*Response Status:* ```204 No Content```, whether the rule existed or not; ```403 Forbidden``` as for the registration
 
 ### Register a rule for many accounts
 
@@ -118,12 +123,19 @@ An account with no rules returns `[]`.
 A pattern that matches nothing returns `200` with `"matchedAccounts": 0`. A missing or blank pattern, or an invalid
 interval, returns `400 Bad Request`.
 
+When the caller is not an Administrator, the Administrator accounts matching the pattern are skipped and the call
+returns `207 Multi-Status` with the same body, where `matchedAccounts` counts only the accounts processed. The response
+does not say which accounts were skipped, how many, or why; the server logs the number of skipped accounts as a
+warning.
+
 ### Remove a rule from many accounts
 
 *URI:* ```DELETE /api/admin/accounts/password/lifecycle/{action}/bulk?accountPattern=*%40gmail.com```
 
-Deletes the rules for that action whose username matches the pattern, including rules left behind by accounts that no
-longer exist. The response body is the same as for the bulk registration, with the number of rules removed.
+Deletes the rule for that action of every account matching the pattern, page by page like the bulk registration. The
+response body is the same as for the bulk registration, with the number of rules removed, and Administrator accounts
+are skipped with `207 Multi-Status` in the same way. Rules left behind by accounts that no longer exist are not matched
+here; the evaluation job removes them.
 
 ### Evaluation
 

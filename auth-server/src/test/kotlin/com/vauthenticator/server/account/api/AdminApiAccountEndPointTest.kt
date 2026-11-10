@@ -221,4 +221,29 @@ internal class AdminApiAccountEndPointTest {
 
         verify(exactly = 0) { accountRepository.save(any()) }
     }
+
+    @Test
+    internal fun `disabling an administrator account is forbidden for a caller that is not an administrator`() {
+        val representation = AdminAccountApiRequest(
+            email = "anemail@domain.com",
+            enabled = false,
+            accountLocked = false,
+            authorities = setOf(VAUTHENTICATOR_ADMIN)
+        )
+        val accountWriter = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.SAVE_ACCOUNT.content))
+        // the security filter chain fills the context in production; standalone MockMvc does not
+        SecurityContextHolder.getContext().authentication = accountWriter
+
+        every { accountRepository.accountFor("anemail@domain.com") } returns
+                AccountTestFixture.anAccount().copy(authorities = setOf(VAUTHENTICATOR_ADMIN))
+
+        mokMvc.perform(
+            put("/api/admin/accounts")
+                .contentType(APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(representation))
+                .principal(accountWriter)
+        ).andExpect(status().isForbidden)
+
+        verify(exactly = 0) { accountRepository.save(any()) }
+    }
 }
