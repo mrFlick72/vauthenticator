@@ -3,13 +3,19 @@ package com.vauthenticator.server.password.api
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.account.domain.InvalidAccountPatternException
+import com.vauthenticator.server.extentions.clientAppId
+import com.vauthenticator.server.extentions.escapedForLog
+import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleBulkOutcome
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRule
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
 import com.vauthenticator.server.role.domain.PermissionValidator
+import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -24,6 +30,8 @@ class PasswordLifeCycleEndPoint(
     private val permissionValidator: PermissionValidator,
     private val passwordLifeCycleRules: PasswordLifeCycleRules
 ) {
+
+    private val logger = LoggerFactory.getLogger(PasswordLifeCycleEndPoint::class.java)
 
     @PutMapping(ACCOUNT_RULE_PATH)
     fun registerRule(
@@ -66,14 +74,11 @@ class PasswordLifeCycleEndPoint(
         @RequestBody request: PasswordLifeCycleBulkRuleRequest,
         authentication: Authentication?
     ): ResponseEntity<PasswordLifeCycleBulkResult> {
-        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
-        val matchedAccounts = passwordLifeCycleRules.registerAll(
-            accountPatternOf(request.accountPattern),
-            action,
-            intervalOf(request.intervalSeconds)
-        )
-        return ResponseEntity.ok(PasswordLifeCycleBulkResult(matchedAccounts))
+        val pattern = accountPatternOf(request.accountPattern)
+        val outcome = passwordLifeCycleRules.registerAll(pattern, action, intervalOf(request.intervalSeconds))
+        return bulkResponseFor(outcome, "register", action, pattern, principal.clientAppId())
     }
 
     @DeleteMapping(BULK_RULES_PATH)
@@ -82,10 +87,11 @@ class PasswordLifeCycleEndPoint(
         @RequestParam accountPattern: String,
         authentication: Authentication?
     ): ResponseEntity<PasswordLifeCycleBulkResult> {
-        permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
+        val principal = permissionValidator.validate(authentication, Scopes.from(Scope.CHANGE_PASSWORD_LIFECYCLE))
 
-        val matchedAccounts = passwordLifeCycleRules.removeAll(accountPatternOf(accountPattern), action)
-        return ResponseEntity.ok(PasswordLifeCycleBulkResult(matchedAccounts))
+        val pattern = accountPatternOf(accountPattern)
+        val outcome = passwordLifeCycleRules.removeAll(pattern, action)
+        return bulkResponseFor(outcome, "remove", action, pattern, principal.clientAppId())
     }
 
     @ExceptionHandler(AccountNotFoundException::class)
@@ -94,6 +100,26 @@ class PasswordLifeCycleEndPoint(
     @ExceptionHandler(InvalidPasswordLifeCycleIntervalException::class, InvalidAccountPatternException::class)
     fun invalidRequestExceptionHandler(ex: RuntimeException) =
         ResponseEntity.badRequest().body(ex.message)
+
+    // a partly applied bulk request answers 207 with the usual body: which accounts were skipped, how many, and why
+    // stay out of the response and only the count is logged (ADR 0018)
+    private fun bulkResponseFor(
+        outcome: PasswordLifeCycleBulkOutcome,
+        operation: String,
+        action: PasswordLifeCycleAction,
+        pattern: AccountPattern,
+        clientAppId: ClientAppId
+    ): ResponseEntity<PasswordLifeCycleBulkResult> {
+        val body = PasswordLifeCycleBulkResult(outcome.applied)
+        if (outcome.skipped == 0) {
+            return ResponseEntity.ok(body)
+        }
+        logger.warn(
+            "bulk {} of the {} password lifecycle rule for pattern {} by client app {} skipped {} accounts only an administrator can manage",
+            operation, action, pattern.value.escapedForLog(), clientAppId.content.escapedForLog(), outcome.skipped
+        )
+        return ResponseEntity.status(HttpStatus.MULTI_STATUS).body(body)
+    }
 
     private fun intervalOf(intervalSeconds: Long?): Duration =
         Duration.ofSeconds(

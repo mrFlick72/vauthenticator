@@ -6,7 +6,9 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationReposi
 import com.vauthenticator.server.password.domain.lifecycle.InvalidPasswordLifeCycleIntervalException
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.ACCOUNT_LOCK
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction.PASSWORD_RESET
+import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleBulkOutcome
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRules
+import com.vauthenticator.server.role.domain.AdministrationRequiredException
 import com.vauthenticator.server.role.domain.PermissionValidator
 import com.vauthenticator.server.support.EMAIL
 import com.vauthenticator.server.support.SecurityFixture.m2mPrincipalFor
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.MediaType
+import org.springframework.test.json.JsonCompareMode
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -203,7 +206,7 @@ class PasswordLifeCycleEndPointTest {
 
     @Test
     fun `when a rule is registered for every account matching a pattern`() {
-        every { passwordLifeCycleRules.registerAll(AccountPattern("*@gmail.com"), PASSWORD_RESET, Duration.ofDays(90)) } returns 1342
+        every { passwordLifeCycleRules.registerAll(AccountPattern("*@gmail.com"), PASSWORD_RESET, Duration.ofDays(90)) } returns PasswordLifeCycleBulkOutcome(applied = 1342, skipped = 0)
 
         mokMvc.perform(
             post(BULK_RESET_PATH)
@@ -213,6 +216,20 @@ class PasswordLifeCycleEndPointTest {
         )
             .andExpect(status().isOk)
             .andExpect(content().json("""{"matchedAccounts": 1342}"""))
+    }
+
+    @Test
+    fun `when a rule is registered for a pattern skipping some accounts the response says only that it was partly applied`() {
+        every { passwordLifeCycleRules.registerAll(AccountPattern("*@gmail.com"), PASSWORD_RESET, Duration.ofDays(90)) } returns PasswordLifeCycleBulkOutcome(applied = 1342, skipped = 2)
+
+        mokMvc.perform(
+            post(BULK_RESET_PATH)
+                .principal(editor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"accountPattern": "*@gmail.com", "intervalSeconds": 7776000}""")
+        )
+            .andExpect(status().isMultiStatus)
+            .andExpect(content().json("""{"matchedAccounts": 1342}""", JsonCompareMode.STRICT))
     }
 
     @Test
@@ -247,11 +264,40 @@ class PasswordLifeCycleEndPointTest {
 
     @Test
     fun `when the rules of every account matching a pattern are removed`() {
-        every { passwordLifeCycleRules.removeAll(AccountPattern("*@gmail.com"), PASSWORD_RESET) } returns 12
+        every { passwordLifeCycleRules.removeAll(AccountPattern("*@gmail.com"), PASSWORD_RESET) } returns PasswordLifeCycleBulkOutcome(applied = 12, skipped = 0)
 
         mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", "*@gmail.com").principal(editor))
             .andExpect(status().isOk)
             .andExpect(content().json("""{"matchedAccounts": 12}"""))
+    }
+
+    @Test
+    fun `when the rules matching a pattern are removed skipping some accounts the response says only that it was partly applied`() {
+        every { passwordLifeCycleRules.removeAll(AccountPattern("*@gmail.com"), PASSWORD_RESET) } returns PasswordLifeCycleBulkOutcome(applied = 12, skipped = 1)
+
+        mokMvc.perform(delete(BULK_RESET_PATH).param("accountPattern", "*@gmail.com").principal(editor))
+            .andExpect(status().isMultiStatus)
+            .andExpect(content().json("""{"matchedAccounts": 12}""", JsonCompareMode.STRICT))
+    }
+
+    @Test
+    fun `when a rule is registered for an administrator account by a caller that is not an administrator`() {
+        every { passwordLifeCycleRules.register(EMAIL, ACCOUNT_LOCK, Duration.ofDays(90)) } throws AdministrationRequiredException("only an administrator can do this")
+
+        mokMvc.perform(
+            put(LOCK_RULE_PATH)
+                .principal(editor)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"intervalSeconds": 7776000}""")
+        ).andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `when a rule is removed from an administrator account by a caller that is not an administrator`() {
+        every { passwordLifeCycleRules.remove(EMAIL, ACCOUNT_LOCK) } throws AdministrationRequiredException("only an administrator can do this")
+
+        mokMvc.perform(delete(LOCK_RULE_PATH).principal(editor))
+            .andExpect(status().isForbidden)
     }
 
     @Test

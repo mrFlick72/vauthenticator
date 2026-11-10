@@ -23,7 +23,16 @@ export type PasswordLifeCycleRule = {
 }
 
 export type PasswordLifeCycleBulkResult = {
-    matchedAccounts: number
+    matchedAccounts: number,
+    // 207: the server skipped accounts this admin cannot manage; it does not say which or how many
+    partiallyApplied: boolean
+}
+
+const HTTP_MULTI_STATUS = 207
+
+async function bulkResultOf(response: Response): Promise<PasswordLifeCycleBulkResult> {
+    const body = await jsonOf<{ matchedAccounts: number }>(response)
+    return {matchedAccounts: body.matchedAccounts, partiallyApplied: response.status === HTTP_MULTI_STATUS}
 }
 
 const authorizationHeader = () => `Bearer ${window.sessionStorage.getItem("ACCESS_TOKEN")}`
@@ -91,7 +100,7 @@ export async function saveRuleForAccountPattern(accountPattern: string,
             credentials: 'include',
             body: JSON.stringify({accountPattern: accountPattern, intervalSeconds: intervalSeconds})
         })
-    return jsonOf<PasswordLifeCycleBulkResult>(response)
+    return bulkResultOf(response)
 }
 
 export async function removeRuleForAccountPattern(accountPattern: string, action: PasswordLifeCycleAction): Promise<PasswordLifeCycleBulkResult> {
@@ -105,5 +114,5 @@ export async function removeRuleForAccountPattern(accountPattern: string, action
             mode: "cors",
             credentials: 'include'
         })
-    return jsonOf<PasswordLifeCycleBulkResult>(response)
+    return bulkResultOf(response)
 }

@@ -2,7 +2,6 @@ package com.vauthenticator.server.role.adapter.security
 
 import com.vauthenticator.server.extentions.isAdministrator
 import com.vauthenticator.server.role.domain.Administration
-import com.vauthenticator.server.role.domain.AdministrationRequiredException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 
@@ -12,10 +11,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
  */
 class SecurityContextAdministration : Administration {
 
-    override fun requireAdministrator() {
+    override fun isAdministrator(): Boolean {
         val caller = SecurityContextHolder.getContext().authentication as? JwtAuthenticationToken
-        if (caller?.isAdministrator() != true) {
-            throw AdministrationRequiredException("only an administrator can change administration")
-        }
+        return caller?.isAdministrator() == true
     }
 }

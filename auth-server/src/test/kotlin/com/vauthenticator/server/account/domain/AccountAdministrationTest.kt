@@ -6,7 +6,9 @@ import com.vauthenticator.server.support.AdministrationFixture.accountAdministra
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class AccountAdministrationTest {
@@ -73,5 +75,35 @@ class AccountAdministrationTest {
     @Test
     fun `an administrator creates an account with the administrator role`() {
         assertDoesNotThrow { anAdministrator.checkCreate(anAdministratorAccount) }
+    }
+
+    @Test
+    fun `a caller that is not an administrator cannot manage an administrator account`() {
+        assertThrows(AdministrationRequiredException::class.java) {
+            notAnAdministrator.checkManage(anAdministratorAccount)
+        }
+    }
+
+    @Test
+    fun `a caller that is not an administrator manages an account that is not an administrator`() {
+        assertDoesNotThrow { notAnAdministrator.checkManage(anAccount()) }
+    }
+
+    @Test
+    fun `an administrator manages an administrator account`() {
+        assertDoesNotThrow { anAdministrator.checkManage(anAdministratorAccount) }
+    }
+
+    @Test
+    fun `only an administrator manages every account`() {
+        assertTrue(anAdministrator.managesEveryAccount())
+        assertFalse(notAnAdministrator.managesEveryAccount())
+    }
+
+    @Test
+    fun `a caller that is not an administrator can manage only accounts that are not administrators`() {
+        assertTrue(notAnAdministrator.canManage(anAccount()))
+        assertFalse(notAnAdministrator.canManage(anAdministratorAccount))
+        assertTrue(anAdministrator.canManage(anAdministratorAccount))
     }
 }

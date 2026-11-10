@@ -20,7 +20,7 @@ import {failureMessage} from "../../utils/ApiError";
 
 const defaultUnit = intervalUnitOptions.find(option => option.value === IntervalUnit.DAYS)!
 
-type Feedback = { severity: "success" | "error", message: string }
+type Feedback = { severity: "success" | "warning" | "error", message: string }
 
 type PendingOperation =
     { kind: "apply", pattern: string, action: PasswordLifeCycleAction, intervalSeconds: number }
@@ -83,12 +83,12 @@ const BulkRulesCard: React.FC = () => {
             setFeedback({severity: "error", message: failureMessage(action, error, PASSWORD_LIFECYCLE_RULES)})
             return
         }
-        setFeedback({
-            severity: "success",
-            message: operation.kind === "apply"
-                ? `${operation.action} registered for ${result.matchedAccounts} accounts`
-                : `${operation.action} removed from ${result.matchedAccounts} accounts`
-        })
+        const done = operation.kind === "apply"
+            ? `${operation.action} registered for ${result.matchedAccounts} accounts`
+            : `${operation.action} removed from ${result.matchedAccounts} accounts`
+        setFeedback(result.partiallyApplied
+            ? {severity: "warning", message: `${done}. Some accounts were skipped because only an administrator can manage them.`}
+            : {severity: "success", message: done})
     }
 
     return <Card>

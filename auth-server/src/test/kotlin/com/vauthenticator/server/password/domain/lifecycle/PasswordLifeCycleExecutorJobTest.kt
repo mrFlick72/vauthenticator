@@ -74,7 +74,7 @@ class PasswordLifeCycleExecutorJobTest {
         every { passwordLifeCycleRepository.findAllRulesAfter(after = user2Rule, size = 100) } returns emptyList()
         every { passwordLifeCycleExecutor.execute(user1Rule) } throws AccountNotFoundException("missing")
         every { passwordLifeCycleExecutor.execute(user2Rule) } just runs
-        every { passwordLifeCycleRepository.delete(user1Rule.userName, user1Rule.action) } just runs
+        every { passwordLifeCycleRepository.delete(user1Rule.userName, user1Rule.action) } returns 1
 
         uut.execute()
 

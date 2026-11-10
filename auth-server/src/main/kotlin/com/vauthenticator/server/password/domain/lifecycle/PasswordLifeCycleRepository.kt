@@ -1,18 +1,15 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
-import com.vauthenticator.server.account.domain.AccountPattern
 import java.time.LocalDateTime
 
 interface PasswordLifeCycleRepository {
 
     fun store(rule: PasswordLifeCycleRule)
 
-    fun delete(userName: String, action: PasswordLifeCycleAction)
-
     /**
-     * Deletes the rules for [action] whose username matches [pattern] and returns how many were deleted.
+     * Deletes the rule of [userName] for [action] and returns how many rules were deleted: 1, or 0 when there was none.
      */
-    fun deleteMatching(pattern: AccountPattern, action: PasswordLifeCycleAction): Int
+    fun delete(userName: String, action: PasswordLifeCycleAction): Int
 
     fun updateLastEvaluationDate(rule: PasswordLifeCycleRule, lastEvaluationDate: LocalDateTime)
 

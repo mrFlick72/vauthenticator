@@ -464,7 +464,9 @@ the same shape as **VA-SEC-06**.
 - A rejection is `AdministrationRequiredException` → `403`, with nothing saved.
 - Tenant setup is the single exemption, wired on `TenantSetUpAdministration` in `TenantInitConfig`.
 
-**Related:** further admin operations and scope grants are reviewed in #428 and #429. Keep
+**Related:** #428 (ADR 0018) extends the fix: only an Administrator manages an Administrator
+account, so the granular scopes can no longer lock, disable or schedule lifecycle rules on one.
+Scope grants are reviewed in #429. Keep
 `VAUTHENTICATOR_ADMIN` in `vauthenticator.role.protected-from-delete` (the default).
 
 ---

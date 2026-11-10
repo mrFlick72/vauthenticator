@@ -8,8 +8,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
- * The administration rule (ADR 0017) is checked in the use cases, so nothing at runtime stops a writer that forgets
- * the check: this test does, at build time.
+ * The administration rules (ADR 0017, ADR 0018) are checked in the use cases, so nothing at runtime stops a writer
+ * that forgets the check: this test does, at build time.
  */
 class AdministrationArchitectureTest {
 
@@ -36,6 +36,17 @@ class AdministrationArchitectureTest {
     }
 
     @Test
+    fun `every class that writes password lifecycle rules checks who may manage the account`() {
+        assertEveryWriterChecks(
+            repository = "com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleRepository",
+            writes = setOf("store", "delete"),
+            check = "com.vauthenticator.server.account.domain.AccountAdministration",
+            // the job only removes the rules of accounts that no longer exist
+            alsoExempt = setOf("com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleExecutorJob")
+        )
+    }
+
+    @Test
     fun `only the security context and tenant setup decide who is an administrator`() {
         val implementations = mainClasses
             .filter { it.isAssignableTo("com.vauthenticator.server.role.domain.Administration") && !it.isInterface }
@@ -47,9 +58,14 @@ class AdministrationArchitectureTest {
         )
     }
 
-    private fun assertEveryWriterChecks(repository: String, writes: Set<String>, check: String) {
+    private fun assertEveryWriterChecks(
+        repository: String,
+        writes: Set<String>,
+        check: String,
+        alsoExempt: Set<String> = emptySet()
+    ) {
         val writers = classesCalling { it.owner.isAssignableTo(repository) && it.name in writes }
-            .filterNot { isExempt(it) }
+            .filterNot { isExempt(it) || it in alsoExempt }
         val checkers = classesCalling { it.owner.name == check }
 
         assertThat(writers).describedAs("writers of $repository").isNotEmpty
