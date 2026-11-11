@@ -466,7 +466,8 @@ the same shape as **VA-SEC-06**.
 
 **Related:** #428 (ADR 0018) extends the fix: only an Administrator manages an Administrator
 account, so the granular scopes can no longer lock, disable or schedule lifecycle rules on one.
-Scope grants are reviewed in #429. Keep
+#429 (ADR 0019) keeps the granular `admin:*` scopes out of the rule: `admin:client-app-writer` grants
+them to any client app that is not an Administrator, so it must be given only to trusted client apps. Keep
 `VAUTHENTICATOR_ADMIN` in `vauthenticator.role.protected-from-delete` (the default).
 
 ---

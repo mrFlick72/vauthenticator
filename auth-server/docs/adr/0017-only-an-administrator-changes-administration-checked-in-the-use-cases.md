@@ -78,7 +78,8 @@ fails if any `Administration` other than `SecurityContextAdministration` and
 - The `VAUTHENTICATOR_ADMIN` role must stay in `vauthenticator.role.protected-from-delete`, as it
   does by default (local, e2e, Helm `values.yaml`): deleting a role is not an account write.
 - Only administration itself is gated here. ADR 0018 (#428) extends it: an Administrator account can
-  be managed only by an Administrator. Scope grants are reviewed in #429.
+  be managed only by an Administrator. ADR 0019 (#429) keeps the
+  granular `admin:*` scopes out of the rule: any `admin:client-app-writer` grants them.
 - The domain services and use cases are tested with a stand-in `Administration`
   (`AdministrationFixture`). Which callers count as Administrators is tested on
   `SecurityContextAdministration`, setting `SecurityContextHolder` directly, because standalone

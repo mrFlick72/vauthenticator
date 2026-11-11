@@ -21,6 +21,8 @@ An administrator is a client application with the `admin:full-access` scope, or 
 
 The same goes for managing an administrator's account: only an administrator can lock, unlock, enable or disable it, or give it password lifecycle rules. A caller with only the matching scope, such as a machine-to-machine integration, manages every other account; when a bulk password lifecycle rule matches administrator accounts, those are skipped and the response status is `207`, without saying which accounts were skipped.
 
+The other management API scopes are not limited this way. A caller with `admin:client-app-writer` can give any of them, such as `admin:account-writer` or `admin:key-editor`, to a client application that is not an administrator, including its own, so give `admin:client-app-writer` only to client applications you trust with that much access.
+
 The initial tenant setup is the only exception: it creates the first administrator account and client application. Administrators who forget their password recover it like any other account holder, through the reset-password link sent to their email.
 
 ## Part of the local setup
