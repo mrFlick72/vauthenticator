@@ -128,7 +128,7 @@ The role that makes an account holder an **Administrator**. It is a **Protected 
 _Avoid_: admin authority
 
 **Full-Access Scope**:
-The client app scope that makes a client app an **Administrator**. It is a scope, not a role: putting its name among an account's roles grants nothing.
+The client app scope that makes a client app an **Administrator**. It is a scope, not a role: putting its name among an account's roles grants nothing. It is the only scope that only an administrator can give or take away; any client app writer gives the other admin scopes, including ones it does not hold itself.
 _Avoid_: admin scope
 
 **Protected Role**:

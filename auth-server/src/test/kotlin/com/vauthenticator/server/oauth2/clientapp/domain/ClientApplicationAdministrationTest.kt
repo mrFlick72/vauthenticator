@@ -1,6 +1,8 @@
 package com.vauthenticator.server.oauth2.clientapp.domain
 
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.ADMIN_FULL_ACCESS
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.KEY_EDITOR
+import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.SAVE_ACCOUNT
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope.Companion.SAVE_CLIENT_APPLICATION
 import com.vauthenticator.server.role.domain.AdministrationRequiredException
 import com.vauthenticator.server.support.AdministrationFixture
@@ -44,6 +46,43 @@ class ClientApplicationAdministrationTest {
     fun `a caller that is not an administrator cannot take the full access scope away from a client app`() {
         assertThrows(AdministrationRequiredException::class.java) {
             notAnAdministrator.checkSave(anAdministratorClientApp, anAdministratorClientApp.copy(scopes = Scopes.from(SAVE_CLIENT_APPLICATION)))
+        }
+    }
+
+    @Test
+    fun `a caller that is not an administrator gives a client app granular admin scopes, also ones it does not hold`() {
+        assertDoesNotThrow {
+            notAnAdministrator.checkSave(aClientApp, aClientApp.copy(scopes = Scopes(aClientApp.scopes.content + SAVE_ACCOUNT + KEY_EDITOR)))
+        }
+    }
+
+    @Test
+    fun `a caller that is not an administrator creates a client app with granular admin scopes`() {
+        assertDoesNotThrow {
+            notAnAdministrator.checkSave(null, aClientApp.copy(scopes = Scopes(setOf(SAVE_CLIENT_APPLICATION, SAVE_ACCOUNT, KEY_EDITOR))))
+        }
+    }
+
+    @Test
+    fun `a caller that is not an administrator takes granular admin scopes away from a client app`() {
+        val aClientAppWithGranularScopes = aClientApp.copy(scopes = Scopes(setOf(SAVE_ACCOUNT, KEY_EDITOR)))
+        assertDoesNotThrow {
+            notAnAdministrator.checkSave(aClientAppWithGranularScopes, aClientAppWithGranularScopes.copy(scopes = Scopes.from(SAVE_ACCOUNT)))
+        }
+    }
+
+    @Test
+    fun `a caller that is not an administrator changes the secret of a client app with granular admin scopes`() {
+        val aClientAppWithGranularScopes = aClientApp.copy(scopes = Scopes(setOf(SAVE_ACCOUNT, KEY_EDITOR)))
+        assertDoesNotThrow {
+            notAnAdministrator.checkSave(aClientAppWithGranularScopes, aClientAppWithGranularScopes.copy(secret = Secret("a secret of my choice")))
+        }
+    }
+
+    @Test
+    fun `a caller that is not an administrator cannot give the full access scope together with granular admin scopes`() {
+        assertThrows(AdministrationRequiredException::class.java) {
+            notAnAdministrator.checkSave(aClientApp, aClientApp.copy(scopes = Scopes(setOf(SAVE_ACCOUNT, ADMIN_FULL_ACCESS))))
         }
     }
 
