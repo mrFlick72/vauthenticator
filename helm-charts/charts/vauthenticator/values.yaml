@@ -207,6 +207,13 @@ application:
       otpLength: 6
       otpTimeToLiveInSeconds: 30
 
+  # Failed-Login Lock: after `threshold` consecutive failed logins the account is
+  # locked for `duration` (a Spring duration). A threshold of 0 applies no new locks.
+  login:
+    failedLoginLock:
+      threshold: 5
+      duration: 1m
+
   # How long a ticket (the one-time proof behind MFA enrollment, reset-password
   # and email-verification links) can be redeemed, as Spring durations.
   ticket:
@@ -217,7 +224,6 @@ application:
 
   assetServer:
     onS3:
-      enabled: false
       bundleVersion: ""
     baseUrl: http://localhost:8080
 
