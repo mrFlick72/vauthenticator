@@ -373,6 +373,23 @@ application:
 | `application.cache.clientApplication.ttl` | Client application cache TTL, as a Spring duration. | `1h` |
 | `application.cache.clientApplication.name` | Client application cache region name. | `client_application_cache` |
 
+### Failed-Login Lock
+
+After `threshold` consecutive failed logins an account is locked for `duration`; the lock ends on its own at the next login attempt after that time. The failure count is kept in Redis. A threshold of `0` applies no new locks, but existing ones still expire. See `auth-server/docs/failed-login-lock.md`.
+
+```yaml
+application:
+  login:
+    failedLoginLock:
+      threshold: 5
+      duration: 1m
+```
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `application.login.failedLoginLock.threshold` | Consecutive failed logins that lock the account; `0` turns new locks off. | `5` |
+| `application.login.failedLoginLock.duration` | How long the lock lasts, and how long an idle failure count is kept, as a Spring duration. | `1m` |
+
 ### Tickets
 
 A ticket is the one-time proof behind MFA enrollment, reset-password links and email-verification links. It is deleted when redeemed and cannot be redeemed after its TTL.
@@ -413,7 +430,6 @@ application:
       otpTimeToLiveInSeconds: 30
   assetServer:
     onS3:
-      enabled: false
       bundleVersion: ""
     baseUrl: http://localhost:8080
   events:

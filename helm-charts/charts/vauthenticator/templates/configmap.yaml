@@ -45,7 +45,6 @@ data:
 
     assetServer:
       on-s3:
-        enabled: {{ .Values.application.assetServer.onS3.enabled }}
         bundle-version: {{ .Values.application.assetServer.onS3.bundleVersion }}
       baseUrl: {{ .Values.application.assetServer.baseUrl }}
 
@@ -79,6 +78,11 @@ data:
       otp:
         length: {{ .Values.application.mfa.otp.otpLength }}
         timeToLiveInSeconds: {{ .Values.application.mfa.otp.otpTimeToLiveInSeconds }}
+
+    login:
+      failed-login-lock:
+        threshold: {{ .Values.application.login.failedLoginLock.threshold }}
+        duration: {{ .Values.application.login.failedLoginLock.duration }}
 
     ticket:
       ttl:
