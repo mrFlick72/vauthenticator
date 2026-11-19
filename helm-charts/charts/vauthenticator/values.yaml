@@ -71,9 +71,17 @@ gateway:
 # renders an HTTPRoute bound to it via parentRefs. Enable both together to route
 # through the Gateway API instead of the Ingress resource (ingress.enabled and
 # httpRoute.enabled are mutually exclusive; the chart fails to render if both are true).
+# To attach the HTTPRoute to a Gateway that already exists in the cluster, leave
+# gateway.enabled false and set httpRoute.parentRefs.
 httpRoute:
   enabled: false
-  gatewayClassName: traeefik
+  gatewayClassName: traefik
+  # Gateways the HTTPRoute attaches to; empty means the Gateway this chart renders.
+  # Example:
+  # parentRefs:
+  #   - name: traefik-gateway
+  #     namespace: traefik
+  parentRefs: [ ]
   gatewayPort: 8443
   hostnames: [ ]
   tls: [ ]
