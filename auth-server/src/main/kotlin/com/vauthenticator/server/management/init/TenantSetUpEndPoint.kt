@@ -16,11 +16,12 @@ class TenantSetUpEndPoint(
 
     @WriteOperation
     fun tenantInit(): ResponseEntity<Unit> {
+        // documents first: creating the first accounts sends their welcome email, rendered from the template
+        communicationTemplateSetUpJob.execute()
+        defaultPageSetUpJob.execute()
         accountSetUpJob.execute()
         clientApplicationSetUpJob.execute()
         keySetUpJob.execute()
-        communicationTemplateSetUpJob.execute()
-        defaultPageSetUpJob.execute()
 
         return ResponseEntity.noContent().build()
     }
