@@ -20,13 +20,13 @@ compose() {
 }
 
 echo "==> building auth-server"
-(cd "$ROOT_DIR/auth-server/local" && bash build-frontend.sh)
+# the jar carries the Default Pages, built by Maven
 (cd "$ROOT_DIR/auth-server" && ./mvnw -q clean package -DskipTests)
 
-# the template scenarios save email/SMS templates: give the stack a writable copy of the documents, so a run
-# never touches auth-server/dist; the container user is not the host user, hence the open permissions
+# the document storage starts empty: the tenant setup below saves the Default Pages and the default email/SMS
+# templates into it, as on a real new tenant. The container user is not the host user, hence the open permissions
 rm -rf "$E2E_DIR/.documents"
-cp -r "$ROOT_DIR/auth-server/dist" "$E2E_DIR/.documents"
+mkdir -p "$E2E_DIR/.documents"
 chmod -R a+rwX "$E2E_DIR/.documents"
 
 echo "==> building management-ui"

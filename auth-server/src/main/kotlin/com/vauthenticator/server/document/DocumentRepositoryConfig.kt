@@ -58,11 +58,9 @@ internal class DocumentRepositoryConfig {
         return CaffeineCache(
             cacheName, Caffeine.newBuilder()
                 .refreshAfterWrite(ttl)
-                .build { assetName: Any? ->
-                    documentRepository.loadDocument(
-                        DocumentType.STATIC_ASSET.content,
-                        "content/asset/${assetName}"
-                    )
+                // the key is the asset's full path in the storage, resolved by PageLocation
+                .build { assetPath: Any? ->
+                    documentRepository.loadDocument(DocumentType.STATIC_ASSET.content, assetPath as String)
                 })
     }
 }

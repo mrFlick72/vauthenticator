@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.RequestMapping
 import tools.jackson.databind.ObjectMapper
+import com.vauthenticator.server.page.domain.Page
 
 @Controller
 class ErrorPagesTemplateController(objectMapper: ObjectMapper) : ErrorController {
@@ -17,10 +18,10 @@ class ErrorPagesTemplateController(objectMapper: ObjectMapper) : ErrorController
         model.addAttribute("errorPageTitle", "VAuthenticator")
         model.addAttribute("errors", errorMessages)
         when (request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE) as Int) {
-            400 -> model.addAttribute("assetBundle", "400_error_bundle.js")
-            404 -> model.addAttribute("assetBundle", "404_error_bundle.js")
-            500 -> model.addAttribute("assetBundle", "500_error_bundle.js")
-            else -> model.addAttribute("assetBundle", "default_error_bundle.js")
+            400 -> model.addAttribute("assetBundle", Page.BAD_REQUEST_ERROR.bundle)
+            404 -> model.addAttribute("assetBundle", Page.NOT_FOUND_ERROR.bundle)
+            500 -> model.addAttribute("assetBundle", Page.SERVER_ERROR.bundle)
+            else -> model.addAttribute("assetBundle", Page.DEFAULT_ERROR.bundle)
         }
 
         return "error-template"

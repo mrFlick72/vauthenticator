@@ -1,6 +1,7 @@
 package com.vauthenticator.server.web
 
 import com.vauthenticator.server.document.domain.Document
+import com.vauthenticator.server.page.domain.PageLocation
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
@@ -24,12 +25,12 @@ class StaticControllerTest {
 
     @BeforeEach
     internal fun setUp() {
-        mokMvc = MockMvcBuilders.standaloneSetup(StaticController("", staticContentLocalCache)).build()
+        mokMvc = MockMvcBuilders.standaloneSetup(StaticController(PageLocation(""), staticContentLocalCache)).build()
     }
 
     @Test
     fun `when the content is cached`() {
-        every { staticContentLocalCache.get("asset.js", Document::class.java) } returns Document(
+        every { staticContentLocalCache.get("content/asset/asset.js", Document::class.java) } returns Document(
             "",
             "",
             ByteArray(0)
@@ -42,7 +43,7 @@ class StaticControllerTest {
 
     @Test
     fun `when the content is missing then return 404`() {
-        every { staticContentLocalCache.get("no-such-asset.js", Document::class.java) } returns null
+        every { staticContentLocalCache.get("content/asset/no-such-asset.js", Document::class.java) } returns null
 
         mokMvc.perform(get("/static/content/asset/no-such-asset.js"))
             .andExpect(status().isNotFound)

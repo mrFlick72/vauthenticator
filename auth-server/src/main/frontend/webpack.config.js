@@ -1,6 +1,8 @@
 var path = require('path');
 
-const BUID_DIR = path.resolve(__dirname + "/dist");
+// the Default Pages ship in the jar: Maven runs this build, and the bundles land on the classpath under
+// pages/default, where tenant setup reads them from
+const BUID_DIR = path.resolve(__dirname, "../../../target/classes/pages/default");
 
 module.exports = {
     entry: {
@@ -37,7 +39,7 @@ module.exports = {
         ]
     },
     output: {
-        filename: 'asset/[name]_bundle.js',
+        filename: '[name]_bundle.js',
         path: BUID_DIR
     }
 };

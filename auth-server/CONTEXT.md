@@ -117,6 +117,26 @@ The purpose an SMS is sent for; each type has exactly one **SMS Template**. Toda
 The admin-editable text an SMS of a given **SMS Type** is rendered from. It mirrors the **Email Template** of an **Email Type**: an SMS whose template has not been set up cannot be sent.
 _Avoid_: SMS message (for the template)
 
+**Default Template**:
+The **Email Template** or **SMS Template** text that ships with the authorization server for each **Email Type** and **SMS Type**. It is only a starting point: a tenant gets it once, through the **Tenant Setup**, and admins change it from there.
+_Avoid_: fallback template, built-in template
+
+### Pages
+
+**Page**:
+One screen the authorization server shows to an account holder in the browser, such as login, the MFA challenge, signup, password reset or an error. It is served from the tenant's storage, not from the authorization server itself.
+_Avoid_: view, screen, bundle (the compiled file is how a page is delivered, not what it is)
+
+**Default Page**:
+The **Page** that ships with the authorization server for each screen. Like a **Default Template**, it is only a starting point: a tenant gets it through the **Tenant Setup**, and an operator who wants a different page replaces it as a whole rather than editing it.
+_Avoid_: built-in page, fallback page
+
+### Tenant
+
+**Tenant Setup**:
+The one-time bootstrap that makes a new tenant usable: it provides the first administrators, the signing keys, the **Default Template** of every **Email Type** and **SMS Type**, and the **Default Page** of every **Page**. It is meant for a new tenant only: run again, it puts the defaults back, replacing an admin's edits. A tenant that existed before a template was added gets that template from an admin saving it, not from running the setup again.
+_Avoid_: tenant init, provisioning
+
 ### Roles
 
 **Administrator**:

@@ -42,7 +42,9 @@ In order to make simple the ui assets build for local development take in consid
     fs-base-path: dist
 ```
 
-in order to be sure to have the assets and the default email and SMS templates you can use the ```build-frontend.sh```
+The tenant setup (`POST /actuator/tenant-setup`) saves the Default Pages and the default email and SMS templates into this storage, as on any other tenant. The pages are built into the jar by Maven (`frontend-maven-plugin`, Node is installed by the build); `-Dskip.npm` skips them for backend-only runs.
+
+While working on a page, ```build-frontend.sh``` rebuilds the pages through Maven and copies them, with the default templates, into `dist`, without running the tenant setup again.
 
 ## Installation in a NON AWS Environment 
 

@@ -34,9 +34,9 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - `src/main/kotlin/com/vauthenticator/server`: backend source
 - `src/test/kotlin/com/vauthenticator/server`: tests
 - `src/main/resources`: Spring config, SQL schema, i18n messages, HTML templates
-- `src/main/frontend`: React/TypeScript asset source and webpack config
-- `communication/default/email`: default email templates used for communication rendering and local asset/template build flows
-- `communication/default/sms`: default SMS templates (today the MFA challenge text), same flows as the email templates
+- `src/main/frontend`: React/TypeScript source of the Default Pages and webpack config; Maven builds them (`frontend-maven-plugin`, pinned Node) into the jar under `pages/default` (`target/classes/pages/default`); `-Dskip.npm` skips them
+- `src/main/resources/communication/default/email`: Default Templates for every Email Type, shipped in the jar; `POST /actuator/tenant-setup` saves them into the document store, replacing existing ones (new tenant only); `local/build-frontend.sh` also copies them into the local filesystem store
+- `src/main/resources/communication/default/sms`: Default Templates for every SMS Type (today the MFA challenge text), same flows as the email templates
 - `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, events, and lambda integration
 - `local`: local development compose files, sample config, helper script, and HTTP requests
 - `iac/terraform`: infrastructure-as-code assets
@@ -58,6 +58,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `password`: password reset, change, generation, policy/history logic, and password lifecycle rules (`domain/lifecycle`) evaluated by a scheduled job
 - `role`: groups, roles, and permission validation
 - `ticket`: ticket creation and storage used by multi-step flows; a ticket expires on read after a lifetime per purpose (`ticket.ttl.*`, ADR 0014)
+- `page`: the `Page` enum (one entry per webpack entry, checked by `PageTest`) used by the page controllers for `assetBundle`, and `PageLocation`, the storage path pages are served from and seeded to
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
 - `config`: Spring configuration for auth server, AWS, security, and time; each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
 
@@ -77,7 +78,7 @@ Important locations:
 - `src/main/frontend/app/errors`
 - `src/main/frontend/app/component`
 
-Webpack entry points are defined in `src/main/frontend/webpack.config.js`. The local helper can build the frontend bundles and copy them into the filesystem-based asset/template layout used for local development.
+Webpack entry points are defined in `src/main/frontend/webpack.config.js`; each one is a `Page` entry. The bundles are Default Pages: they ship in the jar only as a starting point, `POST /actuator/tenant-setup` (`DefaultPageSetUpJob`) saves them into the document store at the `PageLocation` path, and `StaticController` serves them from there. A new page needs a webpack entry and a `Page` entry. The local helper builds them through Maven and copies them into the filesystem-based asset/template layout used for local development.
 
 ## Runtime Profiles
 
@@ -99,7 +100,7 @@ Local hostnames expected by the project:
 
 Useful local endpoint:
 
-- `POST /actuator/tenant-setup` provisions a default local tenant
+- `POST /actuator/tenant-setup` provisions a default local tenant, including the Default Templates and the Default Pages (run it on a new tenant only, see `docs/management.md`)
 
 The local docs also describe default admin/client credentials and the frontend/document filesystem mode:
 
@@ -114,7 +115,7 @@ document:
 Backend:
 
 - `./mvnw test`
-- `./mvnw package`
+- `./mvnw package` (also builds the Default Pages; add `-Dskip.npm` for backend-only runs, then `DefaultPageSetUpJobTest` needs pages built by an earlier run)
 - `./mvnw spring-boot:run`
 
 Use a Java 25 runtime/toolchain for Maven builds and local runs. The application image is based on `amazoncorretto:25-al2023`.
@@ -130,7 +131,7 @@ Combined local asset/template build:
 
 - `bash local/build-frontend.sh`
 
-Note: `local/build-frontend.sh` rebuilds frontend assets and copies email and SMS templates into the local filesystem-based document/template layout.
+Note: `local/build-frontend.sh` rebuilds the Default Pages through Maven and copies them, with the email and SMS templates, into the local filesystem-based document/template layout, for page work without running the tenant setup again.
 
 ## Management And Feature Endpoints
 

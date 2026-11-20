@@ -6,6 +6,7 @@ import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
 import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
+import com.vauthenticator.server.page.domain.Page
 import com.vauthenticator.server.password.domain.changepassword.*
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -36,7 +37,7 @@ class ChangePasswordController(
     @GetMapping("/change-password")
     fun view(model: Model): String {
         i18nMessageInjector.setMessagedFor(I18nScope.CHANGE_PASSWORD_PAGE, model)
-        model.addAttribute("assetBundle", "changePassword_bundle.js")
+        model.addAttribute("assetBundle", Page.CHANGE_PASSWORD.bundle)
         return "template"
     }
 
