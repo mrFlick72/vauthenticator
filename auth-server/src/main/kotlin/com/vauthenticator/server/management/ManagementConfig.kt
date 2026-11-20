@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
 import com.vauthenticator.server.management.init.*
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
+import com.vauthenticator.server.page.domain.PageLocation
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
 import com.vauthenticator.server.role.domain.Administration
 import com.vauthenticator.server.role.domain.RoleRepository
@@ -67,17 +68,23 @@ class TenantInitConfig {
         CommunicationTemplateSetUpJob(documentRepository)
 
     @Bean
+    fun defaultPageSetUpJob(documentRepository: DocumentRepository, pageLocation: PageLocation) =
+        DefaultPageSetUpJob(documentRepository, pageLocation)
+
+    @Bean
     fun tenantSetUpEndPoint(
         accountSetUpJob: AccountSetUpJob,
         clientApplicationSetUpJob: ClientApplicationSetUpJob,
         keySetUpJob: KeySetUpJob,
-        communicationTemplateSetUpJob: CommunicationTemplateSetUpJob
+        communicationTemplateSetUpJob: CommunicationTemplateSetUpJob,
+        defaultPageSetUpJob: DefaultPageSetUpJob
     ) =
         TenantSetUpEndPoint(
             accountSetUpJob,
             clientApplicationSetUpJob,
             keySetUpJob,
-            communicationTemplateSetUpJob
+            communicationTemplateSetUpJob,
+            defaultPageSetUpJob
         )
 
     @Bean

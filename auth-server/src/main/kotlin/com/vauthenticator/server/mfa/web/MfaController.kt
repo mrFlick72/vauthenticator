@@ -4,6 +4,7 @@ import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
 import com.vauthenticator.server.login.workflow.LoginWorkflowEngine
 import com.vauthenticator.server.mfa.domain.*
+import com.vauthenticator.server.page.domain.Page
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
@@ -40,7 +41,7 @@ class MfaController(
     fun view(
         model: Model
     ): String {
-        model.addAttribute("assetBundle", "mfa_bundle.js")
+        model.addAttribute("assetBundle", Page.MFA.bundle)
         i18nMessageInjector.setMessagedFor(I18nScope.MFA_PAGE, model)
 
         return "template"

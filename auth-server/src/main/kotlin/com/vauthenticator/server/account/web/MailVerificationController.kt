@@ -3,6 +3,7 @@ package com.vauthenticator.server.account.web
 import com.vauthenticator.server.account.domain.emailverification.VerifyEMailChallenge
 import com.vauthenticator.server.i18n.I18nMessageInjector
 import com.vauthenticator.server.i18n.I18nScope
+import com.vauthenticator.server.page.domain.Page
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
@@ -19,7 +20,7 @@ class MailVerificationController(
         verifyEMailChallenge.verifyMail(ticket)
 
         i18nMessageInjector.setMessagedFor(I18nScope.SUCCESSFUL_MAIL_VERIFY_PAGE, model)
-        model.addAttribute("assetBundle", "successfulMailVerify_bundle.js")
+        model.addAttribute("assetBundle", Page.SUCCESSFUL_MAIL_VERIFY.bundle)
         return "template"
     }
 

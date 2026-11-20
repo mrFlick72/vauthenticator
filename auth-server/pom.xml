@@ -27,6 +27,11 @@
         <greenmail.version>2.1.7</greenmail.version>
         <wiremock.version>3.0.1</wiremock.version>
         <two-factor-auth.version>1.3</two-factor-auth.version>
+
+        <frontend-maven-plugin.version>1.15.1</frontend-maven-plugin.version>
+        <node.version>v22.18.0</node.version>
+        <!-- -Dskip.npm skips building the Default Pages, for backend-only runs; the jar then has no pages -->
+        <skip.npm>false</skip.npm>
     </properties>
 
     <dependencies>
@@ -253,6 +258,48 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <!-- builds the Default Pages into target/classes/pages/default (see webpack.config.js) -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>${frontend-maven-plugin.version}</version>
+                <configuration>
+                    <workingDirectory>src/main/frontend</workingDirectory>
+                    <installDirectory>target</installDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>${node.version}</nodeVersion>
+                            <skip>${skip.npm}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-ci</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>ci --legacy-peer-deps</arguments>
+                            <skip>${skip.npm}</skip>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>build-default-pages</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>run-script production-build</arguments>
+                            <skip>${skip.npm}</skip>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
