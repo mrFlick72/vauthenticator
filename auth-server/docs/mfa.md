@@ -228,7 +228,7 @@ The SMS a challenge sends is rendered from the MFA SMS template, the same way an
 Your VAuthenticator verification code is {{ mfaCode }}
 ```
 
-The template is stored in the document store at ```sms/templates/mfa-challenge.txt```. **An SMS challenge fails until that template exists**, as an email challenge fails without its email template. The default template is in ```communication/default/sms/mfa-challenge.txt```: ```local/build-frontend.sh``` copies it into the local file-system store, while an S3 deployment must upload it to ```sms/templates/mfa-challenge.txt``` in the document bucket.
+The template is stored in the document store at ```sms/templates/mfa-challenge.txt```. **An SMS challenge fails until that template exists**, as an email challenge fails without its email template. The default template ships in the jar (```src/main/resources/communication/default/sms/mfa-challenge.txt```) and ```POST /actuator/tenant-setup``` saves it; ```local/build-frontend.sh``` also copies it into the local file-system store. A tenant set up before then must save the template through ```PUT /api/sms-template``` (see ```docs/management.md```).
 
 The template is read and replaced through the SMS template API:
 
