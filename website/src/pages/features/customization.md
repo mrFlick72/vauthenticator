@@ -13,6 +13,17 @@ For example, your integration can add application-specific claims based on the a
 
 [Read the Lambda integration reference](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/lambda.md).
 
+## Pages and templates
+
+The sign-in, MFA, signup, password reset and change, email verification and error pages ship in the server as default pages, and the email and SMS templates as default templates. The tenant setup of a new installation saves both into the document store, on Amazon S3 or the filesystem, and the server serves the pages and renders the templates from there.
+
+- **Templates:** an administrator edits the email and SMS templates from the management UI or the template APIs.
+- **Pages:** an operator replaces a page by uploading their own version to the document store, at the same path.
+
+Running the tenant setup again would put the defaults back over your changes, so it is for new installations only.
+
+[Read the tenant setup reference](https://github.com/mrFlick72/vauthenticator/blob/main/auth-server/docs/management.md#tenant-setup).
+
 ## Infrastructure choices
 
 - **Persistence:** PostgreSQL.

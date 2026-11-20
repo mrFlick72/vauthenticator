@@ -11,7 +11,7 @@ VAuthenticator includes MFA with one-time codes sent by email or SMS. The login 
 
 An MFA device is one method (email or SMS) on one channel: an email address or a phone number. A device is enrolled when it is registered, and associated once the account holder confirms the code sent to it. Only associated devices count as a second factor. One associated device is the default device, which receives the login challenge unless the sign-in page picks another one. The account's verified email is its first associated device: confirming the verification link associates it as the default device, and an account created with its email already verified, such as the administrator of the local setup, gets it associated at once instead of a verification email.
 
-The text of a challenge is a template an administrator can edit, for email and for SMS alike, from the management UI or the template APIs. An SMS challenge, like an email one, can be sent only once its template is set up; the local setup installs a default one.
+The text of a challenge is a template an administrator can edit, for email and for SMS alike, from the management UI or the template APIs. An SMS challenge, like an email one, can be sent only once its template is set up; the tenant setup of a new installation saves a default one.
 
 ## When it is useful
 
