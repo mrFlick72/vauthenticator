@@ -6,10 +6,11 @@ import org.springframework.http.ResponseEntity
 
 
 @Endpoint(id = "tenant-setup")
-class TenantSetUpEndPoint(
+class   TenantSetUpEndPoint(
     private val accountSetUpJob: AccountSetUpJob,
     private val clientApplicationSetUpJob: ClientApplicationSetUpJob,
-    private val keySetUpJob: KeySetUpJob
+    private val keySetUpJob: KeySetUpJob,
+    private val communicationTemplateSetUpJob: CommunicationTemplateSetUpJob
 ) {
 
     @WriteOperation
@@ -17,6 +18,7 @@ class TenantSetUpEndPoint(
         accountSetUpJob.execute()
         clientApplicationSetUpJob.execute()
         keySetUpJob.execute()
+        communicationTemplateSetUpJob.execute()
 
         return ResponseEntity.noContent().build()
     }

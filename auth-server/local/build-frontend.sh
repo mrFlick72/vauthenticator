@@ -13,8 +13,8 @@ cd dist/asset
 
 cp * ../../../../../dist/static-asset/content/asset/
 
-cd ../../../../../communication/default/email 
-cp *  ../../../dist/email/templates
+cd ../../../resources/communication/default/email
+cp *  ../../../../../../dist/email/templates
 
 cd ../sms
-cp *  ../../../dist/sms/templates
+cp *  ../../../../../../dist/sms/templates

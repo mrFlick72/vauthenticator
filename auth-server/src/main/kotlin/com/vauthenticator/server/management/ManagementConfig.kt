@@ -3,6 +3,7 @@ package com.vauthenticator.server.management
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.signup.SignUpUse
+import com.vauthenticator.server.document.domain.DocumentRepository
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.keys.domain.KeyRepository
@@ -62,15 +63,21 @@ class TenantInitConfig {
     )
 
     @Bean
+    fun communicationTemplateSetUpJob(documentRepository: DocumentRepository) =
+        CommunicationTemplateSetUpJob(documentRepository)
+
+    @Bean
     fun tenantSetUpEndPoint(
         accountSetUpJob: AccountSetUpJob,
         clientApplicationSetUpJob: ClientApplicationSetUpJob,
-        keySetUpJob: KeySetUpJob
+        keySetUpJob: KeySetUpJob,
+        communicationTemplateSetUpJob: CommunicationTemplateSetUpJob
     ) =
         TenantSetUpEndPoint(
             accountSetUpJob,
             clientApplicationSetUpJob,
-            keySetUpJob
+            keySetUpJob,
+            communicationTemplateSetUpJob
         )
 
     @Bean

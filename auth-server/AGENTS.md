@@ -35,8 +35,8 @@ As additional capability I would suggest to use the context7 MCP server to gain 
 - `src/test/kotlin/com/vauthenticator/server`: tests
 - `src/main/resources`: Spring config, SQL schema, i18n messages, HTML templates
 - `src/main/frontend`: React/TypeScript asset source and webpack config
-- `communication/default/email`: default email templates used for communication rendering and local asset/template build flows
-- `communication/default/sms`: default SMS templates (today the MFA challenge text), same flows as the email templates
+- `src/main/resources/communication/default/email`: Default Templates for every Email Type, shipped in the jar; `POST /actuator/tenant-setup` saves them into the document store, replacing existing ones (new tenant only); `local/build-frontend.sh` also copies them into the local filesystem store
+- `src/main/resources/communication/default/sms`: Default Templates for every SMS Type (today the MFA challenge text), same flows as the email templates
 - `docs`: focused feature docs for profiles, management endpoints, MFA, the login workflow, password lifecycle, the Failed-Login Lock, events, and lambda integration
 - `local`: local development compose files, sample config, helper script, and HTTP requests
 - `iac/terraform`: infrastructure-as-code assets
@@ -99,7 +99,7 @@ Local hostnames expected by the project:
 
 Useful local endpoint:
 
-- `POST /actuator/tenant-setup` provisions a default local tenant
+- `POST /actuator/tenant-setup` provisions a default local tenant, including the Default Templates (run it on a new tenant only, see `docs/management.md`)
 
 The local docs also describe default admin/client credentials and the frontend/document filesystem mode:
 
