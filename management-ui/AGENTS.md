@@ -29,7 +29,6 @@ The package manifest is `src/package.json` and the webpack config is `src/webpac
 - `docker`: production nginx config template, `config.json.template`, and the entrypoint script used by the root `Dockerfile`
 - `dist`: generated frontend output
 - `docs/adr`: architecture decision records for this project
-- `changelog`: project release notes
 
 ## App Shape
 

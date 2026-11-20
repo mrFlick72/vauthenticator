@@ -18,4 +18,6 @@ Project boundaries:
 
 Never mix changes across projects unless explicitly requested. If a contract must change across projects, state that coupling clearly and update the related docs in the same change.
 
+Release notes live only in the root `changelog/<version>.md`, which `.github/workflows/release.yml` publishes as the GitHub release body: one file per version, covering every project, with an `## :warning: Upgrade notes` section for database migrations and changed configuration or chart values. Inner projects never get a `changelog` folder; they carry documentation only, in their README files and `docs/` folders. Until the release, record an upgrade note in the PR description and its issue.
+
 Do not edit generated outputs by hand, including `auth-server/target`, `management-ui/dist`, `auth-server/dist`, `website/dist`, dependency directories, or packaged Helm chart archives.
