@@ -16,11 +16,12 @@ for this subtree.
 
 `run.sh` is the single entry point:
 
-1. builds auth-server frontend assets (`auth-server/local/build-frontend.sh`) and the jar (`./mvnw clean package -DskipTests`),
-   then copies `auth-server/dist` into the writable, gitignored `.documents/` the stack mounts
+1. builds the auth-server jar, Default Pages included (`./mvnw clean package -DskipTests`), and creates the empty,
+   writable, gitignored `.documents/` storage the stack mounts
 2. builds the management UI (`management-ui/production-build.sh`)
 3. `docker compose down -v` then `up -d --build`, so every run starts from an empty database
-4. waits for `:9091/actuator/health`, then `POST :9091/actuator/tenant-setup`
+4. waits for `:9091/actuator/health`, then `POST :9091/actuator/tenant-setup`, which also saves the Default Pages and
+   templates into `.documents/`: the login page only exists once the setup has run
 5. `npx playwright test`, then tears the stack down (skipped with `--keep`)
 
 Playwright runs on the host against the published ports, so the browser uses the same hostnames as the

@@ -8,6 +8,7 @@ import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationFeatur
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.ext.hasEnoughScopes
+import com.vauthenticator.server.page.domain.Page
 import jakarta.servlet.http.HttpSession
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,7 +36,7 @@ class LoginPageController(
         clientAppFeaturesFor(clientId, model, features)
 
         model.addAttribute("features", objectMapper.writeValueAsString(features))
-        model.addAttribute("assetBundle", "login_bundle.js")
+        model.addAttribute("assetBundle", Page.LOGIN.bundle)
 
         i18nMessageInjector.setMessagedFor(I18nScope.LOGIN_PAGE, model)
 

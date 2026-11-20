@@ -1,8 +1,8 @@
 package com.vauthenticator.server.web
 
 import com.vauthenticator.server.document.domain.Document
+import com.vauthenticator.server.page.domain.PageLocation
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.cache.caffeine.CaffeineCache
 import org.springframework.http.ResponseEntity
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @ConditionalOnProperty("embedded-asset-cdn.enabled", havingValue = "true", matchIfMissing = true)
 class StaticController(
-    @Value("\${asset-server.on-s3.bundle-version:}") private val bundleVersionPath: String,
+    private val pageLocation: PageLocation,
     private val staticAssetDocumentLocalCache: CaffeineCache,
 ) {
 
@@ -23,11 +23,10 @@ class StaticController(
 
     @GetMapping("/static/content/asset/{assetName}")
     fun assetContent(@PathVariable assetName: String): ResponseEntity<ByteArray> {
-        val finalAssetName = resolvedAssetName(assetName)
-        logger.debug("assetName: {}", assetName)
-        logger.debug("finalAssetName: {}", finalAssetName)
+        val assetPath = pageLocation.pathOf(assetName)
+        logger.debug("assetPath: {}", assetPath)
 
-        return staticAssetDocumentLocalCache.get(finalAssetName, Document::class.java)
+        return staticAssetDocumentLocalCache.get(assetPath, Document::class.java)
             ?.let { document ->
                 ResponseEntity.ok()
                     .header("Content-Type", document.contentType)
@@ -35,7 +34,4 @@ class StaticController(
             }
             ?: ResponseEntity.notFound().build()
     }
-
-    private fun resolvedAssetName(assetName: String): String =
-        if (bundleVersionPath.isBlank()) assetName else "$bundleVersionPath/$assetName"
 }

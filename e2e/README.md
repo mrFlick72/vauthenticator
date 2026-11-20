@@ -46,8 +46,9 @@ docker compose down -v       # when done
 - `support/`: test data builders (`aClientApplication()`, `anAccount()`), `AdminApi` (auth-server calls with the
   seeded m2m `admin` client, used to arrange data and prove a result) and logins as a test account from a fresh browser
 - `tests/*.spec.ts`: scenarios, written against the page objects, one file per management UI section
-- `.documents/` (gitignored): a writable copy of `auth-server/dist` that `run.sh` makes for the stack, so the
-  template scenarios can save email and SMS templates without touching the working tree
+- `.documents/` (gitignored): the stack's document storage, created empty by `run.sh`; the tenant setup saves the
+  Default Pages (login page...) and the default email and SMS templates into it, so every run proves the jar seeds a
+  new tenant, and the template scenarios save templates there without touching the working tree
 
 ## Login and storage state
 

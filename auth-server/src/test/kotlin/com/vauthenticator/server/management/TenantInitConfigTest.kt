@@ -15,6 +15,9 @@ import com.vauthenticator.server.document.domain.DocumentType
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import com.vauthenticator.server.oauth2.clientapp.ClientApplicationRepositoryConfig
+import com.vauthenticator.server.page.PageConfig
+import com.vauthenticator.server.page.domain.Page
+import com.vauthenticator.server.page.domain.PageLocation
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
 import com.vauthenticator.server.role.domain.RoleRepository
@@ -34,7 +37,8 @@ class TenantInitConfigTest {
     private val contextRunner get() = aRepositoryConfigContextRunner(
         AccountRepositoryConfig::class.java,
         ClientApplicationRepositoryConfig::class.java,
-        TenantInitConfig::class.java
+        TenantInitConfig::class.java,
+        PageConfig::class.java
     )
         .withPropertyValues("key.master-key.id=a-master-key")
         .withBean(RoleRepository::class.java, { mockk<RoleRepository>(relaxed = true) })
@@ -58,7 +62,7 @@ class TenantInitConfigTest {
     }
 
     @Test
-    fun `tenant setup gives a new tenant the default email and sms templates`() {
+    fun `tenant setup gives a new tenant the default email and sms templates and the default pages`() {
         SecurityContextHolder.clearContext()
 
         contextRunner.run { context ->
@@ -69,6 +73,12 @@ class TenantInitConfigTest {
             }
             SmsType.entries.forEach {
                 assertThat(documentRepository.loadDocument(DocumentType.SMS.content, it.path).content).isNotEmpty()
+            }
+            val pageLocation = context.getBean(PageLocation::class.java)
+            Page.entries.forEach {
+                assertThat(
+                    documentRepository.loadDocument(DocumentType.STATIC_ASSET.content, pageLocation.pathOf(it.bundle)).content
+                ).isNotEmpty()
             }
         }
     }
