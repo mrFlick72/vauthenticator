@@ -39,6 +39,18 @@ spec:
         - name: application-config
           configMap:
             name: application-config
+        {{- if eq .Values.application.documentRepository.engine "file-system" }}
+        {{- if not (hasPrefix "/" .Values.application.documentRepository.fsBasePath) }}
+        {{- fail "application.documentRepository.fsBasePath must be an absolute path when the engine is file-system" }}
+        {{- end }}
+        - name: document-store
+          {{- with .Values.application.documentRepository.fileSystem.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ . }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           volumeMounts:
@@ -47,6 +59,10 @@ spec:
             - name: application-config
               subPath: application.yml
               mountPath: /usr/local/onlyone-portal/config/application.yml
+            {{- if eq .Values.application.documentRepository.engine "file-system" }}
+            - name: document-store
+              mountPath: {{ .Values.application.documentRepository.fsBasePath }}
+            {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:

@@ -71,9 +71,17 @@ gateway:
 # renders an HTTPRoute bound to it via parentRefs. Enable both together to route
 # through the Gateway API instead of the Ingress resource (ingress.enabled and
 # httpRoute.enabled are mutually exclusive; the chart fails to render if both are true).
+# To attach the HTTPRoute to a Gateway that already exists in the cluster, leave
+# gateway.enabled false and set httpRoute.parentRefs.
 httpRoute:
   enabled: false
-  gatewayClassName: traeefik
+  gatewayClassName: traefik
+  # Gateways the HTTPRoute attaches to; empty means the Gateway this chart renders.
+  # Example:
+  # parentRefs:
+  #   - name: traefik-gateway
+  #     namespace: traefik
+  parentRefs: [ ]
   gatewayPort: 8443
   hostnames: [ ]
   tls: [ ]
@@ -194,6 +202,12 @@ application:
     engine: s3
     bucketName: test
     fsBasePath: dist
+    # engine: file-system only. The document store is mounted at fsBasePath (an
+    # absolute path), because the container user cannot create directories itself.
+    # Empty existingClaim mounts an emptyDir: documents are lost when the pod is
+    # replaced. Set a PersistentVolumeClaim name to keep them.
+    fileSystem:
+      existingClaim: ""
     documentType:
       email:
         cacheName:
@@ -207,6 +221,13 @@ application:
       otpLength: 6
       otpTimeToLiveInSeconds: 30
 
+  # Failed-Login Lock: after `threshold` consecutive failed logins the account is
+  # locked for `duration` (a Spring duration). A threshold of 0 applies no new locks.
+  login:
+    failedLoginLock:
+      threshold: 5
+      duration: 1m
+
   # How long a ticket (the one-time proof behind MFA enrollment, reset-password
   # and email-verification links) can be redeemed, as Spring durations.
   ticket:
@@ -217,7 +238,6 @@ application:
 
   assetServer:
     onS3:
-      enabled: false
       bundleVersion: ""
     baseUrl: http://localhost:8080
 

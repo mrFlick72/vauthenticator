@@ -207,14 +207,34 @@ the release; `httpRoute.enabled` renders an `HTTPRoute` bound to that `Gateway` 
 `parentRefs`. Enable both together. `ingress.enabled` and `httpRoute.enabled` are
 mutually exclusive — the chart fails to render if both are `true`.
 
+To attach the `HTTPRoute` to a `Gateway` that already exists in the cluster (for example
+a shared Traefik gateway), leave `gateway.enabled` `false` and list it in
+`httpRoute.parentRefs`:
+
+```yaml
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: traefik-gateway
+      namespace: traefik
+  hostnames:
+    - auth.example.com
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+```
+
 ```yaml
 gateway:
   enabled: false
 
 httpRoute:
   enabled: false
-  gatewayClassName: nginx
-  gatewayPort: 443
+  gatewayClassName: traefik
+  gatewayPort: 8443
+  parentRefs: []
   hostnames: []
   tls: []
   annotations: {}
@@ -225,8 +245,9 @@ httpRoute:
 | --- | --- | --- |
 | `gateway.enabled` | Render the `Gateway` resource. | `false` |
 | `httpRoute.enabled` | Render the `HTTPRoute` resource. Fails if `ingress.enabled` is also `true`. | `false` |
-| `httpRoute.gatewayClassName` | `Gateway` spec `gatewayClassName`. | `nginx` |
-| `httpRoute.gatewayPort` | Listener port on the `Gateway`. | `443` |
+| `httpRoute.gatewayClassName` | `Gateway` spec `gatewayClassName`. | `traefik` |
+| `httpRoute.gatewayPort` | Listener port on the `Gateway`. | `8443` |
+| `httpRoute.parentRefs` | `Gateway`s the `HTTPRoute` attaches to, as `HTTPRoute` `parentRefs` entries. Empty means the `Gateway` rendered by `gateway.enabled`. | `[]` |
 | `httpRoute.hostnames` | Hostnames for both the `Gateway` HTTPS listener and the `HTTPRoute`. | `[]` |
 | `httpRoute.tls` | `certificateRefs` list (`- secretName: ...`) for the `Gateway`'s TLS listener. | `[]` |
 | `httpRoute.annotations` | Extra `HTTPRoute` annotations. | `{}` |
@@ -373,6 +394,23 @@ application:
 | `application.cache.clientApplication.ttl` | Client application cache TTL, as a Spring duration. | `1h` |
 | `application.cache.clientApplication.name` | Client application cache region name. | `client_application_cache` |
 
+### Failed-Login Lock
+
+After `threshold` consecutive failed logins an account is locked for `duration`; the lock ends on its own at the next login attempt after that time. The failure count is kept in Redis. A threshold of `0` applies no new locks, but existing ones still expire. See `auth-server/docs/failed-login-lock.md`.
+
+```yaml
+application:
+  login:
+    failedLoginLock:
+      threshold: 5
+      duration: 1m
+```
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `application.login.failedLoginLock.threshold` | Consecutive failed logins that lock the account; `0` turns new locks off. | `5` |
+| `application.login.failedLoginLock.duration` | How long the lock lasts, and how long an idle failure count is kept, as a Spring duration. | `1m` |
+
 ### Tickets
 
 A ticket is the one-time proof behind MFA enrollment, reset-password links and email-verification links. It is deleted when redeemed and cannot be redeemed after its TTL.
@@ -407,15 +445,22 @@ application:
       staticAsset:
         cacheName:
         cacheTtl: 1m
+    fileSystem:
+      existingClaim: ""
   mfa:
     otp:
       otpLength: 6
       otpTimeToLiveInSeconds: 30
   assetServer:
     onS3:
-      enabled: false
       bundleVersion: ""
     baseUrl: http://localhost:8080
   events:
     enableLoggerConsumer: false
 ```
+
+With `documentRepository.engine: file-system`, the chart mounts a volume at `documentRepository.fsBasePath`, which must then be an absolute path (the chart fails to render otherwise). The container runs as a non-root user that cannot create directories outside a mounted volume, and `POST /actuator/tenant-setup` writes the Default Templates and Default Pages there.
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `application.documentRepository.fileSystem.existingClaim` | PersistentVolumeClaim mounted at `fsBasePath` for the file-system engine. Empty means an `emptyDir`: documents are lost when the pod is replaced, and every replica has its own copy. | `""` |

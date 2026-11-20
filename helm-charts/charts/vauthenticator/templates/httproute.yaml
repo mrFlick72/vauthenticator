@@ -14,7 +14,11 @@ metadata:
   {{- end }}
 spec:
   parentRefs:
+    {{- if .Values.httpRoute.parentRefs }}
+    {{- toYaml .Values.httpRoute.parentRefs | nindent 4 }}
+    {{- else }}
     - name: {{ include "vauthenticator.name" . }}
+    {{- end }}
   {{- with .Values.httpRoute.hostnames }}
   hostnames:
     {{- toYaml . | nindent 4 }}
