@@ -13,7 +13,7 @@ It signs in through VAuthenticator using OAuth2 with PKCE and calls the server's
 
 ## A concrete example
 
-An administrator can register a client application, manage an account's roles, or update an email or SMS template through the UI. With the PostgreSQL profile, the password lifecycle page also supports account-specific and bulk rules.
+An administrator can register a client application, manage an account's roles, or update an email or SMS template through the UI. The password lifecycle page also supports account-specific and bulk rules.
 
 ## Only an administrator changes administration
 
