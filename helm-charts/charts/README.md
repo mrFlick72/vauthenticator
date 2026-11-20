@@ -445,6 +445,8 @@ application:
       staticAsset:
         cacheName:
         cacheTtl: 1m
+    fileSystem:
+      existingClaim: ""
   mfa:
     otp:
       otpLength: 6
@@ -456,3 +458,9 @@ application:
   events:
     enableLoggerConsumer: false
 ```
+
+With `documentRepository.engine: file-system`, the chart mounts a volume at `documentRepository.fsBasePath`, which must then be an absolute path (the chart fails to render otherwise). The container runs as a non-root user that cannot create directories outside a mounted volume, and `POST /actuator/tenant-setup` writes the Default Templates and Default Pages there.
+
+| Key | Description | Default |
+| --- | --- | --- |
+| `application.documentRepository.fileSystem.existingClaim` | PersistentVolumeClaim mounted at `fsBasePath` for the file-system engine. Empty means an `emptyDir`: documents are lost when the pod is replaced, and every replica has its own copy. | `""` |

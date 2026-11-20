@@ -202,6 +202,12 @@ application:
     engine: s3
     bucketName: test
     fsBasePath: dist
+    # engine: file-system only. The document store is mounted at fsBasePath (an
+    # absolute path), because the container user cannot create directories itself.
+    # Empty existingClaim mounts an emptyDir: documents are lost when the pod is
+    # replaced. Set a PersistentVolumeClaim name to keep them.
+    fileSystem:
+      existingClaim: ""
     documentType:
       email:
         cacheName:
