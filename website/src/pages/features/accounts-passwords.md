@@ -15,7 +15,7 @@ Administrators can manage accounts and assign password lifecycle rules through t
 
 ## Failed-login lock
 
-After too many consecutive wrong passwords on the sign-in page, the account is locked for a while and then unlocks on its own. By default five wrong passwords in a row lock the account for one minute; both values are server settings, and a threshold of `0` turns the protection off:
+After too many consecutive wrong passwords on the sign-in page, the account is locked for a while and then unlocks on its own. By default five wrong passwords in a row lock the account for one minute; both values are server settings, also exposed by the Helm chart, and a threshold of `0` turns the protection off:
 
 ```yaml
 login:
