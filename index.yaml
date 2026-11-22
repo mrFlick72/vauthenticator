@@ -2,6 +2,17 @@ apiVersion: v1
 entries:
   management-ui:
   - apiVersion: v2
+    appVersion: "0.10"
+    created: "2026-11-22T22:36:07.393068676Z"
+    description: A Helm chart for the VAuthenticator management UI (static React SPA
+      served by nginx)
+    digest: a2a026bd86c51f8d4d9275d7a36c0579ef78bcbdce57f762113c50526449681b
+    name: management-ui
+    type: application
+    urls:
+    - https://github.com/mrFlick72/vauthenticator/releases/download/management-ui-0.10/management-ui-0.10.tgz
+    version: "0.10"
+  - apiVersion: v2
     appVersion: "0.9"
     created: "2026-08-27T07:01:13.360805909Z"
     description: A Helm chart for the VAuthenticator management UI (static React SPA
@@ -13,6 +24,25 @@ entries:
     - https://github.com/mrFlick72/vauthenticator/releases/download/management-ui-0.9/management-ui-0.9.tgz
     version: "0.9"
   vauthenticator:
+  - apiVersion: v2
+    appVersion: "0.10"
+    created: "2026-11-22T22:36:07.602357372Z"
+    dependencies:
+    - condition: in-namespace.redis.enabled
+      name: redis
+      repository: https://charts.bitnami.com/bitnami
+      version: 25.3.11
+    - condition: in-namespace.db.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 18.5.24
+    description: A Helm chart for the VAuthenticator authorization server
+    digest: cd0de7cdacac508f4c43d51923a606bce264e92487b9ecbe41e8c6c28fcd4b73
+    name: vauthenticator
+    type: application
+    urls:
+    - https://github.com/mrFlick72/vauthenticator/releases/download/vauthenticator-0.10/vauthenticator-0.10.tgz
+    version: "0.10"
   - apiVersion: v2
     appVersion: "0.9"
     created: "2026-08-27T07:01:13.538032817Z"
@@ -32,4 +62,4 @@ entries:
     urls:
     - https://github.com/mrFlick72/vauthenticator/releases/download/vauthenticator-0.9/vauthenticator-0.9.tgz
     version: "0.9"
-generated: "2026-08-27T07:01:13.538045591Z"
+generated: "2026-11-22T22:36:07.602374545Z"
