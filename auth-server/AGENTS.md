@@ -118,7 +118,7 @@ Backend:
 - `./mvnw package` (also builds the Default Pages; add `-Dskip.npm` for backend-only runs, then `DefaultPageSetUpJobTest` needs pages built by an earlier run)
 - `./mvnw spring-boot:run`
 
-Use a Java 25 runtime/toolchain for Maven builds and local runs. The application image is based on `amazoncorretto:25-al2023`.
+Use a Java 25 runtime/toolchain for Maven builds and local runs. The application image is based on `amazoncorretto:25.0.5-al2023`; `check-jdk-floor.sh` runs in CI between `docker build` and `docker push` and fails when the image JDK is older than the floor (today `25.0.5.1`, the Java4Shell and eMudhra fix, #447). Raise the floor in both workflows at the next JDK CVE.
 
 Frontend:
 

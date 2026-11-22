@@ -81,6 +81,7 @@ jobs:
 
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
           docker build -t mrflick72/vauthenticator-k8s:$RELEASE_VERSION -f application.Dockerfile .
+          ./check-jdk-floor.sh mrflick72/vauthenticator-k8s:$RELEASE_VERSION 25.0.5.1
           docker push mrflick72/vauthenticator-k8s:$RELEASE_VERSION
 
       - name: Build and push management-ui docker image
