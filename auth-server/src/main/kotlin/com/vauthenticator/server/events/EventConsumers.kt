@@ -1,5 +1,7 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.EventConsumerConfig
+
 import com.vauthenticator.platform.extensions.escapedForLog
 import com.vauthenticator.server.password.domain.Password
 import org.slf4j.LoggerFactory

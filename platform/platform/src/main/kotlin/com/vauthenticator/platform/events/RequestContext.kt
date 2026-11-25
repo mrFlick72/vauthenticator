@@ -1,4 +1,4 @@
-package com.vauthenticator.server.events
+package com.vauthenticator.platform.events
 
 import com.vauthenticator.platform.extensions.toSha256
 import org.springframework.web.context.request.RequestContextHolder

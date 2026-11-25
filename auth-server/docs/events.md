@@ -18,6 +18,12 @@ react to them inside the auth-server, and the same pipeline is the base for audi
 3. Consumers today: the logger, signup, welcome mail, verification mail, and the password history kept on reset and
    change.
 
+The pipeline itself comes from the platform (`com.vauthenticator.platform.events`): the abstract `Event` (timestamp, payload,
+request context), `RequestContext`, the generic dispatcher/collector/consumer contracts, the consumer loop
+(`ConsumingEventsCollector`) and `EventConsumerConfig` (`event.consumer.enable.*`). The auth-server keeps its own
+events: `VAuthenticatorEvent` is a sealed class on top of the platform's `Event`, and its `EventsDispatcher`, `EventConsumer`
+and `SpringEventsCollector` narrow the platform's contracts to it, so the collector only receives auth-server events.
+
 Everything runs synchronously, on the thread that raised the event. Nothing is published outside the auth-server; a
 broker or a store would be one more `EventConsumer`.
 

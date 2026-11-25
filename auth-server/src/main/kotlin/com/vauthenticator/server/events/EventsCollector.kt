@@ -1,20 +1,11 @@
 package com.vauthenticator.server.events
 
-import org.slf4j.LoggerFactory
+import com.vauthenticator.platform.events.ConsumingEventsCollector
 import org.springframework.context.event.EventListener
 
-class SpringEventsCollector(private val eventConsumers: List<EventConsumer>) : EventsCollector {
+class SpringEventsCollector(eventConsumers: List<EventConsumer>) :
+    ConsumingEventsCollector<VAuthenticatorEvent>(eventConsumers), EventsCollector {
 
-    private val logger = LoggerFactory.getLogger(SpringEventsCollector::class.java)
     @EventListener
-    override fun accept(event: VAuthenticatorEvent) {
-        logger.debug("event ${event::class.simpleName} is collected")
-        eventConsumers.forEach {
-            val handleable = it.handleable(event)
-            logger.debug("event ${event::class.simpleName} is handleable $handleable")
-            if(handleable){
-                it.accept(event)
-            }
-        }
-    }
+    override fun accept(event: VAuthenticatorEvent) = super.accept(event)
 }

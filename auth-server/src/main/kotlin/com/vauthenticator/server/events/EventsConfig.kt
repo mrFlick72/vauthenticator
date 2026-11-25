@@ -1,5 +1,7 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.EventConsumerConfig
+
 import com.vauthenticator.server.account.domain.emailverification.SendVerifyEMailChallengeUponSignUpEventConsumer
 import com.vauthenticator.server.account.domain.signup.SignUpEventConsumer
 import com.vauthenticator.server.account.domain.welcome.SendWelcomeMailUponSignUpEventConsumer

@@ -7,35 +7,25 @@ import com.vauthenticator.server.mfa.domain.MfaDeviceRevoked
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
-import org.springframework.boot.context.properties.ConfigurationProperties
+import com.vauthenticator.platform.events.Event
+import com.vauthenticator.platform.events.RequestContext
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import java.time.Instant
 
-interface EventsDispatcher {
-    fun dispatch(event: VAuthenticatorEvent)
-}
+interface EventsDispatcher : com.vauthenticator.platform.events.EventsDispatcher<VAuthenticatorEvent>
 
-interface EventsCollector {
-    fun accept(event: VAuthenticatorEvent)
+interface EventsCollector : com.vauthenticator.platform.events.EventsCollector<VAuthenticatorEvent>
 
-}
+interface EventConsumer : com.vauthenticator.platform.events.EventConsumer<VAuthenticatorEvent>
 
-interface EventConsumer {
-    fun accept(event: VAuthenticatorEvent)
-    fun handleable(event: VAuthenticatorEvent): Boolean
-
-}
-
-@ConfigurationProperties("event.consumer")
-data class EventConsumerConfig(val enable: Map<String, Boolean>)
-
+/** The events of the authorization server: who, through which client app, on top of the platform [Event]. */
 sealed class VAuthenticatorEvent(
     val userName: Email,
     val clientAppId: ClientAppId,
-    val timeStamp: Instant,
-    val payload: Any,
-    val requestContext: RequestContext? = RequestContext.current()
-)
+    timeStamp: Instant,
+    payload: Any,
+    requestContext: RequestContext? = RequestContext.current()
+) : Event(timeStamp, payload, requestContext)
 
 
 class VAuthenticatorAuthEvent(

@@ -19,6 +19,12 @@ vocabulary is in `CONTEXT.md`.
     `evictAll` by region prefix), `CacheContentConverter`. Spring Data Redis is `optional`: the server brings it and its
     `RedisTemplate`. The regions themselves (which data is cached, `vauthenticator.cache.<region>.*`) and the
     evict-on-write rule stay in the server (auth-server `CacheConfig`, ADR 0012)
+  - `events`: the in-process event pipeline: the abstract `Event` (timestamp, payload, `RequestContext`), the
+    `EventsDispatcher`/`EventsCollector`/`EventConsumer` contracts generic on the server's event type, the consumer loop
+    `ConsumingEventsCollector`, `EventConsumerConfig` (`event.consumer.enable.<name>`) and `RequestContext` (IP, user
+    agent, SHA-256 session reference, never the session id: auth-server ADR 0016). A server defines its own sealed
+    event hierarchy on top of `Event`, narrows the contracts to it and puts `@EventListener` on its collector's `accept`
+    override, so it only receives its own events (auth-server `VAuthenticatorEvent`, `SpringEventsCollector`)
   - `i18n`: `I18nMessageRepository` reads the messages and errors of a scope (a key prefix) from the server's
     `i18n/messages_<lang>.properties` bundle, falling back to `i18n/messages.properties`; `I18nMessages`. The scopes,
     the bundles and how messages reach a page stay in the server (auth-server `I18nScope`, `I18nMessageInjector`)

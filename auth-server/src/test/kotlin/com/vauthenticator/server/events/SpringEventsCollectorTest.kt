@@ -7,8 +7,13 @@ import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.runs
 import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.springframework.context.annotation.AnnotationConfigUtils
+import org.springframework.context.support.GenericApplicationContext
+import com.vauthenticator.platform.events.Event
+import java.time.Instant
 
 @ExtendWith(MockKExtension::class)
 class SpringEventsCollectorTest {
@@ -34,5 +39,30 @@ class SpringEventsCollectorTest {
         verify { anotherEventConsumer.accept(vauthenticatorAuthEvent) }
         verify { anotherEventConsumer.accept(vauthenticatorAuthEvent) }
         verify { anotherEventConsumer.handleable(vauthenticatorAuthEvent) }
+    }
+
+    @Test
+    fun `as the event listener it receives the authorization server events only`() {
+        val received = mutableListOf<Any>()
+        val recordingConsumer = object : EventConsumer {
+            override fun accept(event: VAuthenticatorEvent) {
+                received.add(event)
+            }
+
+            override fun handleable(event: VAuthenticatorEvent) = true
+        }
+        val anotherServerEvent = object : Event(Instant.EPOCH, "another server's payload", null) {}
+
+        GenericApplicationContext().use { context ->
+            context.registerBean(SpringEventsCollector::class.java, listOf(recordingConsumer))
+            // the @EventListener support a Spring Boot context has
+            AnnotationConfigUtils.registerAnnotationConfigProcessors(context)
+            context.refresh()
+
+            context.publishEvent(anotherServerEvent)
+            context.publishEvent(vauthenticatorAuthEvent)
+        }
+
+        assertEquals(listOf<Any>(vauthenticatorAuthEvent), received)
     }
 }
