@@ -37,3 +37,5 @@ management-ui/src/node_modules/
 
 # packaged subcharts from `helm dependency update`
 helm-charts/charts/*/charts/*.tgz
+
+platform/*/target/

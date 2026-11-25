@@ -10,7 +10,7 @@ mkdir -p dist/static-asset/content/asset/
 mkdir -p dist/email/templates
 mkdir -p dist/sms/templates
 
-./mvnw -q generate-resources
+../mvnw -q generate-resources
 
 cp target/classes/pages/default/*_bundle.js dist/static-asset/content/asset/
 cp src/main/resources/communication/default/email/* dist/email/templates

@@ -35,9 +35,9 @@ jobs:
           java-version: 25
           distribution: 'corretto'
 
+      # the root aggregator builds the platform and auth-server in one reactor (docs/adr/0001)
       - name: Build
         run: |
-          cd auth-server
           mvn install -q
 
       - name: docker push

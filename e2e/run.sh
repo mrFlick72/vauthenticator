@@ -20,8 +20,8 @@ compose() {
 }
 
 echo "==> building auth-server"
-# the jar carries the Default Pages, built by Maven
-(cd "$ROOT_DIR/auth-server" && ./mvnw -q clean package -DskipTests)
+# the jar carries the Default Pages, built by Maven; built from the root aggregator with the platform modules it needs
+(cd "$ROOT_DIR" && ./mvnw -q clean package -DskipTests -pl auth-server -am)
 
 # the document storage starts empty: the tenant setup below saves the Default Pages and the default email/SMS
 # templates into it, as on a real new tenant. The container user is not the host user, hence the open permissions

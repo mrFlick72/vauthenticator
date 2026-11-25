@@ -1,6 +1,6 @@
 # VAuthenticator Platform
 
-The shared ground every VAuthenticator server is built on: the capabilities more than one server needs, each one a server takes only if it uses it.
+The starting point of every VAuthenticator application: the mechanisms more than one server needs, never a server's own concepts.
 
 ## Language
 

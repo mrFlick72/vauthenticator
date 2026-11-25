@@ -112,11 +112,11 @@ document:
 
 ## Build And Test Commands
 
-Backend:
+Backend (the Maven wrapper lives at the repo root: the root aggregator `pom.xml` builds the platform (`platform/`), then auth-server; its parent is `platform/platform-parent`, see the root `docs/adr/0001`):
 
-- `./mvnw test`
-- `./mvnw package` (also builds the Default Pages; add `-Dskip.npm` for backend-only runs, then `DefaultPageSetUpJobTest` needs pages built by an earlier run)
-- `./mvnw spring-boot:run`
+- from the repo root: `./mvnw test -pl auth-server -am`
+- from the repo root: `./mvnw package -pl auth-server -am` (also builds the Default Pages; add `-Dskip.npm` for backend-only runs, then `DefaultPageSetUpJobTest` needs pages built by an earlier run)
+- `./mvnw install -DskipTests` once from the repo root, then `../mvnw spring-boot:run` from `auth-server`
 
 Use a Java 25 runtime/toolchain for Maven builds and local runs. The application image is based on `amazoncorretto:25.0.5-al2023`; `check-jdk-floor.sh` runs in CI between `docker build` and `docker push` and fails when the image JDK is older than the floor (today `25.0.5.1`, the Java4Shell and eMudhra fix, #447). Raise the floor in both workflows at the next JDK CVE.
 
