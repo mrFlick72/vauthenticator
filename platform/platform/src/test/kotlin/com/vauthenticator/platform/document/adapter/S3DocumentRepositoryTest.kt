@@ -1,9 +1,9 @@
-package com.vauthenticator.server.document.adapter
+package com.vauthenticator.platform.document.adapter
 
-import com.vauthenticator.server.document.adapter.DocumentUtils.initDocumentTests
-import com.vauthenticator.server.document.adapter.DocumentUtils.s3Client
-import com.vauthenticator.server.document.adapter.FileUtils.loadFileFor
-import com.vauthenticator.server.document.domain.Document
+import com.vauthenticator.platform.document.adapter.DocumentUtils.initDocumentTests
+import com.vauthenticator.platform.document.adapter.DocumentUtils.s3Client
+import com.vauthenticator.platform.document.adapter.FileUtils.loadFileFor
+import com.vauthenticator.platform.document.domain.Document
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import software.amazon.awssdk.services.s3.S3Client

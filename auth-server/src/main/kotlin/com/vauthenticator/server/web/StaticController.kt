@@ -1,6 +1,6 @@
 package com.vauthenticator.server.web
 
-import com.vauthenticator.server.document.domain.Document
+import com.vauthenticator.platform.document.domain.Document
 import com.vauthenticator.server.page.domain.PageLocation
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

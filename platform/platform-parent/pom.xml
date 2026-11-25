@@ -42,6 +42,11 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
+                <groupId>com.vauthenticator</groupId>
+                <artifactId>vauthenticator-platform</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.mockk</groupId>
                 <artifactId>mockk-jvm</artifactId>
                 <version>${io.mockk.version}</version>

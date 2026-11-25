@@ -47,7 +47,6 @@ The backend is organized by domain-oriented packages. The important ones are:
 
 - `account`: account CRUD, signup, welcome/verification flows, account repositories and web controllers
 - `communication`: email/SMS abstractions and template resolution
-- `document`: document/template loading from filesystem or S3
 - `events`: the in-process event pipeline (`EventsDispatcher` → `SpringEventsCollector` → `EventConsumer`s) that every domain event and wrapped Spring authentication event goes through; each event carries the request context (IP, user agent, SHA-256 session reference), see `docs/events.md` and ADR 0016
 - `keys`: signing/encryption key generation, storage, and rotation
 - `login`: login page, Spring Security user details, the login workflow (`login/workflow`, see `docs/login-workflow.md`), and the Failed-Login Lock (`login/failedloginlock`, see `docs/failed-login-lock.md`)
@@ -60,6 +59,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `ticket`: ticket creation and storage used by multi-step flows; a ticket expires on read after a lifetime per purpose (`ticket.ttl.*`, ADR 0014)
 - `page`: the `Page` enum (one entry per webpack entry, checked by `PageTest`) used by the page controllers for `assetBundle`, and `PageLocation`, the storage path pages are served from and seeded to
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
+- Document storage (S3 or file system, `document.*` keys) comes from the platform (`platform/platform`, `com.vauthenticator.platform.document`). The auth server keeps its own Document Types and caches: `CommunicationDocumentType` and `CommunicationDocumentCacheConfig` in `communication`, `PageDocumentType` and the static-asset cache in `PageConfig`. Its `S3Client` bean (`AwsConfig`) is the one the platform uses when `document.engine=s3`
 - `config`: Spring configuration for auth server, AWS, security, and time; each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
 
 The package structure generally follows `api`, `domain`, `adapter`, and `web` subpackages where applicable.

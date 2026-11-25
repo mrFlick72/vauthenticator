@@ -1,4 +1,4 @@
-package com.vauthenticator.server.document.adapter
+package com.vauthenticator.platform.document.adapter
 
 import java.net.URL
 import java.nio.file.Files

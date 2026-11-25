@@ -3,7 +3,7 @@ package com.vauthenticator.server.management
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.signup.SignUpUse
-import com.vauthenticator.server.document.domain.DocumentRepository
+import com.vauthenticator.platform.document.domain.DocumentRepository
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.keys.domain.KeyRepository

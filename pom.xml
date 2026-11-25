@@ -17,6 +17,7 @@
 
     <modules>
         <module>platform/platform-parent</module>
+        <module>platform/platform</module>
         <module>auth-server</module>
     </modules>
 </project>

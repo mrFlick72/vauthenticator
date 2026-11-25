@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.vauthenticator</groupId>
+        <artifactId>vauthenticator-platform-parent</artifactId>
+        <version>0.10-SNAPSHOT</version>
+        <relativePath>../platform-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>vauthenticator-platform</artifactId>
+
+    <name>vauthenticator-platform</name>
+    <description>the platform: the shared mechanisms every VAuthenticator server is built on (Document storage first)</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <!-- Document storage, only for document.engine=s3: a server using S3 brings the SDK and an S3Client bean itself -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+</project>

@@ -1,7 +1,7 @@
-package com.vauthenticator.server.document.adapter
+package com.vauthenticator.platform.document.adapter
 
-import com.vauthenticator.server.document.adapter.FileUtils.loadFileFor
-import com.vauthenticator.server.document.domain.Document
+import com.vauthenticator.platform.document.adapter.FileUtils.loadFileFor
+import com.vauthenticator.platform.document.domain.Document
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir

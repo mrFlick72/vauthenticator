@@ -1,4 +1,4 @@
-package com.vauthenticator.server.document.domain
+package com.vauthenticator.platform.document.domain
 
 import java.util.*
 
@@ -16,8 +16,4 @@ data class Document(val contentType: String, val path: String, val content: Byte
         result = 31 * result + content.contentHashCode()
         return result
     }
-}
-
-enum class DocumentType(val content: String) {
-    EMAIL("email"), SMS("sms"), STATIC_ASSET("static-asset")
 }

@@ -1,7 +1,7 @@
 package com.vauthenticator.server.communication.adapter.javamail
 
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.communication.domain.*
 import jakarta.mail.internet.MimeMessage
@@ -25,7 +25,7 @@ class JavaEMailSenderService(
 
     private fun mailTemplateFor(email: EMailMessage): String {
         val documentContent =
-            documentRepository.loadDocument(DocumentType.EMAIL.content, mailTemplatePathFor(email.type))
+            documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, mailTemplatePathFor(email.type))
         return String(documentContent.content)
     }
 

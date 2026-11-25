@@ -1,8 +1,8 @@
 package com.vauthenticator.server.management.init
 
-import com.vauthenticator.server.document.adapter.FileSystemDocumentRepository
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.adapter.FileSystemDocumentRepository
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.server.page.domain.PageDocumentType
 import com.vauthenticator.server.page.domain.Page
 import com.vauthenticator.server.page.domain.PageLocation
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +26,7 @@ class DefaultPageSetUpJobTest {
         uut.execute()
 
         Page.entries.forEach {
-            val page = documentRepository.loadDocument(DocumentType.STATIC_ASSET.content, pageLocation.pathOf(it.bundle))
+            val page = documentRepository.loadDocument(PageDocumentType.STATIC_ASSET.content, pageLocation.pathOf(it.bundle))
             assertThat(page.content).isEqualTo(defaultPage(it))
         }
     }
@@ -38,7 +38,7 @@ class DefaultPageSetUpJobTest {
 
         uut.execute()
 
-        val login = documentRepository.loadDocument(DocumentType.STATIC_ASSET.content, "content/asset/0.10/login_bundle.js")
+        val login = documentRepository.loadDocument(PageDocumentType.STATIC_ASSET.content, "content/asset/0.10/login_bundle.js")
         assertThat(login.content).isEqualTo(defaultPage(Page.LOGIN))
     }
 
@@ -48,13 +48,13 @@ class DefaultPageSetUpJobTest {
         val pageLocation = PageLocation("")
         val uut = DefaultPageSetUpJob(documentRepository, pageLocation)
         documentRepository.saveDocument(
-            DocumentType.STATIC_ASSET.content,
+            PageDocumentType.STATIC_ASSET.content,
             Document("application/javascript", pageLocation.pathOf(Page.LOGIN.bundle), "an operator's login".toByteArray())
         )
 
         uut.execute()
 
-        val login = documentRepository.loadDocument(DocumentType.STATIC_ASSET.content, pageLocation.pathOf(Page.LOGIN.bundle))
+        val login = documentRepository.loadDocument(PageDocumentType.STATIC_ASSET.content, pageLocation.pathOf(Page.LOGIN.bundle))
         assertThat(login.content).isEqualTo(defaultPage(Page.LOGIN))
     }
 

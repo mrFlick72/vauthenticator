@@ -29,6 +29,12 @@
     </properties>
 
     <dependencies>
+        <!-- Document storage, configured by document.* (platform/platform) -->
+        <dependency>
+            <groupId>com.vauthenticator</groupId>
+            <artifactId>vauthenticator-platform</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>

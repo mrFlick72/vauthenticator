@@ -1,6 +1,6 @@
 package com.vauthenticator.server.web
 
-import com.vauthenticator.server.document.domain.Document
+import com.vauthenticator.platform.document.domain.Document
 import com.vauthenticator.server.page.domain.PageLocation
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

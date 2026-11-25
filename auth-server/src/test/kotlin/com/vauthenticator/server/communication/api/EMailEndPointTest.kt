@@ -1,9 +1,9 @@
 package com.vauthenticator.server.communication.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import com.vauthenticator.server.communication.domain.EMailTemplate
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
@@ -62,7 +62,7 @@ class EMailEndPointTest {
 
         every {
             documentRepository.loadDocument(
-                DocumentType.EMAIL.content,
+                CommunicationDocumentType.EMAIL.content,
                 EMailType.MFA.path
             )
         } returns Document(
@@ -91,7 +91,7 @@ class EMailEndPointTest {
         )
             .andExpect(status().isForbidden)
 
-        verify(exactly = 0) { documentRepository.loadDocument(DocumentType.EMAIL.content, EMailType.MFA.path) }
+        verify(exactly = 0) { documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, EMailType.MFA.path) }
     }
 
     @Test
@@ -104,7 +104,7 @@ class EMailEndPointTest {
 
         every {
             documentRepository.loadDocument(
-                DocumentType.EMAIL.content,
+                CommunicationDocumentType.EMAIL.content,
                 EMailType.MFA.path
             )
         } returns Document(
@@ -130,7 +130,7 @@ class EMailEndPointTest {
 
         every {
             documentRepository.saveDocument(
-                DocumentType.EMAIL.content,
+                CommunicationDocumentType.EMAIL.content,
                 Document(
                     "text/html",
                     "templates/welcome.html",
@@ -163,7 +163,7 @@ class EMailEndPointTest {
         ).andExpect(status().isForbidden)
 
         verify(exactly = 0) {
-            documentRepository.saveDocument(DocumentType.EMAIL.content, any())
+            documentRepository.saveDocument(CommunicationDocumentType.EMAIL.content, any())
         }
     }
 
@@ -177,7 +177,7 @@ class EMailEndPointTest {
 
         every {
             documentRepository.saveDocument(
-                DocumentType.EMAIL.content,
+                CommunicationDocumentType.EMAIL.content,
                 Document(
                     "text/html",
                     "templates/welcome.html",
@@ -204,7 +204,7 @@ class EMailEndPointTest {
         )
             .andExpect(status().isUnauthorized)
 
-        verify(exactly = 0) { documentRepository.loadDocument(DocumentType.EMAIL.content, EMailType.MFA.path) }
+        verify(exactly = 0) { documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, EMailType.MFA.path) }
     }
 
     @Test
@@ -223,7 +223,7 @@ class EMailEndPointTest {
         ).andExpect(status().isUnauthorized)
 
         verify(exactly = 0) {
-            documentRepository.saveDocument(DocumentType.EMAIL.content, any())
+            documentRepository.saveDocument(CommunicationDocumentType.EMAIL.content, any())
         }
     }
 }

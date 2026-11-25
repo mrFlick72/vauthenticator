@@ -1,8 +1,8 @@
 package com.vauthenticator.server.communication.api
 
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import com.vauthenticator.server.communication.domain.EMailTemplate
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
@@ -26,7 +26,7 @@ class EMailEndPoint(
     ): ResponseEntity<EMailTemplate> {
         permissionValidator.validate(authentication, Scopes.from(Scope.MAIL_TEMPLATE_READER))
 
-        val document = documentRepository.loadDocument(DocumentType.EMAIL.content, emailType.path)
+        val document = documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, emailType.path)
         return ResponseEntity.ok(EMailTemplate(emailType, String(document.content)))
     }
 
@@ -35,7 +35,7 @@ class EMailEndPoint(
         permissionValidator.validate(authentication, Scopes.from(Scope.MAIL_TEMPLATE_WRITER))
 
         documentRepository.saveDocument(
-            DocumentType.EMAIL.content,
+            CommunicationDocumentType.EMAIL.content,
             Document(
                 MediaType.TEXT_HTML_VALUE,
                 request.emailType.path,

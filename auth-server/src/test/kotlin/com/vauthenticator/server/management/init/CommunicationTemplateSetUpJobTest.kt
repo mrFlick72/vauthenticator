@@ -2,9 +2,9 @@ package com.vauthenticator.server.management.init
 
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.communication.domain.SmsType
-import com.vauthenticator.server.document.adapter.FileSystemDocumentRepository
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.adapter.FileSystemDocumentRepository
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -20,11 +20,11 @@ class CommunicationTemplateSetUpJobTest {
         uut.execute()
 
         EMailType.entries.forEach {
-            val template = documentRepository.loadDocument(DocumentType.EMAIL.content, it.path)
+            val template = documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, it.path)
             assertThat(String(template.content)).isEqualTo(defaultTemplate("email", it.path))
         }
         SmsType.entries.forEach {
-            val template = documentRepository.loadDocument(DocumentType.SMS.content, it.path)
+            val template = documentRepository.loadDocument(CommunicationDocumentType.SMS.content, it.path)
             assertThat(String(template.content)).isEqualTo(defaultTemplate("sms", it.path))
         }
     }
@@ -34,19 +34,19 @@ class CommunicationTemplateSetUpJobTest {
         val documentRepository = FileSystemDocumentRepository(basePath.toString())
         val uut = CommunicationTemplateSetUpJob(documentRepository)
         documentRepository.saveDocument(
-            DocumentType.EMAIL.content,
+            CommunicationDocumentType.EMAIL.content,
             Document("text/html", EMailType.WELCOME.path, "an admin's welcome".toByteArray())
         )
         documentRepository.saveDocument(
-            DocumentType.SMS.content,
+            CommunicationDocumentType.SMS.content,
             Document("text/plain", SmsType.MFA.path, "an admin's code {{ mfaCode }}".toByteArray())
         )
 
         uut.execute()
 
-        val welcome = documentRepository.loadDocument(DocumentType.EMAIL.content, EMailType.WELCOME.path)
+        val welcome = documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, EMailType.WELCOME.path)
         assertThat(String(welcome.content)).isEqualTo(defaultTemplate("email", EMailType.WELCOME.path))
-        val mfaSms = documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path)
+        val mfaSms = documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path)
         assertThat(String(mfaSms.content)).isEqualTo(defaultTemplate("sms", SmsType.MFA.path))
     }
 

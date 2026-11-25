@@ -5,7 +5,7 @@ import com.vauthenticator.server.account.adapter.CachedAccountRepository
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
-import com.vauthenticator.server.document.domain.DocumentRepository
+import com.vauthenticator.platform.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.SaveAccount

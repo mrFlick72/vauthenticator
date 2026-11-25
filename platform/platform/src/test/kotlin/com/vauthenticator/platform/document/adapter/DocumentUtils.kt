@@ -1,4 +1,4 @@
-package com.vauthenticator.server.document.adapter
+package com.vauthenticator.platform.document.adapter
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
