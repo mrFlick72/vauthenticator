@@ -85,7 +85,7 @@ class AccountUserDetailsServiceTest {
         val actual = uut.loadUserByUsername(account.username)
 
         assertTrue(actual.isAccountNonLocked)
-        assertEquals(ClientAppId("A_CLIENT_APP_ID"), event.captured.clientAppId)
+        assertEquals(ClientAppId("A_CLIENT_APP_ID").content, event.captured.clientId)
     }
 
     @Test
@@ -123,7 +123,7 @@ class AccountUserDetailsServiceTest {
 
         uut.loadUserByUsername(account.username)
 
-        assertEquals(ClientAppId.empty(), event.captured.clientAppId)
+        assertEquals(ClientAppId.empty().content, event.captured.clientId)
     }
 
     @Test

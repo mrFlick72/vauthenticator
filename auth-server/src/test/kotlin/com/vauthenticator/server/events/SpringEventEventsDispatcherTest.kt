@@ -51,7 +51,7 @@ class SpringEventEventsDispatcherTest {
     @Test
     fun `happy path`() {
         val mockHttpServletRequest = MockHttpServletRequest()
-        mockHttpServletRequest.addParameter("client_id", vauthenticatorAuthEvent.clientAppId.content)
+        mockHttpServletRequest.addParameter("client_id", vauthenticatorAuthEvent.clientId)
         RequestContextHolder.setRequestAttributes(ServletRequestAttributes(mockHttpServletRequest))
 
         val underTest = SpringEventEventsDispatcher(publisher)
@@ -61,7 +61,7 @@ class SpringEventEventsDispatcherTest {
 
         verify {
             publisher.publishEvent(match<VAuthenticatorAuthEvent> {
-                it.clientAppId == vauthenticatorAuthEvent.clientAppId && it.userName == vauthenticatorAuthEvent.userName
+                it.clientId == vauthenticatorAuthEvent.clientId && it.principal == vauthenticatorAuthEvent.principal
             })
         }
     }
@@ -76,7 +76,7 @@ class SpringEventEventsDispatcherTest {
 
         verify {
             publisher.publishEvent(match<VAuthenticatorAuthEvent> {
-                it.clientAppId == ClientAppId.empty() && it.userName == vauthenticatorAuthEvent.userName
+                it.clientId == ClientAppId.empty().content && it.principal == vauthenticatorAuthEvent.principal
             })
         }
     }
@@ -102,7 +102,7 @@ class SpringEventEventsDispatcherTest {
 
         verify {
             publisher.publishEvent(match<VAuthenticatorAuthEvent> {
-                it.clientAppId == ClientAppId.empty() && it.payload is LogoutSuccessEvent
+                it.clientId == ClientAppId.empty().content && it.payload is LogoutSuccessEvent
             })
         }
     }
@@ -114,7 +114,7 @@ class SpringEventEventsDispatcherTest {
         every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
         underTest.handle(vauthenticatorAuthEvent.payload as AbstractAuthenticationEvent)
 
-        verify { publisher.publishEvent(match<VAuthenticatorAuthEvent> { it.clientAppId == ClientAppId.empty() }) }
+        verify { publisher.publishEvent(match<VAuthenticatorAuthEvent> { it.clientId == ClientAppId.empty().content }) }
     }
 
     // request attributes are bound to the thread: start and end every test without any

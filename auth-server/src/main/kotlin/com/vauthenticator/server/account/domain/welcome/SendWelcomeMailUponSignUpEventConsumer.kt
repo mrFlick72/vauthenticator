@@ -8,7 +8,7 @@ class SendWelcomeMailUponSignUpEventConsumer(
     private val sayWelcome: SayWelcome
 ) : EventConsumer {
     override fun accept(event: VAuthenticatorEvent) {
-        sayWelcome.welcome(event.userName.content)
+        sayWelcome.welcome(event.principal)
     }
 
     override fun handleable(event: VAuthenticatorEvent): Boolean = event is SignUpEvent

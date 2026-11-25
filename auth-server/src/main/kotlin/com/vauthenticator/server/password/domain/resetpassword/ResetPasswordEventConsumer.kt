@@ -11,7 +11,7 @@ class ResetPasswordEventConsumer(
     private val passwordHistoryRepository: PasswordHistoryRepository
 ) : EventConsumer {
     override fun accept(event: VAuthenticatorEvent) {
-        passwordHistoryRepository.store(event.userName.content, event.payload as Password)
+        passwordHistoryRepository.store(event.principal, event.payload as Password)
     }
 
     override fun handleable(event: VAuthenticatorEvent): Boolean = event is ResetPasswordEvent

@@ -19,12 +19,13 @@ interface EventsCollector : com.vauthenticator.platform.events.EventsCollector<V
 interface EventConsumer : com.vauthenticator.platform.events.EventConsumer<VAuthenticatorEvent>
 
 /**
- * The events of the authorization server, on top of the platform [Event]: the account and the client app stay typed
- * here, and the platform gets their values as its principal and client id.
+ * The events of the authorization server, on top of the platform [Event]: they are created from a typed account and
+ * client app, whose values become the platform's [principal] and [clientId], and they are sealed so the auth server's
+ * dispatchers, collectors and consumers only ever see its own events.
  */
 sealed class VAuthenticatorEvent(
-    val userName: Email,
-    val clientAppId: ClientAppId,
+    userName: Email,
+    clientAppId: ClientAppId,
     timeStamp: Instant,
     payload: Any,
     requestContext: RequestContext? = RequestContext.current()

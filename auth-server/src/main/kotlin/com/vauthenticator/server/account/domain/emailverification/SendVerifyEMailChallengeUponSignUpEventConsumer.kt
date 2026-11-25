@@ -8,7 +8,7 @@ class SendVerifyEMailChallengeUponSignUpEventConsumer(
     private val mailChallenge: SendVerifyEMailChallenge
 ) : EventConsumer {
     override fun accept(event: VAuthenticatorEvent) {
-        mailChallenge.sendVerifyMail(event.userName.content)
+        mailChallenge.sendVerifyMail(event.principal)
     }
 
     override fun handleable(event: VAuthenticatorEvent): Boolean = event is SignUpEvent

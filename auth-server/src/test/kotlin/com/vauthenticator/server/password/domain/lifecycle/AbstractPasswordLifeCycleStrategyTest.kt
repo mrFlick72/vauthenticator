@@ -88,8 +88,8 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
 
         verify { accountRepository.save(accountWithActionApplied(account)) }
         assertTrue(event.captured is PasswordLifeCycleActionAppliedEvent)
-        assertEquals(account.username, event.captured.userName.content)
-        assertEquals(ClientAppId.system(), event.captured.clientAppId)
+        assertEquals(account.username, event.captured.principal)
+        assertEquals(ClientAppId.system().content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(passwordLifeCycleRuleAction(), event.captured.payload)
         verifyRuleAdvanced(rule)

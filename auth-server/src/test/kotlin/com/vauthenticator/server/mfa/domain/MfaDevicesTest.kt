@@ -1,6 +1,5 @@
 package com.vauthenticator.server.mfa.domain
 
-import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.MfaDeviceRevokedEvent
 import com.vauthenticator.server.events.VAuthenticatorEvent
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
@@ -59,8 +58,8 @@ class MfaDevicesTest {
 
         verify { keyRepository.deleteKeyFor(associatedDevice.key, KeyPurpose.MFA) }
         val revokedEvent = event.captured as MfaDeviceRevokedEvent
-        assertEquals(Email(userName), revokedEvent.userName)
-        assertEquals(clientAppId, revokedEvent.clientAppId)
+        assertEquals(userName, revokedEvent.principal)
+        assertEquals(clientAppId.content, revokedEvent.clientId)
         assertEquals(MfaDeviceRevoked(associatedDevice.mfaDeviceId, MfaMethod.EMAIL_MFA_METHOD), revokedEvent.payload)
     }
 

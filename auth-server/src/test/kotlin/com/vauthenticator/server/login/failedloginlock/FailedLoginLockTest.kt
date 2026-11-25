@@ -80,8 +80,8 @@ class FailedLoginLockTest {
         verify { failedLoginLockRepository.lockUntilIfUnlocked(unlocked.username, lockedUntil) }
         verify { consecutiveFailedLogins.reset(unlocked.username) }
         assertTrue(event.captured is FailedLoginLockAppliedEvent)
-        assertEquals(unlocked.username, event.captured.userName.content)
-        assertEquals(CLIENT_APP_ID, event.captured.clientAppId)
+        assertEquals(unlocked.username, event.captured.principal)
+        assertEquals(CLIENT_APP_ID.content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(FailedLoginLockApplied(lockedUntil), event.captured.payload)
     }
@@ -192,8 +192,8 @@ class FailedLoginLockTest {
         assertEquals(account.unlock(), actual)
         verify { consecutiveFailedLogins.reset(account.username) }
         assertTrue(event.captured is FailedLoginLockReleasedEvent)
-        assertEquals(account.username, event.captured.userName.content)
-        assertEquals(CLIENT_APP_ID, event.captured.clientAppId)
+        assertEquals(account.username, event.captured.principal)
+        assertEquals(CLIENT_APP_ID.content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(FailedLoginLockRelease(FailedLoginLockReleaseReason.EXPIRED, lockedUntil), event.captured.payload)
     }

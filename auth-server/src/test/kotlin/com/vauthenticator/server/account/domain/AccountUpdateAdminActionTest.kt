@@ -140,8 +140,8 @@ class AccountUpdateAdminActionTest {
             )
         }
         assertTrue(event.captured is FailedLoginLockReleasedEvent)
-        assertEquals(locked.username, event.captured.userName.content)
-        assertEquals(ADMIN_CLIENT_APP_ID, event.captured.clientAppId)
+        assertEquals(locked.username, event.captured.principal)
+        assertEquals(ADMIN_CLIENT_APP_ID.content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(
             FailedLoginLockRelease(FailedLoginLockReleaseReason.ADMIN_UNLOCK, lockedUntil),
