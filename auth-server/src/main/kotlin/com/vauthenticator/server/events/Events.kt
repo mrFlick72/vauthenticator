@@ -18,14 +18,17 @@ interface EventsCollector : com.vauthenticator.platform.events.EventsCollector<V
 
 interface EventConsumer : com.vauthenticator.platform.events.EventConsumer<VAuthenticatorEvent>
 
-/** The events of the authorization server: who, through which client app, on top of the platform [Event]. */
+/**
+ * The events of the authorization server, on top of the platform [Event]: the account and the client app stay typed
+ * here, and the platform gets their values as its principal and client id.
+ */
 sealed class VAuthenticatorEvent(
     val userName: Email,
     val clientAppId: ClientAppId,
     timeStamp: Instant,
     payload: Any,
     requestContext: RequestContext? = RequestContext.current()
-) : Event(timeStamp, payload, requestContext)
+) : Event(userName.content, clientAppId.content, timeStamp, payload, requestContext)
 
 
 class VAuthenticatorAuthEvent(

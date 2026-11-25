@@ -6,7 +6,7 @@ import java.time.Instant
 
 class ConsumingEventsCollectorTest {
 
-    private class AnEvent(payload: String) : Event(Instant.EPOCH, payload, null)
+    private class AnEvent(payload: String) : Event("a user", "a client", Instant.EPOCH, payload, null)
 
     private class RecordingConsumer(private val handles: Boolean) : EventConsumer<AnEvent> {
         val accepted = mutableListOf<AnEvent>()

@@ -32,6 +32,13 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- events: the logger writes Spring Security authentication events as their type only, when present -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+            <optional>true</optional>
+        </dependency>
+
         <!-- cache: a server using the Redis cache brings Spring Data Redis and a RedisTemplate itself -->
         <dependency>
             <groupId>org.springframework.data</groupId>

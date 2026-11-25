@@ -51,7 +51,7 @@ class SpringEventsCollectorTest {
 
             override fun handleable(event: VAuthenticatorEvent) = true
         }
-        val anotherServerEvent = object : Event(Instant.EPOCH, "another server's payload", null) {}
+        val anotherServerEvent = object : Event("a user", "a client", Instant.EPOCH, "another server's payload", null) {}
 
         GenericApplicationContext().use { context ->
             context.registerBean(SpringEventsCollector::class.java, listOf(recordingConsumer))
