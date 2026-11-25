@@ -19,6 +19,9 @@ vocabulary is in `CONTEXT.md`.
     `evictAll` by region prefix), `CacheContentConverter`. Spring Data Redis is `optional`: the server brings it and its
     `RedisTemplate`. The regions themselves (which data is cached, `vauthenticator.cache.<region>.*`) and the
     evict-on-write rule stay in the server (auth-server `CacheConfig`, ADR 0012)
+  - `i18n`: `I18nMessageRepository` reads the messages and errors of a scope (a key prefix) from the server's
+    `i18n/messages_<lang>.properties` bundle, falling back to `i18n/messages.properties`; `I18nMessages`. The scopes,
+    the bundles and how messages reach a page stay in the server (auth-server `I18nScope`, `I18nMessageInjector`)
   - `extensions`: server-agnostic Kotlin extensions: `toSha256`, `escapedForLog` (the log-forging guard every server
     must use for client-controlled text), `expirationTimeStampInSecondFromNow`, the Base64 `encoder`/`decoder`. Extensions
     on a server's types stay in that server (the auth server's `extentions` package)

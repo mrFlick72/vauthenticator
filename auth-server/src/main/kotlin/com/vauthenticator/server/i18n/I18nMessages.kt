@@ -1,17 +1,6 @@
 package com.vauthenticator.server.i18n
 
-typealias I18nMessageKey = String
-typealias I18nMessageValue = String
-
-data class I18nMessages(
-    val messages: Map<I18nMessageKey, I18nMessageValue>,
-    val error: Map<I18nMessageKey, I18nMessageValue>,
-) {
-    companion object {
-        fun empty() = I18nMessages(emptyMap(), emptyMap())
-    }
-}
-
+/** The message scope of each Page: the prefix of its keys in the `i18n/messages*.properties` bundles. */
 enum class I18nScope(val prefix: String) {
     LOGIN_PAGE("login_page"),
 

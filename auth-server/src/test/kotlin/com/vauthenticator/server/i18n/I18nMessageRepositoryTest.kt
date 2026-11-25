@@ -1,5 +1,7 @@
 package com.vauthenticator.server.i18n
 
+import com.vauthenticator.platform.i18n.I18nMessageRepository
+import com.vauthenticator.platform.i18n.I18nMessages
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.springframework.core.io.DefaultResourceLoader
@@ -10,7 +12,7 @@ class I18nMessageRepositoryTest {
     fun `when the messages has errors in en`() {
         val uut = I18nMessageRepository(DefaultResourceLoader())
 
-        val actual = uut.getMessagedFor(I18nScope.CHANGE_PASSWORD_PAGE, "en")
+        val actual = uut.getMessagedFor(I18nScope.CHANGE_PASSWORD_PAGE.prefix, "en")
         val expected = I18nMessages(
             mapOf(
                 "pageTitleText" to "Please change your password",
@@ -31,7 +33,7 @@ class I18nMessageRepositoryTest {
     fun `when the messages doesn't has errors in en`() {
         val uut = I18nMessageRepository(DefaultResourceLoader())
 
-        val actual = uut.getMessagedFor(I18nScope.SUCCESSFUL_MAIL_VERIFY_PAGE, "en")
+        val actual = uut.getMessagedFor(I18nScope.SUCCESSFUL_MAIL_VERIFY_PAGE.prefix, "en")
         val expected = I18nMessages(
             mapOf(
                 "pageTitleText" to "Confirmation of your email verification",

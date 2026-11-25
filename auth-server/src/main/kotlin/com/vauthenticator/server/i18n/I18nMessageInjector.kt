@@ -1,6 +1,7 @@
 package com.vauthenticator.server.i18n
 
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
+import com.vauthenticator.platform.i18n.I18nMessageRepository
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.ui.Model
 import org.springframework.web.servlet.LocaleResolver
@@ -19,7 +20,7 @@ class I18nMessageInjector(
     ) {
         val httpServletRequest = currentHttpServletRequestService.getServletRequest()
         val userLang = localeResolver.resolveLocale(httpServletRequest).toLanguageTag()
-        val i18nMessages = i18nMessageRepository.getMessagedFor(i18nScope, userLang)
+        val i18nMessages = i18nMessageRepository.getMessagedFor(i18nScope.prefix, userLang)
         model.addAttribute("i18nMessages", objectMapper.writeValueAsString(i18nMessages.messages))
         model.addAttribute("errors", objectMapper.writeValueAsString(i18nMessages.error))
         model.addAttribute("hasServerSideErrors", hasBadLoginFrom(httpServletRequest))
