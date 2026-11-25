@@ -3,7 +3,7 @@ package com.vauthenticator.server.role.adapter.cache
 import com.vauthenticator.server.account.adapter.CachedAccountRepository
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
-import com.vauthenticator.server.cache.RedisCacheOperation
+import com.vauthenticator.platform.cache.RedisCacheOperation
 import com.vauthenticator.server.role.adapter.jdbc.JdbcRoleRepository
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.support.AccountTestFixture.anAccount

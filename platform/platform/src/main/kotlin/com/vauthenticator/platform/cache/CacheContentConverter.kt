@@ -1,4 +1,4 @@
-package com.vauthenticator.server.cache
+package com.vauthenticator.platform.cache
 
 
 interface CacheContentConverter<O> {

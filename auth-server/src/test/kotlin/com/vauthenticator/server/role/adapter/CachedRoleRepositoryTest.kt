@@ -1,7 +1,7 @@
 package com.vauthenticator.server.role.adapter
 
-import com.vauthenticator.server.cache.CacheContentConverter
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheContentConverter
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.role.domain.Role
 import com.vauthenticator.server.role.domain.RoleRepository
 import com.vauthenticator.server.support.adminRole

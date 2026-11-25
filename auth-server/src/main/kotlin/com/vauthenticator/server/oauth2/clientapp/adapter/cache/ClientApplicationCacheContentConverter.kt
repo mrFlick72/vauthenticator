@@ -1,6 +1,6 @@
 package com.vauthenticator.server.oauth2.clientapp.adapter.cache
 
-import com.vauthenticator.server.cache.CacheContentConverter
+import com.vauthenticator.platform.cache.CacheContentConverter
 import com.vauthenticator.server.oauth2.clientapp.domain.*
 import tools.jackson.databind.ObjectMapper
 

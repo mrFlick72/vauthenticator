@@ -1,6 +1,6 @@
 package com.vauthenticator.server.role.domain
 
-import com.vauthenticator.server.cache.CacheContentConverter
+import com.vauthenticator.platform.cache.CacheContentConverter
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 

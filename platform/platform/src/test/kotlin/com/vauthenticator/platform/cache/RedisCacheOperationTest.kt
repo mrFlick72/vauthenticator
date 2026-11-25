@@ -1,7 +1,7 @@
-package com.vauthenticator.server.cache
+package com.vauthenticator.platform.cache
 
 import com.vauthenticator.platform.extensions.toSha256
-import com.vauthenticator.server.support.RedisUtils.aRedisTemplate
+import com.vauthenticator.platform.cache.RedisTestTemplates.aRedisTemplate
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

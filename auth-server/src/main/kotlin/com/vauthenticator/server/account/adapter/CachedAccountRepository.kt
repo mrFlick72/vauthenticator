@@ -2,8 +2,8 @@ package com.vauthenticator.server.account.adapter
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.cache.CacheContentConverter
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheContentConverter
+import com.vauthenticator.platform.cache.CacheOperation
 
 class CachedAccountRepository(
     private val cacheContentConverter: CacheContentConverter<Account>,

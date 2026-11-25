@@ -1,6 +1,6 @@
 package com.vauthenticator.server.login.failedloginlock.adapter.cache
 
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRepository
 import java.time.Instant
 

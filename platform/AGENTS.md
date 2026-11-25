@@ -15,6 +15,10 @@ vocabulary is in `CONTEXT.md`.
 - `vauthenticator-platform`: the shared mechanisms, one package per feature under `com.vauthenticator.platform`:
   - `document`: Document storage (`domain`: `Document`, `DocumentRepository`; `adapter`: `S3DocumentRepository`,
     `FileSystemDocumentRepository`; `autoconfigure`: `DocumentAutoConfiguration`, `DocumentProperties`)
+  - `cache`: `CacheOperation` and its Redis implementation `RedisCacheOperation` (one hash per key, a TTL per region,
+    `evictAll` by region prefix), `CacheContentConverter`. Spring Data Redis is `optional`: the server brings it and its
+    `RedisTemplate`. The regions themselves (which data is cached, `vauthenticator.cache.<region>.*`) and the
+    evict-on-write rule stay in the server (auth-server `CacheConfig`, ADR 0012)
   - `extensions`: server-agnostic Kotlin extensions: `toSha256`, `escapedForLog` (the log-forging guard every server
     must use for client-controlled text), `expirationTimeStampInSecondFromNow`, the Base64 `encoder`/`decoder`. Extensions
     on a server's types stay in that server (the auth server's `extentions` package)
@@ -43,6 +47,6 @@ From the repo root (the Maven wrapper is there):
 - `./mvnw install` builds the platform and every server
 - `./mvnw test -pl platform/platform -am` for the platform only
 
-`S3DocumentRepositoryTest` expects LocalStack on `localhost:4566`, like the auth-server tests: CI provides it as a job
+`S3DocumentRepositoryTest` expects LocalStack on `localhost:4566` and `RedisCacheOperationTest` Redis on `localhost:6379`, like the auth-server tests: CI provides it as a job
 service; locally use `auth-server/src/test/resources/docker-compose.yml`. `DocumentAutoConfigurationTest` needs no
 infrastructure.

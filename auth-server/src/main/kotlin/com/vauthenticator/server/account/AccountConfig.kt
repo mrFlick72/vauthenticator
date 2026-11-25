@@ -15,7 +15,7 @@ import com.vauthenticator.server.account.domain.emailverification.VerifyEMailCha
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.account.domain.welcome.SayWelcome
 import com.vauthenticator.server.account.domain.welcome.SendWelcomeMailUponSignUpEventConsumer
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.communication.NoReplyEMailConfiguration
 import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderService

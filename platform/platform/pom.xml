@@ -21,6 +21,18 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
 
+        <!-- cache: a server using the Redis cache brings Spring Data Redis and a RedisTemplate itself -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-redis</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Document storage, only for document.engine=s3: a server using S3 brings the SDK and an S3Client bean itself -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>

@@ -1,5 +1,7 @@
 package com.vauthenticator.server.cache
 
+import com.vauthenticator.platform.cache.CacheOperation
+import com.vauthenticator.platform.cache.RedisCacheOperation
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean

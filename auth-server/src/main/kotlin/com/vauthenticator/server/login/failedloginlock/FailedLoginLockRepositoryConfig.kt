@@ -1,6 +1,6 @@
 package com.vauthenticator.server.login.failedloginlock
 
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.login.failedloginlock.adapter.cache.AccountCacheEvictingFailedLoginLockRepository
 import com.vauthenticator.server.login.failedloginlock.adapter.jdbc.JdbcFailedLoginLockRepository
 import org.springframework.beans.factory.ObjectProvider

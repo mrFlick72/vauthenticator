@@ -1,4 +1,4 @@
-package com.vauthenticator.server.cache
+package com.vauthenticator.platform.cache
 
 import com.vauthenticator.platform.extensions.toSha256
 import org.slf4j.LoggerFactory

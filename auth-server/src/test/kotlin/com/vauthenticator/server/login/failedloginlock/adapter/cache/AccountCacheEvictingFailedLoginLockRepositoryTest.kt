@@ -3,7 +3,7 @@ package com.vauthenticator.server.login.failedloginlock.adapter.cache
 import com.vauthenticator.server.account.adapter.CachedAccountRepository
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
-import com.vauthenticator.server.cache.RedisCacheOperation
+import com.vauthenticator.platform.cache.RedisCacheOperation
 import com.vauthenticator.server.login.failedloginlock.adapter.jdbc.JdbcFailedLoginLockRepository
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.JdbcUtils.jdbcTemplate

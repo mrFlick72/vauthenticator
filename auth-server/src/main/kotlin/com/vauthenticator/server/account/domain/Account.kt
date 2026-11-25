@@ -1,6 +1,6 @@
 package com.vauthenticator.server.account.domain
 
-import com.vauthenticator.server.cache.CacheContentConverter
+import com.vauthenticator.platform.cache.CacheContentConverter
 import com.vauthenticator.platform.extensions.toSha256
 import tools.jackson.databind.ObjectMapper
 import java.time.Instant

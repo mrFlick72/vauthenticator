@@ -1,4 +1,4 @@
-package com.vauthenticator.server.cache
+package com.vauthenticator.platform.cache
 
 interface CacheOperation<K, O> {
     fun get(key: K): O?
