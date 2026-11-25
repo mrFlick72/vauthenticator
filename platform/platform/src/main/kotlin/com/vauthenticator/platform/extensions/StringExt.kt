@@ -1,4 +1,4 @@
-package com.vauthenticator.server.extentions
+package com.vauthenticator.platform.extensions
 
 import org.slf4j.LoggerFactory
 import java.math.BigInteger

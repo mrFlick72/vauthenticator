@@ -1,6 +1,6 @@
 package com.vauthenticator.server.oidc.sessionmanagement
 
-import com.vauthenticator.server.extentions.toSha256
+import com.vauthenticator.platform.extensions.toSha256
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse

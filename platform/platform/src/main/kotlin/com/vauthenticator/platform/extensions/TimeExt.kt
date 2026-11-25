@@ -1,4 +1,4 @@
-package com.vauthenticator.server.extentions
+package com.vauthenticator.platform.extensions
 
 import java.time.Clock
 import java.time.Duration

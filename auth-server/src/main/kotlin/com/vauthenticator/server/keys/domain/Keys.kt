@@ -1,8 +1,8 @@
 package com.vauthenticator.server.keys.domain
 
 import com.nimbusds.jose.jwk.RSAKey
-import com.vauthenticator.server.extentions.decoder
-import com.vauthenticator.server.extentions.encoder
+import com.vauthenticator.platform.extensions.decoder
+import com.vauthenticator.platform.extensions.encoder
 import java.security.KeyPair
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey

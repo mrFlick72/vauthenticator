@@ -1,4 +1,4 @@
-package com.vauthenticator.server.extentions
+package com.vauthenticator.platform.extensions
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

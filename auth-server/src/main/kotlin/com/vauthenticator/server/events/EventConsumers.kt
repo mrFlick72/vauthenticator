@@ -1,6 +1,6 @@
 package com.vauthenticator.server.events
 
-import com.vauthenticator.server.extentions.escapedForLog
+import com.vauthenticator.platform.extensions.escapedForLog
 import com.vauthenticator.server.password.domain.Password
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent

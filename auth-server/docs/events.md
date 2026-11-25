@@ -71,7 +71,7 @@ token on an API call, is not forwarded, so API traffic is not recorded as logins
 `event.consumer.enable.logger-event-consumer: true` (Helm: `events.enableLoggerConsumer`, off by default).
 
 - The username (for a failed login, whatever was typed), the client id, the user agent and the IP address are
-  client-controlled. The logger writes them through `escapedForLog()` (`extentions/LogExt.kt`): a backslash is doubled
+  client-controlled. The logger writes them through `escapedForLog()` (the platform `com.vauthenticator.platform.extensions`, `LogExt.kt`): a backslash is doubled
   and control characters (CR, LF, NEL, ESC, ...), Unicode line and paragraph separators and format characters (bidi
   overrides, zero-width characters) are written as escapes. The user agent and the IP address are first truncated to
   512 characters, never in the middle of a character. `AccountUserDetailsService` logs the typed username the same way.

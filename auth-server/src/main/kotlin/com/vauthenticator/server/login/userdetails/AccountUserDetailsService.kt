@@ -2,7 +2,7 @@ package com.vauthenticator.server.login.userdetails
 
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.extentions.escapedForLog
+import com.vauthenticator.platform.extensions.escapedForLog
 import com.vauthenticator.server.extentions.loginClientAppId
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.web.CurrentHttpServletRequestService

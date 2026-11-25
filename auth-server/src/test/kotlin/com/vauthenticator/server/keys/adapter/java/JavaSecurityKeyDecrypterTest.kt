@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.adapter.java
 
-import com.vauthenticator.server.extentions.encoder
+import com.vauthenticator.platform.extensions.encoder
 import com.vauthenticator.server.keys.domain.MasterKid
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

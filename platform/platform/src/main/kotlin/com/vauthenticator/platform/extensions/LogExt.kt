@@ -1,4 +1,4 @@
-package com.vauthenticator.server.extentions
+package com.vauthenticator.platform.extensions
 
 /**
  * Makes client-controlled text (a typed username, a client id, a user agent, a forwarded IP) safe to write in a log

@@ -1,6 +1,6 @@
 package com.vauthenticator.server.mfa.domain
 
-import com.vauthenticator.server.extentions.decoder
+import com.vauthenticator.platform.extensions.decoder
 import com.vauthenticator.server.keys.domain.*
 import com.vauthenticator.server.mfa.OtpConfigurationProperties
 import com.vauthenticator.server.support.AccountTestFixture.anAccount

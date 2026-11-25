@@ -1,4 +1,4 @@
-package com.vauthenticator.server.extentions
+package com.vauthenticator.platform.extensions
 
 import io.mockk.every
 import io.mockk.mockkStatic

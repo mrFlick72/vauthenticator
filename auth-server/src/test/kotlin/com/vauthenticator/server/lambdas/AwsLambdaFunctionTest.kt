@@ -1,6 +1,6 @@
 package com.vauthenticator.server.lambdas
 
-import com.vauthenticator.server.extentions.toSha256
+import com.vauthenticator.platform.extensions.toSha256
 import com.vauthenticator.server.support.JwtEncodingContextFixture.newContext
 import com.vauthenticator.server.support.RequestAttributesFixture.requestAttributes
 import io.mockk.every

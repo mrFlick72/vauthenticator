@@ -1,6 +1,6 @@
 package com.vauthenticator.server.oauth2.clientapp.adapter.redis
 
-import com.vauthenticator.server.extentions.toSha256
+import com.vauthenticator.platform.extensions.toSha256
 import com.vauthenticator.server.oauth2.clientapp.domain.AllowedOrigin
 import com.vauthenticator.server.oauth2.clientapp.domain.AllowedOriginRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.AllowedOrigins

@@ -1,7 +1,7 @@
 package com.vauthenticator.server.lambdas
 
 
-import com.vauthenticator.server.extentions.toSha256
+import com.vauthenticator.platform.extensions.toSha256
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.web.context.request.RequestContextHolder.currentRequestAttributes
 import software.amazon.awssdk.core.SdkBytes

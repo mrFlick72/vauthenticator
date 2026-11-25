@@ -15,7 +15,9 @@ vocabulary is in `CONTEXT.md`.
 - `vauthenticator-platform`: the shared mechanisms, one package per feature under `com.vauthenticator.platform`:
   - `document`: Document storage (`domain`: `Document`, `DocumentRepository`; `adapter`: `S3DocumentRepository`,
     `FileSystemDocumentRepository`; `autoconfigure`: `DocumentAutoConfiguration`, `DocumentProperties`)
-  - cache, events, i18n and extensions follow, one issue each (see #449)
+  - `extensions`: server-agnostic Kotlin extensions: `toSha256`, `escapedForLog` (the log-forging guard every server
+    must use for client-controlled text), `expirationTimeStampInSecondFromNow`, the Base64 `encoder`/`decoder`. Extensions
+    on a server's types stay in that server (the auth server's `extentions` package)
 
 ## Conventions For Changes
 

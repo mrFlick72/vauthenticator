@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.domain
 
-import com.vauthenticator.server.extentions.decoder
+import com.vauthenticator.platform.extensions.decoder
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.PrivateKey
