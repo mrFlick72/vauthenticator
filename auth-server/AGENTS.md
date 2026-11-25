@@ -60,7 +60,7 @@ The backend is organized by domain-oriented packages. The important ones are:
 - `page`: the `Page` enum (one entry per webpack entry, checked by `PageTest`) used by the page controllers for `assetBundle`, and `PageLocation`, the storage path pages are served from and seeded to
 - `web`: shared MVC/web helpers, error pages, static assets, CORS configuration
 - Document storage (S3 or file system, `document.*` keys) comes from the platform (`platform/platform`, `com.vauthenticator.platform.document`). The auth server keeps its own Document Types and caches: `CommunicationDocumentType` and `CommunicationDocumentCacheConfig` in `communication`, `PageDocumentType` and the static-asset cache in `PageConfig`. Its `S3Client` bean (`AwsConfig`) is the one the platform uses when `document.engine=s3`
-- `config`: Spring configuration for auth server, AWS, security, and time; each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
+- `config`: Spring configuration for auth server, AWS, security, time, and the opt-in Redis cache regions (`CacheConfig`, on top of the platform's `com.vauthenticator.platform.cache`); each domain's beans live in a config class in its own package (for example `AccountConfig`, `RoleRepositoryConfig`)
 
 The package structure generally follows `api`, `domain`, `adapter`, and `web` subpackages where applicable.
 

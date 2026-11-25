@@ -1,6 +1,6 @@
 package com.vauthenticator.server.support
 
-import com.vauthenticator.server.cache.CacheConfig
+import com.vauthenticator.server.config.CacheConfig
 import io.mockk.mockk
 import org.springframework.boot.convert.ApplicationConversionService
 import org.springframework.boot.test.context.runner.ApplicationContextRunner

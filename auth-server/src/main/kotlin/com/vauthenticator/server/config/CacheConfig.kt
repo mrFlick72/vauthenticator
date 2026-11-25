@@ -1,4 +1,4 @@
-package com.vauthenticator.server.cache
+package com.vauthenticator.server.config
 
 import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.platform.cache.RedisCacheOperation
