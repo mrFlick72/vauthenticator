@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.adapter.java
 
-import com.vauthenticator.server.extentions.decoder
+import com.vauthenticator.platform.extensions.decoder
 import com.vauthenticator.server.support.KeysUtils
 import io.mockk.*
 import io.mockk.impl.annotations.MockK

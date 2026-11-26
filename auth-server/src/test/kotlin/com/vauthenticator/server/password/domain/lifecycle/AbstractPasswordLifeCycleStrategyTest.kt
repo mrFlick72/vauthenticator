@@ -1,13 +1,13 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
 import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.PasswordLifeCycleActionAppliedEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import io.mockk.every
@@ -44,7 +44,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
     lateinit var passwordLifeCycleRepository: PasswordLifeCycleRepository
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     lateinit var uut: PasswordLifeCycleStrategy
 
@@ -88,8 +88,8 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
 
         verify { accountRepository.save(accountWithActionApplied(account)) }
         assertTrue(event.captured is PasswordLifeCycleActionAppliedEvent)
-        assertEquals(account.username, event.captured.userName.content)
-        assertEquals(ClientAppId.system(), event.captured.clientAppId)
+        assertEquals(account.username, event.captured.principal)
+        assertEquals(ClientAppId.system().content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(passwordLifeCycleRuleAction(), event.captured.payload)
         verifyRuleAdvanced(rule)

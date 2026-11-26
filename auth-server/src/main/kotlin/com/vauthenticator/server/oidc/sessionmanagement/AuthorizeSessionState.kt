@@ -1,6 +1,6 @@
 package com.vauthenticator.server.oidc.sessionmanagement
 
-import com.vauthenticator.server.extentions.toSha256
+import com.vauthenticator.platform.extensions.toSha256
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -46,7 +46,6 @@ fun sendAuthorizationResponse(
 
     val sessionState = factory.sessionStateFor(request, authentication)
     val opbs = factory.opbsStateValue(request)
-    println("opbs: $opbs")
     val sessionId = factory.sessionIdFor(request)
     redisTemplate.opsForHash<String, String?>().put(sessionId, sessionId.toSha256(), sessionState)
     redisTemplate.opsForHash<String, String?>().put(sessionState, sessionState.toSha256(), opbs)

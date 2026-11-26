@@ -73,7 +73,8 @@ Runtime auth/API settings are loaded from a static `GET /config.json`, generated
 
 | Project | Commands |
 | --- | --- |
-| `auth-server` | `./mvnw test`, `./mvnw package`, `./mvnw spring-boot:run` |
+| root (`pom.xml`) | `./mvnw install` builds `platform/` and `auth-server` in one reactor; `./mvnw test -pl auth-server -am` for auth-server only |
+| `auth-server` | `../mvnw spring-boot:run` after a root `./mvnw install -DskipTests` |
 | `auth-server/src/main/frontend` | `npm install`, `npm run build`, `npm run production-build`, `npm run watch` |
 | `management-ui/src` | `npm install`, `npm run build`, `npm run production-build`, `npm run watch` |
 | `management-ui` | `bash build.sh` |

@@ -1,6 +1,6 @@
 package com.vauthenticator.server.ticket.domain
 
-import com.vauthenticator.server.extentions.expirationTimeStampInSecondFromNow
+import com.vauthenticator.platform.extensions.expirationTimeStampInSecondFromNow
 import com.vauthenticator.server.support.AccountTestFixture
 import com.vauthenticator.server.support.ClientAppFixture
 import io.mockk.every

@@ -4,7 +4,7 @@ import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountPattern
 import com.vauthenticator.server.account.domain.InvalidAccountPatternException
 import com.vauthenticator.server.extentions.clientAppId
-import com.vauthenticator.server.extentions.escapedForLog
+import com.vauthenticator.platform.extensions.escapedForLog
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes

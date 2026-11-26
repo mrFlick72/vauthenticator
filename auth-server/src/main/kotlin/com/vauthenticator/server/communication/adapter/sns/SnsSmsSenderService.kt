@@ -6,8 +6,8 @@ import com.vauthenticator.server.communication.domain.MessageTemplateResolver
 import com.vauthenticator.server.communication.domain.SmsMessage
 import com.vauthenticator.server.communication.domain.SmsMessageFactory
 import com.vauthenticator.server.communication.domain.SmsSenderService
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import software.amazon.awssdk.services.sns.SnsClient
 import software.amazon.awssdk.services.sns.model.PublishRequest
 
@@ -30,7 +30,7 @@ class SnsSmsSenderService(
     }
 
     private fun smsTemplateFor(sms: SmsMessage): String {
-        val documentContent = documentRepository.loadDocument(DocumentType.SMS.content, sms.type.path)
+        val documentContent = documentRepository.loadDocument(CommunicationDocumentType.SMS.content, sms.type.path)
         return String(documentContent.content)
     }
 

@@ -1,10 +1,10 @@
 package com.vauthenticator.server.login.failedloginlock
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.FailedLoginLockAppliedEvent
 import com.vauthenticator.server.events.FailedLoginLockReleasedEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import io.mockk.every
@@ -45,7 +45,7 @@ class FailedLoginLockTest {
     lateinit var consecutiveFailedLogins: ConsecutiveFailedLogins
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     lateinit var uut: FailedLoginLock
 
@@ -80,8 +80,8 @@ class FailedLoginLockTest {
         verify { failedLoginLockRepository.lockUntilIfUnlocked(unlocked.username, lockedUntil) }
         verify { consecutiveFailedLogins.reset(unlocked.username) }
         assertTrue(event.captured is FailedLoginLockAppliedEvent)
-        assertEquals(unlocked.username, event.captured.userName.content)
-        assertEquals(CLIENT_APP_ID, event.captured.clientAppId)
+        assertEquals(unlocked.username, event.captured.principal)
+        assertEquals(CLIENT_APP_ID.content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(FailedLoginLockApplied(lockedUntil), event.captured.payload)
     }
@@ -192,8 +192,8 @@ class FailedLoginLockTest {
         assertEquals(account.unlock(), actual)
         verify { consecutiveFailedLogins.reset(account.username) }
         assertTrue(event.captured is FailedLoginLockReleasedEvent)
-        assertEquals(account.username, event.captured.userName.content)
-        assertEquals(CLIENT_APP_ID, event.captured.clientAppId)
+        assertEquals(account.username, event.captured.principal)
+        assertEquals(CLIENT_APP_ID.content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(FailedLoginLockRelease(FailedLoginLockReleaseReason.EXPIRED, lockedUntil), event.captured.payload)
     }

@@ -1,8 +1,8 @@
 package com.vauthenticator.server.management.init
 
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.page.domain.PageDocumentType
 import com.vauthenticator.server.page.domain.Page
 import com.vauthenticator.server.page.domain.PageLocation
 import org.springframework.core.io.ClassPathResource
@@ -28,7 +28,7 @@ class DefaultPageSetUpJob(
                 )
             }
             documentRepository.saveDocument(
-                DocumentType.STATIC_ASSET.content,
+                PageDocumentType.STATIC_ASSET.content,
                 Document(JAVASCRIPT, pageLocation.pathOf(page.bundle), defaultPage.contentAsByteArray)
             )
         }

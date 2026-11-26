@@ -1,10 +1,11 @@
 package com.vauthenticator.server.management
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.signup.SignUpUse
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
+import com.vauthenticator.platform.document.domain.DocumentRepository
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.KeyStorage
@@ -42,7 +43,7 @@ class TenantInitConfig {
         passwordPolicy: PasswordPolicy,
         accountRepository: AccountRepository,
         passwordEncoder: VAuthenticatorPasswordEncoder,
-        eventsDispatcher: VAuthenticatorEventsDispatcher
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
     ) = AccountSetUpJob(
         roleRepository,
         SignUpUse(passwordPolicy, accountRepository, AccountAdministration(TenantSetUpAdministration), passwordEncoder, eventsDispatcher)

@@ -16,7 +16,7 @@ for this subtree.
 
 `run.sh` is the single entry point:
 
-1. builds the auth-server jar, Default Pages included (`./mvnw clean package -DskipTests`), and creates the empty,
+1. builds the auth-server jar, Default Pages included (`./mvnw clean package -DskipTests -pl auth-server -am` from the repo root), and creates the empty,
    writable, gitignored `.documents/` storage the stack mounts
 2. builds the management UI (`management-ui/production-build.sh`)
 3. `docker compose down -v` then `up -d --build`, so every run starts from an empty database

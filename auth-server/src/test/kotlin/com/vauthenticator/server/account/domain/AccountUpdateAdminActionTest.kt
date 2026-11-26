@@ -1,8 +1,8 @@
 package com.vauthenticator.server.account.domain
 
-import com.vauthenticator.server.events.EventsDispatcher
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.events.FailedLoginLockReleasedEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRelease
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockReleaseReason
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
@@ -38,7 +38,7 @@ class AccountUpdateAdminActionTest {
     lateinit var accountRepository: AccountRepository
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     lateinit var underTest: AccountUpdateAdminAction
     val anAccount = anAccount()
@@ -140,8 +140,8 @@ class AccountUpdateAdminActionTest {
             )
         }
         assertTrue(event.captured is FailedLoginLockReleasedEvent)
-        assertEquals(locked.username, event.captured.userName.content)
-        assertEquals(ADMIN_CLIENT_APP_ID, event.captured.clientAppId)
+        assertEquals(locked.username, event.captured.principal)
+        assertEquals(ADMIN_CLIENT_APP_ID.content, event.captured.clientId)
         assertEquals(NOW, event.captured.timeStamp)
         assertEquals(
             FailedLoginLockRelease(FailedLoginLockReleaseReason.ADMIN_UNLOCK, lockedUntil),

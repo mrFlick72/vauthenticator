@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.adapter
 
-import com.vauthenticator.server.extentions.encoder
+import com.vauthenticator.platform.extensions.encoder
 import com.vauthenticator.server.keys.domain.KeyPurpose
 import com.vauthenticator.server.keys.domain.KeyPurpose.MFA
 import com.vauthenticator.server.keys.domain.KeyPurpose.SIGNATURE

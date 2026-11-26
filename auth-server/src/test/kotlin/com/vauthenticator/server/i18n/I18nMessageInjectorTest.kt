@@ -1,5 +1,7 @@
 package com.vauthenticator.server.i18n
 
+import com.vauthenticator.platform.i18n.I18nMessageRepository
+import com.vauthenticator.platform.i18n.I18nMessages
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -80,7 +82,7 @@ class I18nMessageInjectorTest {
         every { localeResolver.resolveLocale(httpServletRequest) } returns Locale.ENGLISH
         every {
             i18nMessageRepository.getMessagedFor(
-                I18nScope.LOGIN_PAGE,
+                I18nScope.LOGIN_PAGE.prefix,
                 Locale.ENGLISH.toLanguageTag()
             )
         } returns I18nMessages(messages, errors)

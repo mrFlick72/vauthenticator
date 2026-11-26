@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.adapter.jdbc
 
-import com.vauthenticator.server.extentions.expirationTimeStampInSecondFromNow
+import com.vauthenticator.platform.extensions.expirationTimeStampInSecondFromNow
 import com.vauthenticator.server.keys.domain.*
 import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.JdbcTemplate

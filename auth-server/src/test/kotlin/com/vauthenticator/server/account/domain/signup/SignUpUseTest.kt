@@ -1,10 +1,10 @@
 package com.vauthenticator.server.account.domain.signup
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.events.SignUpEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.PasswordPolicy
@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.Instant
 
 @ExtendWith(MockKExtension::class)
 internal class SignUpUseTest {
@@ -39,7 +38,7 @@ internal class SignUpUseTest {
     lateinit var vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder
 
     @MockK
-    lateinit var vAuthenticatorEventsDispatcher: VAuthenticatorEventsDispatcher
+    lateinit var vAuthenticatorEventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     private lateinit var underTest: SignUpUse
 
@@ -56,27 +55,30 @@ internal class SignUpUseTest {
 
     @Test
     internal fun `when a new account is created`() {
-        val now = Instant.now()
         val clientAppId = ClientAppId("an_id")
         val account = anAccount().copy(
             authorities = setOf(Role.defaultRole().name),
             password = "encrypted_secret"
         )
 
-        val signUpEvent = SignUpEvent(Email(account.email), clientAppId, now, Password("encrypted_secret"))
-
         every { passwordPolicy.accept(account.email, "secret") } just runs
         every { vAuthenticatorPasswordEncoder.encode("secret") } returns "encrypted_secret"
         every { accountRepository.create(account) } just runs
-        every { vAuthenticatorEventsDispatcher.dispatch(signUpEvent) } just runs
-
+        every { vAuthenticatorEventsDispatcher.dispatch(any()) } just runs
 
         underTest.execute(clientAppId, account.copy(password = "secret"))
 
         verify { passwordPolicy.accept(account.email, "secret") }
         verify { vAuthenticatorPasswordEncoder.encode("secret") }
         verify { accountRepository.create(account) }
-        verify { vAuthenticatorEventsDispatcher.dispatch(signUpEvent) }
+        verify {
+            vAuthenticatorEventsDispatcher.dispatch(match {
+                it is SignUpEvent &&
+                    it.principal == account.email &&
+                    it.clientId == clientAppId.content &&
+                    it.payload == Password("encrypted_secret")
+            })
+        }
     }
 
     @Test

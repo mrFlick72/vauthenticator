@@ -45,10 +45,8 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-          # auth-server version management
-          cd auth-server
-          mvn versions:set -DnewVersion="$RELEASE_VERSION"
-          cd ..
+          # auth-server and platform version management: one version for the whole reactor, set at the root
+          mvn versions:set -DnewVersion="$RELEASE_VERSION" -DprocessAllModules=true -DgroupId='*' -DartifactId='*' -DoldVersion='*' -DgenerateBackupPoms=false
 
 
           # management-ui version management
@@ -76,8 +74,8 @@ jobs:
         env:
           RELEASE_VERSION: ${{ github.event.inputs.version }}
         run: |
-          cd auth-server
           mvn install -q -DskipTests
+          cd auth-server
 
           docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
           docker build -t mrflick72/vauthenticator-k8s:$RELEASE_VERSION -f application.Dockerfile .
@@ -121,9 +119,7 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-          cd auth-server
-          mvn versions:set -DnewVersion="$NEXT_VERSION"
-          cd ..
+          mvn versions:set -DnewVersion="$NEXT_VERSION" -DprocessAllModules=true -DgroupId='*' -DartifactId='*' -DoldVersion='*' -DgenerateBackupPoms=false
 
           cd management-ui/src
           npm pkg set version="$NEXT_VERSION"

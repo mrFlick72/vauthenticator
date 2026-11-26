@@ -15,7 +15,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.context.ApplicationEventPublisher
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -46,22 +47,22 @@ class SpringEventEventsDispatcherTest {
     }
 
     @MockK
-    private lateinit var publisher: ApplicationEventPublisher
+    private lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     @Test
     fun `happy path`() {
         val mockHttpServletRequest = MockHttpServletRequest()
-        mockHttpServletRequest.addParameter("client_id", vauthenticatorAuthEvent.clientAppId.content)
+        mockHttpServletRequest.addParameter("client_id", vauthenticatorAuthEvent.clientId)
         RequestContextHolder.setRequestAttributes(ServletRequestAttributes(mockHttpServletRequest))
 
-        val underTest = SpringEventEventsDispatcher(publisher)
+        val underTest = SpringEventEventsDispatcher(eventsDispatcher)
 
-        every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
+        every { eventsDispatcher.dispatch(any<VAuthenticatorAuthEvent>()) } just runs
         underTest.handle(vauthenticatorAuthEvent.payload as AbstractAuthenticationEvent)
 
         verify {
-            publisher.publishEvent(match<VAuthenticatorAuthEvent> {
-                it.clientAppId == vauthenticatorAuthEvent.clientAppId && it.userName == vauthenticatorAuthEvent.userName
+            eventsDispatcher.dispatch(match<VAuthenticatorAuthEvent> {
+                it.clientId == vauthenticatorAuthEvent.clientId && it.principal == vauthenticatorAuthEvent.principal
             })
         }
     }
@@ -69,14 +70,14 @@ class SpringEventEventsDispatcherTest {
     @Test
     fun `a password login without a client app is dispatched with no client app`() {
         RequestContextHolder.setRequestAttributes(ServletRequestAttributes(MockHttpServletRequest()))
-        val underTest = SpringEventEventsDispatcher(publisher)
+        val underTest = SpringEventEventsDispatcher(eventsDispatcher)
 
-        every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
+        every { eventsDispatcher.dispatch(any<VAuthenticatorAuthEvent>()) } just runs
         underTest.handle(vauthenticatorAuthEvent.payload as AbstractAuthenticationEvent)
 
         verify {
-            publisher.publishEvent(match<VAuthenticatorAuthEvent> {
-                it.clientAppId == ClientAppId.empty() && it.userName == vauthenticatorAuthEvent.userName
+            eventsDispatcher.dispatch(match<VAuthenticatorAuthEvent> {
+                it.clientId == ClientAppId.empty().content && it.principal == vauthenticatorAuthEvent.principal
             })
         }
     }
@@ -84,37 +85,37 @@ class SpringEventEventsDispatcherTest {
     @Test
     fun `an authentication that is not a login and has no client app, such as a bearer token, is not dispatched`() {
         RequestContextHolder.setRequestAttributes(ServletRequestAttributes(MockHttpServletRequest()))
-        val underTest = SpringEventEventsDispatcher(publisher)
+        val underTest = SpringEventEventsDispatcher(eventsDispatcher)
 
         underTest.handle(AuthenticationSuccessEvent(BearerTokenAuthenticationToken("A_TOKEN")))
 
-        verify(exactly = 0) { publisher.publishEvent(any()) }
+        verify(exactly = 0) { eventsDispatcher.dispatch(any()) }
     }
 
     @Test
     fun `a logout without a client app is dispatched with no client app`() {
         RequestContextHolder.setRequestAttributes(ServletRequestAttributes(MockHttpServletRequest()))
-        val underTest = SpringEventEventsDispatcher(publisher)
+        val underTest = SpringEventEventsDispatcher(eventsDispatcher)
         val authentication = UsernamePasswordAuthenticationToken.authenticated("anemail@domain.com", null, emptyList())
 
-        every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
+        every { eventsDispatcher.dispatch(any<VAuthenticatorAuthEvent>()) } just runs
         underTest.handle(LogoutSuccessEvent(authentication))
 
         verify {
-            publisher.publishEvent(match<VAuthenticatorAuthEvent> {
-                it.clientAppId == ClientAppId.empty() && it.payload is LogoutSuccessEvent
+            eventsDispatcher.dispatch(match<VAuthenticatorAuthEvent> {
+                it.clientId == ClientAppId.empty().content && it.payload is LogoutSuccessEvent
             })
         }
     }
 
     @Test
     fun `a password login outside any request is dispatched with no client app`() {
-        val underTest = SpringEventEventsDispatcher(publisher)
+        val underTest = SpringEventEventsDispatcher(eventsDispatcher)
 
-        every { publisher.publishEvent(any<VAuthenticatorAuthEvent>()) } just runs
+        every { eventsDispatcher.dispatch(any<VAuthenticatorAuthEvent>()) } just runs
         underTest.handle(vauthenticatorAuthEvent.payload as AbstractAuthenticationEvent)
 
-        verify { publisher.publishEvent(match<VAuthenticatorAuthEvent> { it.clientAppId == ClientAppId.empty() }) }
+        verify { eventsDispatcher.dispatch(match<VAuthenticatorAuthEvent> { it.clientId == ClientAppId.empty().content }) }
     }
 
     // request attributes are bound to the thread: start and end every test without any

@@ -1,7 +1,8 @@
 package com.vauthenticator.server.login.failedloginlock
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.login.failedloginlock.adapter.redis.RedisConsecutiveFailedLogins
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -23,7 +24,7 @@ class FailedLoginLockConfiguration {
         accountRepository: AccountRepository,
         failedLoginLockRepository: FailedLoginLockRepository,
         consecutiveFailedLogins: ConsecutiveFailedLogins,
-        eventsDispatcher: VAuthenticatorEventsDispatcher,
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
         clock: Clock,
         failedLoginLockConfig: FailedLoginLockConfig
     ) = FailedLoginLock(

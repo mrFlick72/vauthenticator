@@ -1,6 +1,7 @@
 package com.vauthenticator.server.i18n
 
 import com.vauthenticator.server.web.CurrentHttpServletRequestService
+import com.vauthenticator.platform.i18n.I18nMessageRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.io.ResourceLoader

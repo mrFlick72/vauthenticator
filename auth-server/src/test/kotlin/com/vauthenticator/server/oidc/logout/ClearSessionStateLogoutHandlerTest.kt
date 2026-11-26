@@ -1,6 +1,6 @@
 package com.vauthenticator.server.oidc.logout
 
-import com.vauthenticator.server.extentions.toSha256
+import com.vauthenticator.platform.extensions.toSha256
 import com.vauthenticator.server.oidc.sessionmanagement.OPBS_COOKIE_NAME
 import com.vauthenticator.server.oidc.sessionmanagement.OPBS_SESSION_ATTRIBUTE
 import com.vauthenticator.server.oidc.sessionmanagement.SessionManagementFactory

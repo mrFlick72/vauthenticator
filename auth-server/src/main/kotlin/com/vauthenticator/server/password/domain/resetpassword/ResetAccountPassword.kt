@@ -1,10 +1,11 @@
 package com.vauthenticator.server.password.domain.resetpassword
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.ResetPasswordEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.api.ResetPasswordRequest
 import com.vauthenticator.server.password.domain.Password
@@ -17,7 +18,7 @@ import com.vauthenticator.server.ticket.domain.TicketRepository
 import java.time.Instant
 
 class ResetAccountPassword(
-    private val eventsDispatcher: VAuthenticatorEventsDispatcher,
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
     private val accountRepository: AccountRepository,
     private val accountAdministration: AccountAdministration,
     private val vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,

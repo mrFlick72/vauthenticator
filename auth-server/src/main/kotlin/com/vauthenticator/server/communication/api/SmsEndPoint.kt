@@ -2,9 +2,9 @@ package com.vauthenticator.server.communication.api
 
 import com.vauthenticator.server.communication.domain.SmsTemplate
 import com.vauthenticator.server.communication.domain.SmsType
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.oauth2.clientapp.domain.Scopes
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -26,7 +26,7 @@ class SmsEndPoint(
     ): ResponseEntity<SmsTemplate> {
         permissionValidator.validate(authentication, Scopes.from(Scope.SMS_TEMPLATE_READER))
 
-        val document = documentRepository.loadDocument(DocumentType.SMS.content, smsType.path)
+        val document = documentRepository.loadDocument(CommunicationDocumentType.SMS.content, smsType.path)
         return ResponseEntity.ok(SmsTemplate(smsType, String(document.content)))
     }
 
@@ -35,7 +35,7 @@ class SmsEndPoint(
         permissionValidator.validate(authentication, Scopes.from(Scope.SMS_TEMPLATE_WRITER))
 
         documentRepository.saveDocument(
-            DocumentType.SMS.content,
+            CommunicationDocumentType.SMS.content,
             Document(
                 MediaType.TEXT_PLAIN_VALUE,
                 request.smsType.path,

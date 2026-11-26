@@ -1,7 +1,7 @@
 package com.vauthenticator.server.keys.adapter.kms
 
-import com.vauthenticator.server.extentions.decoder
-import com.vauthenticator.server.extentions.encoder
+import com.vauthenticator.platform.extensions.decoder
+import com.vauthenticator.platform.extensions.encoder
 import com.vauthenticator.server.keys.domain.KeyDecrypter
 import software.amazon.awssdk.core.SdkBytes
 import software.amazon.awssdk.services.kms.KmsClient

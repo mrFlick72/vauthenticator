@@ -1,7 +1,8 @@
 package com.vauthenticator.server.management
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.AccountRepositoryConfig
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.KeyStorage
 import com.vauthenticator.server.management.init.AccountSetUpJob
@@ -9,9 +10,10 @@ import com.vauthenticator.server.management.init.ClientApplicationSetUpJob
 import com.vauthenticator.server.management.init.TenantSetUpEndPoint
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.communication.domain.SmsType
-import com.vauthenticator.server.document.adapter.FileSystemDocumentRepository
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.adapter.FileSystemDocumentRepository
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
+import com.vauthenticator.server.page.domain.PageDocumentType
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import com.vauthenticator.server.oauth2.clientapp.ClientApplicationRepositoryConfig
@@ -44,7 +46,7 @@ class TenantInitConfigTest {
         .withBean(RoleRepository::class.java, { mockk<RoleRepository>(relaxed = true) })
         .withBean(PasswordPolicy::class.java, { mockk<PasswordPolicy>(relaxed = true) })
         .withBean(VAuthenticatorPasswordEncoder::class.java, { mockk<VAuthenticatorPasswordEncoder>(relaxed = true) })
-        .withBean(VAuthenticatorEventsDispatcher::class.java, { mockk<VAuthenticatorEventsDispatcher>(relaxed = true) })
+        .withBean(EventsDispatcher::class.java, { mockk<EventsDispatcher<VAuthenticatorEvent>>(relaxed = true) })
         .withBean(KeyStorage::class.java, { mockk<KeyStorage>(relaxed = true) })
         .withBean(KeyRepository::class.java, { mockk<KeyRepository>(relaxed = true) })
         .withBean(DocumentRepository::class.java, { documentRepository })
@@ -69,15 +71,15 @@ class TenantInitConfigTest {
             context.getBean(TenantSetUpEndPoint::class.java).tenantInit()
 
             EMailType.entries.forEach {
-                assertThat(documentRepository.loadDocument(DocumentType.EMAIL.content, it.path).content).isNotEmpty()
+                assertThat(documentRepository.loadDocument(CommunicationDocumentType.EMAIL.content, it.path).content).isNotEmpty()
             }
             SmsType.entries.forEach {
-                assertThat(documentRepository.loadDocument(DocumentType.SMS.content, it.path).content).isNotEmpty()
+                assertThat(documentRepository.loadDocument(CommunicationDocumentType.SMS.content, it.path).content).isNotEmpty()
             }
             val pageLocation = context.getBean(PageLocation::class.java)
             Page.entries.forEach {
                 assertThat(
-                    documentRepository.loadDocument(DocumentType.STATIC_ASSET.content, pageLocation.pathOf(it.bundle)).content
+                    documentRepository.loadDocument(PageDocumentType.STATIC_ASSET.content, pageLocation.pathOf(it.bundle)).content
                 ).isNotEmpty()
             }
         }

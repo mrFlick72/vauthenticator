@@ -1,11 +1,13 @@
 package com.vauthenticator.server.account
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.server.account.adapter.CachedAccountRepository
 import com.vauthenticator.server.account.adapter.jdbc.JdbcAccountRepository
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
-import com.vauthenticator.server.document.domain.DocumentRepository
+import com.vauthenticator.platform.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.SaveAccount
@@ -15,14 +17,13 @@ import com.vauthenticator.server.account.domain.emailverification.VerifyEMailCha
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.account.domain.welcome.SayWelcome
 import com.vauthenticator.server.account.domain.welcome.SendWelcomeMailUponSignUpEventConsumer
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.communication.NoReplyEMailConfiguration
 import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderService
 import com.vauthenticator.server.communication.domain.EMailSenderService
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.communication.domain.SimpleEMailMessageFactory
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.mfa.domain.MfaMethodsEnrollment
 import com.vauthenticator.server.mfa.domain.MfaMethodsEnrollmentAssociation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
@@ -51,7 +52,7 @@ class AccountConfig {
     fun changeAccountEnabling(
         accountRepository: AccountRepository,
         accountAdministration: AccountAdministration,
-        eventsDispatcher: VAuthenticatorEventsDispatcher,
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
         clock: Clock
     ): AccountUpdateAdminAction =
         AccountUpdateAdminAction(accountRepository, accountAdministration, eventsDispatcher, clock)
@@ -175,7 +176,7 @@ class SingUpConfig {
         accountRepository: AccountRepository,
         accountAdministration: AccountAdministration,
         vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
-        vAuthenticatorEventsDispatcher : VAuthenticatorEventsDispatcher
+        vAuthenticatorEventsDispatcher : EventsDispatcher<VAuthenticatorEvent>
     ): SignUpUse =
         SignUpUse(
             passwordPolicy,

@@ -1,5 +1,13 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.EventConsumer
+import com.vauthenticator.platform.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.ConsumingEventsCollector
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.PublishingEventsDispatcher
+import com.vauthenticator.platform.events.EventConsumerConfig
+import com.vauthenticator.platform.events.LoggingEventConsumer
+
 import com.vauthenticator.server.account.domain.emailverification.SendVerifyEMailChallengeUponSignUpEventConsumer
 import com.vauthenticator.server.account.domain.signup.SignUpEventConsumer
 import com.vauthenticator.server.account.domain.welcome.SendWelcomeMailUponSignUpEventConsumer
@@ -13,12 +21,12 @@ import org.springframework.context.annotation.Configuration
 class EventsConfig(private val eventConsumerConfig: EventConsumerConfig) {
 
     @Bean
-    fun eventsDispatcherAdapter(publisher: ApplicationEventPublisher) =
-        SpringEventEventsDispatcher(publisher)
+    fun eventsDispatcherAdapter(eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>) =
+        SpringEventEventsDispatcher(eventsDispatcher)
 
     @Bean
     fun eventsDispatcher(publisher: ApplicationEventPublisher) =
-        VAuthenticatorEventsDispatcher(publisher)
+        PublishingEventsDispatcher<VAuthenticatorEvent>(publisher)
 
     @Bean
     fun eventsCollector(
@@ -27,9 +35,9 @@ class EventsConfig(private val eventConsumerConfig: EventConsumerConfig) {
         signUpEventConsumer: SignUpEventConsumer,
         sendWelcomeMailUponSignUpEventConsumer: SendWelcomeMailUponSignUpEventConsumer,
         sendVerifyEMailChallengeUponSignUpEventConsumer: SendVerifyEMailChallengeUponSignUpEventConsumer,
-        loggerEventConsumer: EventConsumer
+        loggerEventConsumer: EventConsumer<VAuthenticatorEvent>
     ) =
-        SpringEventsCollector(
+        ConsumingEventsCollector<VAuthenticatorEvent>(
             listOf(
                 loggerEventConsumer,
                 sendWelcomeMailUponSignUpEventConsumer,
@@ -41,6 +49,6 @@ class EventsConfig(private val eventConsumerConfig: EventConsumerConfig) {
         )
 
     @Bean
-    fun loggerEventConsumer() = LoggerEventConsumer(eventConsumerConfig)
+    fun loggerEventConsumer() = LoggingEventConsumer<VAuthenticatorEvent>(eventConsumerConfig)
 
 }

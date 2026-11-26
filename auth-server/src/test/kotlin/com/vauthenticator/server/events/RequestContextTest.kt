@@ -1,5 +1,7 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.RequestContext
+
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.support.ClientAppFixture

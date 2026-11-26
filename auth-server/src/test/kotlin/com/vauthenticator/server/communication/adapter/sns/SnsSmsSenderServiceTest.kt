@@ -5,9 +5,9 @@ import com.vauthenticator.server.account.domain.Phone.Companion.phoneFor
 import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.domain.SimpleSmsMessageFactory
 import com.vauthenticator.server.communication.domain.SmsType
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import com.vauthenticator.server.support.SmsUtils
 import com.vauthenticator.server.support.SmsUtils.resetSmsProvider
@@ -44,7 +44,7 @@ class SnsSmsSenderServiceTest {
         val account = anAccount().copy(firstName = "John", phone = phoneFor("+39 339 2323233"))
 
         every {
-            documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path)
+            documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path)
         } returns Document("text/plain", SmsType.MFA.path, "hi {{ firstName }} your code is {{ mfaCode }}".toByteArray())
 
         uut.sendFor(account, mapOf("mfaCode" to "123456"))
@@ -64,7 +64,7 @@ class SnsSmsSenderServiceTest {
         val account = anAccount().copy(phone = phoneFor("+39 339 2323233"))
 
         every {
-            documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path)
+            documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path)
         } throws NoSuchFileException(SmsType.MFA.path)
 
         assertThrows(NoSuchFileException::class.java) {

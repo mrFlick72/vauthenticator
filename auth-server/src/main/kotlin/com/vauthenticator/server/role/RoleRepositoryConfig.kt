@@ -1,6 +1,6 @@
 package com.vauthenticator.server.role
 
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.role.adapter.CachedRoleRepository
 import com.vauthenticator.server.role.adapter.cache.AccountCacheEvictingGroupRepository

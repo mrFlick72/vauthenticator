@@ -1,8 +1,8 @@
 package com.vauthenticator.server.login.userdetails
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.events.EventsDispatcher
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.ConsecutiveFailedLogins
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockConfig
@@ -49,7 +49,7 @@ class AccountUserDetailsServiceTest {
     lateinit var consecutiveFailedLogins: ConsecutiveFailedLogins
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     @MockK
     lateinit var currentHttpServletRequestService: CurrentHttpServletRequestService
@@ -85,7 +85,7 @@ class AccountUserDetailsServiceTest {
         val actual = uut.loadUserByUsername(account.username)
 
         assertTrue(actual.isAccountNonLocked)
-        assertEquals(ClientAppId("A_CLIENT_APP_ID"), event.captured.clientAppId)
+        assertEquals(ClientAppId("A_CLIENT_APP_ID").content, event.captured.clientId)
     }
 
     @Test
@@ -123,7 +123,7 @@ class AccountUserDetailsServiceTest {
 
         uut.loadUserByUsername(account.username)
 
-        assertEquals(ClientAppId.empty(), event.captured.clientAppId)
+        assertEquals(ClientAppId.empty().content, event.captured.clientId)
     }
 
     @Test

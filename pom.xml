@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Root aggregator: builds the platform and every server in one reactor, in dependency order.
+        It is not a parent: modules inherit platform/platform-parent. See docs/adr/0001.
+    -->
+    <groupId>com.vauthenticator</groupId>
+    <artifactId>vauthenticator-build</artifactId>
+    <version>0.11-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>vauthenticator-build</name>
+    <description>Builds the platform and the VAuthenticator servers together</description>
+
+    <modules>
+        <module>platform/platform-parent</module>
+        <module>platform/platform</module>
+        <module>auth-server</module>
+    </modules>
+</project>

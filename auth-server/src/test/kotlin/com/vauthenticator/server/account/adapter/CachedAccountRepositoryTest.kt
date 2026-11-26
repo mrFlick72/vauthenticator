@@ -2,7 +2,7 @@ package com.vauthenticator.server.account.adapter
 
 import com.vauthenticator.server.account.domain.AccountCacheContentConverter
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import io.mockk.every
 import io.mockk.impl.annotations.MockK

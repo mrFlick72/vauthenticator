@@ -1,7 +1,7 @@
 package com.vauthenticator.server.oauth2.clientapp.adapter.cache
 
-import com.vauthenticator.server.cache.CacheContentConverter
-import com.vauthenticator.server.cache.CacheOperation
+import com.vauthenticator.platform.cache.CacheContentConverter
+import com.vauthenticator.platform.cache.CacheOperation
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplication
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.support.ClientAppFixture.aClientApp

@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.adapter.java
 
-import com.vauthenticator.server.extentions.decoder
+import com.vauthenticator.platform.extensions.decoder
 import com.vauthenticator.server.keys.domain.MasterKid
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.KeyPair

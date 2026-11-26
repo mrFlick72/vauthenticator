@@ -1,6 +1,6 @@
 package com.vauthenticator.server.keys.domain
 
-import com.vauthenticator.server.extentions.encoder
+import com.vauthenticator.platform.extensions.encoder
 import com.vauthenticator.server.keys.adapter.jdbc.JdbcKeyStorage
 import com.vauthenticator.server.keys.adapter.kms.KmsKeyGenerator
 import com.vauthenticator.server.keys.domain.KeyPurpose.MFA

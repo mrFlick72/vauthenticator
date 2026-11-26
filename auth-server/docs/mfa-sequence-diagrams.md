@@ -207,7 +207,7 @@ sequenceDiagram
     participant MfaRepo as «interface»<br/>MfaAccountMethodsRepository
     participant KeyRepository
     participant KeyStorage as «interface»<br/>KeyStorage
-    participant Events as VAuthenticatorEventsDispatcher
+    participant Events as EventsDispatcher
     participant MfaDB as MFA device store<br/>(database)
     participant KeyDB as Key store<br/>(database)
     Client->>EP: DELETE /api/mfa/enrollment/{mfaDeviceId}<br/>Bearer JWT

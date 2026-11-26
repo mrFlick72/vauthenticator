@@ -3,9 +3,9 @@ package com.vauthenticator.server.communication.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.communication.domain.SmsTemplate
 import com.vauthenticator.server.communication.domain.SmsType
-import com.vauthenticator.server.document.domain.Document
-import com.vauthenticator.server.document.domain.DocumentRepository
-import com.vauthenticator.server.document.domain.DocumentType
+import com.vauthenticator.platform.document.domain.Document
+import com.vauthenticator.platform.document.domain.DocumentRepository
+import com.vauthenticator.server.communication.domain.CommunicationDocumentType
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -58,7 +58,7 @@ class SmsEndPointTest {
         val response = SmsTemplate(SmsType.MFA, "A_TEMPLATE")
 
         every {
-            documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path)
+            documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path)
         } returns Document("", SmsType.MFA.path, "A_TEMPLATE".toByteArray())
 
         mockMvc.perform(
@@ -76,7 +76,7 @@ class SmsEndPointTest {
 
         every {
             documentRepository.saveDocument(
-                DocumentType.SMS.content,
+                CommunicationDocumentType.SMS.content,
                 Document("text/plain", "templates/mfa-challenge.txt", "your code is {{ mfaCode }}".toByteArray())
             )
         } just runs
@@ -90,7 +90,7 @@ class SmsEndPointTest {
 
         verify {
             documentRepository.saveDocument(
-                DocumentType.SMS.content,
+                CommunicationDocumentType.SMS.content,
                 Document("text/plain", "templates/mfa-challenge.txt", "your code is {{ mfaCode }}".toByteArray())
             )
         }
@@ -106,7 +106,7 @@ class SmsEndPointTest {
         )
             .andExpect(status().isForbidden)
 
-        verify(exactly = 0) { documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path) }
+        verify(exactly = 0) { documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path) }
     }
 
     @Test
@@ -114,7 +114,7 @@ class SmsEndPointTest {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
 
         every {
-            documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path)
+            documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path)
         } returns Document("", SmsType.MFA.path, "A_TEMPLATE".toByteArray())
 
         mockMvc.perform(
@@ -136,7 +136,7 @@ class SmsEndPointTest {
                 .content(objectMapper.writeValueAsString(request))
         ).andExpect(status().isForbidden)
 
-        verify(exactly = 0) { documentRepository.saveDocument(DocumentType.SMS.content, any()) }
+        verify(exactly = 0) { documentRepository.saveDocument(CommunicationDocumentType.SMS.content, any()) }
     }
 
     @Test
@@ -144,7 +144,7 @@ class SmsEndPointTest {
         val jwtAuthenticationToken = m2mPrincipalFor(A_CLIENT_APP_ID, listOf(Scope.ADMIN_FULL_ACCESS.content))
         val request = SmsTemplate(SmsType.MFA, "A_TEMPLATE")
 
-        every { documentRepository.saveDocument(DocumentType.SMS.content, any()) } just runs
+        every { documentRepository.saveDocument(CommunicationDocumentType.SMS.content, any()) } just runs
 
         mockMvc.perform(
             put("/api/sms-template")
@@ -164,7 +164,7 @@ class SmsEndPointTest {
         )
             .andExpect(status().isUnauthorized)
 
-        verify(exactly = 0) { documentRepository.loadDocument(DocumentType.SMS.content, SmsType.MFA.path) }
+        verify(exactly = 0) { documentRepository.loadDocument(CommunicationDocumentType.SMS.content, SmsType.MFA.path) }
     }
 
     @Test
@@ -179,6 +179,6 @@ class SmsEndPointTest {
                 .content(objectMapper.writeValueAsString(request))
         ).andExpect(status().isUnauthorized)
 
-        verify(exactly = 0) { documentRepository.saveDocument(DocumentType.SMS.content, any()) }
+        verify(exactly = 0) { documentRepository.saveDocument(CommunicationDocumentType.SMS.content, any()) }
     }
 }
