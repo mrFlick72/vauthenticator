@@ -16,133 +16,53 @@ class VAuthenticatorAuthEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     payload: AbstractAuthenticationEvent
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, payload) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, payload)
 
 class SignUpEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     password : Password
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password)
 
 class ChangePasswordEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     password : Password
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password)
 
 class PasswordLifeCycleActionAppliedEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     action: PasswordLifeCycleAction
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, action) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, action)
 
 class FailedLoginLockAppliedEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     applied: FailedLoginLockApplied
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, applied) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, applied)
 
 class FailedLoginLockReleasedEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     release: FailedLoginLockRelease
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, release) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, release)
 
 class ResetPasswordEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     password : Password
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password)
 
 class MfaDeviceRevokedEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     mfaDeviceRevoked: MfaDeviceRevoked
-) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, mfaDeviceRevoked) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return javaClass.hashCode()
-    }
-}
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, mfaDeviceRevoked)
