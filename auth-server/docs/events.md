@@ -13,7 +13,7 @@ react to them inside the auth-server, and the same pipeline is the base for audi
 1. A domain flow dispatches a `VAuthenticatorEvent` through an `EventsDispatcher`. Spring Security authentication
    events (password login, `MfaSuccessEvent` / `MfaFailureEvent`, change-password events) are wrapped as a
    `VAuthenticatorAuthEvent` by `SpringEventEventsDispatcher`.
-2. `SpringEventsCollector` receives every `VAuthenticatorEvent` and passes it to each `EventConsumer` whose
+2. The collector, the platform's `ConsumingEventsCollector` declared in `EventsConfig`, receives every `VAuthenticatorEvent` and passes it to each `EventConsumer` whose
    `handleable` accepts it.
 3. Consumers today: the logger, signup, welcome mail, verification mail, and the password history kept on reset and
    change.
@@ -24,9 +24,9 @@ the publishing dispatcher, the consumer loop (`ConsumingEventsCollector`), the e
 `EventConsumerConfig` (`event.consumer.enable.*`). The auth-server keeps its own events: each one extends the platform's `VAuthenticatorEvent` directly, takes the
 account (`Email`) and the client app (`ClientAppId`) typed in its constructor and hands their values to the platform as
 principal and client id. It uses the platform contracts directly, as `EventsDispatcher<VAuthenticatorEvent>` and
-`EventConsumer<VAuthenticatorEvent>`; `SpringEventsCollector` listens for `VAuthenticatorEvent` only, so it receives no
-other application event; `VAuthenticatorEventsDispatcher` and `LoggerEventConsumer` are the platform's dispatcher and
-logger bound to `VAuthenticatorEvent`.
+`EventConsumer<VAuthenticatorEvent>`, and declares the platform's `ConsumingEventsCollector` as its collector: it listens for
+`VAuthenticatorEvent` only, so it receives no other application event; `VAuthenticatorEventsDispatcher` is the platform's dispatcher bound to `VAuthenticatorEvent`, and the event logger is
+the platform's `LoggingEventConsumer<VAuthenticatorEvent>`.
 `Password` is a `SensitivePayload`, so the logger never writes it.
 
 Everything runs synchronously, on the thread that raised the event. Nothing is published outside the auth-server; a
@@ -78,7 +78,7 @@ token on an API call, is not forwarded, so API traffic is not recorded as logins
 
 ## Logger consumer
 
-`LoggerEventConsumer` writes one log entry per event, including the request context. It is enabled with
+The platform's `LoggingEventConsumer` writes one log entry per event, including the request context. It is enabled with
 `event.consumer.enable.logger-event-consumer: true` (Helm: `events.enableLoggerConsumer`, off by default).
 
 - The username (for a failed login, whatever was typed), the client id, the user agent and the IP address are

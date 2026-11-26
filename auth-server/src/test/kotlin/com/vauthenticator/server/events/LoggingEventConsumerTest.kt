@@ -2,6 +2,7 @@ package com.vauthenticator.server.events
 
 import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.platform.events.EventConsumerConfig
+import com.vauthenticator.platform.events.LoggingEventConsumer
 
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.EventFixture.vauthenticatorAuthEvent
@@ -25,11 +26,11 @@ import org.springframework.web.context.request.ServletRequestAttributes
 import java.time.Instant
 
 @ExtendWith(OutputCaptureExtension::class)
-class LoggerEventConsumerTest {
+class LoggingEventConsumerTest {
 
     @Test
     fun `when a non Default Spring event is fired line MFA event`(output: CapturedOutput) {
-        val underTest = LoggerEventConsumer(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
+        val underTest = LoggingEventConsumer<VAuthenticatorEvent>(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
         underTest.accept(vauthenticatorAuthEvent)
         val message = """
             The user anemail@domain.com
@@ -218,7 +219,7 @@ class LoggerEventConsumerTest {
         assertTrue(output.out.lines().any { it == "from the ip address " + "1".repeat(512) }, output.out)
     }
 
-    private val underTest = LoggerEventConsumer(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
+    private val underTest = LoggingEventConsumer<VAuthenticatorEvent>(EventConsumerConfig(mapOf("logger-event-consumer" to true)))
 
     private fun anEventCreatedInARequest(userAgent: String, remoteAddr: String = "203.0.113.7"): VAuthenticatorEvent {
         val request = MockHttpServletRequest().apply {

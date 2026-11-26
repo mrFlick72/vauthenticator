@@ -2,7 +2,9 @@ package com.vauthenticator.server.events
 
 import com.vauthenticator.platform.events.EventConsumer
 import com.vauthenticator.platform.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.ConsumingEventsCollector
 import com.vauthenticator.platform.events.EventConsumerConfig
+import com.vauthenticator.platform.events.LoggingEventConsumer
 
 import com.vauthenticator.server.account.domain.emailverification.SendVerifyEMailChallengeUponSignUpEventConsumer
 import com.vauthenticator.server.account.domain.signup.SignUpEventConsumer
@@ -33,7 +35,7 @@ class EventsConfig(private val eventConsumerConfig: EventConsumerConfig) {
         sendVerifyEMailChallengeUponSignUpEventConsumer: SendVerifyEMailChallengeUponSignUpEventConsumer,
         loggerEventConsumer: EventConsumer<VAuthenticatorEvent>
     ) =
-        SpringEventsCollector(
+        ConsumingEventsCollector<VAuthenticatorEvent>(
             listOf(
                 loggerEventConsumer,
                 sendWelcomeMailUponSignUpEventConsumer,
@@ -45,6 +47,6 @@ class EventsConfig(private val eventConsumerConfig: EventConsumerConfig) {
         )
 
     @Bean
-    fun loggerEventConsumer() = LoggerEventConsumer(eventConsumerConfig)
+    fun loggerEventConsumer() = LoggingEventConsumer<VAuthenticatorEvent>(eventConsumerConfig)
 
 }

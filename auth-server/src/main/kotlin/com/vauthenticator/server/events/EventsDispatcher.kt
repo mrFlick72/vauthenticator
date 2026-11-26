@@ -19,7 +19,7 @@ import java.time.Instant
 class VAuthenticatorEventsDispatcher(publisher: ApplicationEventPublisher) :
     PublishingEventsDispatcher<VAuthenticatorEvent>(publisher)
 
-class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublisher) : EventsDispatcher<VAuthenticatorEvent> {
+    class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublisher) : EventsDispatcher<VAuthenticatorEvent> {
 
     private val logger = LoggerFactory.getLogger(SpringEventEventsDispatcher::class.java)
 
