@@ -4,12 +4,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Instant
 
 /**
- * Something that happened in a server: who it happened to ([principal], such as an account's username), through which
- * client ([clientId], empty when there is none), when, with which [payload], and the request it happened in
- * ([RequestContext], ADR 0016 of the auth server). A server defines its own events on top of it, usually as a sealed
- * hierarchy with its own typed fields, and narrows the contracts below to that hierarchy.
+ * Something that happened in a VAuthenticator server: who it happened to ([principal], such as an account's username),
+ * through which client ([clientId], empty when there is none), when, with which [payload], and the request it happened
+ * in ([RequestContext], ADR 0016 of the auth server). Every server's events extend it directly, each server in its own
+ * process; a server can still narrow the contracts below to a subtype of its own.
  */
-abstract class Event(
+abstract class VAuthenticatorEvent(
     val principal: String,
     val clientId: String,
     val timeStamp: Instant,
@@ -20,15 +20,15 @@ abstract class Event(
 /** A payload that must never be written anywhere, such as a password, even encoded: it is logged as its type only. */
 interface SensitivePayload
 
-interface EventsDispatcher<in E : Event> {
+interface EventsDispatcher<in E : VAuthenticatorEvent> {
     fun dispatch(event: E)
 }
 
-interface EventsCollector<in E : Event> {
+interface EventsCollector<in E : VAuthenticatorEvent> {
     fun accept(event: E)
 }
 
-interface EventConsumer<in E : Event> {
+interface EventConsumer<in E : VAuthenticatorEvent> {
     fun accept(event: E)
     fun handleable(event: E): Boolean
 }

@@ -1,5 +1,6 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.platform.events.EventConsumerConfig
 
 import com.vauthenticator.server.account.domain.Email

@@ -7,7 +7,7 @@ import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.PasswordLifeCycleActionAppliedEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.support.AccountTestFixture.anAccount
 import io.mockk.every

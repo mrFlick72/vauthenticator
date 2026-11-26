@@ -7,8 +7,7 @@ import com.vauthenticator.server.mfa.domain.MfaDeviceRevoked
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.lifecycle.PasswordLifeCycleAction
-import com.vauthenticator.platform.events.Event
-import com.vauthenticator.platform.events.RequestContext
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import java.time.Instant
 
@@ -18,26 +17,13 @@ interface EventsCollector : com.vauthenticator.platform.events.EventsCollector<V
 
 interface EventConsumer : com.vauthenticator.platform.events.EventConsumer<VAuthenticatorEvent>
 
-/**
- * The events of the authorization server, on top of the platform [Event]: they are created from a typed account and
- * client app, whose values become the platform's [principal] and [clientId], and they are sealed so the auth server's
- * dispatchers, collectors and consumers only ever see its own events.
- */
-sealed class VAuthenticatorEvent(
-    userName: Email,
-    clientAppId: ClientAppId,
-    timeStamp: Instant,
-    payload: Any,
-    requestContext: RequestContext? = RequestContext.current()
-) : Event(userName.content, clientAppId.content, timeStamp, payload, requestContext)
-
 
 class VAuthenticatorAuthEvent(
     userName: Email,
     clientAppId: ClientAppId,
     timeStamp: Instant,
     payload: AbstractAuthenticationEvent
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, payload) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, payload) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -54,7 +40,7 @@ class SignUpEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     password : Password
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, password) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -71,7 +57,7 @@ class ChangePasswordEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     password : Password
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, password) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -88,7 +74,7 @@ class PasswordLifeCycleActionAppliedEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     action: PasswordLifeCycleAction
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, action) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, action) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -105,7 +91,7 @@ class FailedLoginLockAppliedEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     applied: FailedLoginLockApplied
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, applied) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, applied) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -122,7 +108,7 @@ class FailedLoginLockReleasedEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     release: FailedLoginLockRelease
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, release) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, release) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -139,7 +125,7 @@ class ResetPasswordEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     password : Password
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, password) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, password) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -156,7 +142,7 @@ class MfaDeviceRevokedEvent(
     clientAppId: ClientAppId,
     timeStamp: Instant,
     mfaDeviceRevoked: MfaDeviceRevoked
-) : VAuthenticatorEvent(userName, clientAppId, timeStamp, mfaDeviceRevoked) {
+) : VAuthenticatorEvent(userName.content, clientAppId.content, timeStamp, mfaDeviceRevoked) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

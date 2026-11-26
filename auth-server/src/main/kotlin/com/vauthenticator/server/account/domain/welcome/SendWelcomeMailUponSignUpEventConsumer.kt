@@ -2,7 +2,7 @@ package com.vauthenticator.server.account.domain.welcome
 
 import com.vauthenticator.server.events.EventConsumer
 import com.vauthenticator.server.events.SignUpEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 
 class SendWelcomeMailUponSignUpEventConsumer(
     private val sayWelcome: SayWelcome

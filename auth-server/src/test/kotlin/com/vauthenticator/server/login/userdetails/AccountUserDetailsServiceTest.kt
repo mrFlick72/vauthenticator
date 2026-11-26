@@ -2,7 +2,7 @@ package com.vauthenticator.server.login.userdetails
 
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.EventsDispatcher
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.ConsecutiveFailedLogins
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockConfig

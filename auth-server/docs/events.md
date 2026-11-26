@@ -18,13 +18,13 @@ react to them inside the auth-server, and the same pipeline is the base for audi
 3. Consumers today: the logger, signup, welcome mail, verification mail, and the password history kept on reset and
    change.
 
-The pipeline itself comes from the platform (`com.vauthenticator.platform.events`): the abstract `Event` (principal,
+The pipeline itself comes from the platform (`com.vauthenticator.platform.events`): the abstract `VAuthenticatorEvent` (principal,
 client id, timestamp, payload, request context), `RequestContext`, the generic dispatcher/collector/consumer contracts,
 the publishing dispatcher, the consumer loop (`ConsumingEventsCollector`), the event logger (`LoggingEventConsumer`) and
-`EventConsumerConfig` (`event.consumer.enable.*`). The auth-server keeps its own events: `VAuthenticatorEvent` is a sealed
-class on top of the platform's `Event` that keeps the account (`Email`) and the client app (`ClientAppId`) typed and
-hands their values to the platform as principal and client id. Its `EventsDispatcher`, `EventConsumer` and
-`SpringEventsCollector` narrow the platform's contracts to it, so the collector only receives auth-server events;
+`EventConsumerConfig` (`event.consumer.enable.*`). The auth-server keeps its own events: each one extends the platform's `VAuthenticatorEvent` directly, takes the
+account (`Email`) and the client app (`ClientAppId`) typed in its constructor and hands their values to the platform as
+principal and client id. Its `EventsDispatcher`, `EventConsumer` and `SpringEventsCollector` bind the platform's
+contracts to `VAuthenticatorEvent`, so the collector receives no other application event;
 `VAuthenticatorEventsDispatcher` and `LoggerEventConsumer` are the platform's dispatcher and logger bound to them.
 `Password` is a `SensitivePayload`, so the logger never writes it.
 

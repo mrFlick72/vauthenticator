@@ -1,7 +1,7 @@
 package com.vauthenticator.server.mfa.domain
 
 import com.vauthenticator.server.events.MfaDeviceRevokedEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyPurpose
 import com.vauthenticator.server.keys.domain.KeyRepository

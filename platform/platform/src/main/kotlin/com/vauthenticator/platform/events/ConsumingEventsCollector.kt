@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
  * for its own event hierarchy and marks its `accept` override as the event listener, so that it only receives the
  * events of that hierarchy.
  */
-abstract class ConsumingEventsCollector<E : Event>(private val eventConsumers: List<EventConsumer<E>>) :
+abstract class ConsumingEventsCollector<E : VAuthenticatorEvent>(private val eventConsumers: List<EventConsumer<E>>) :
     EventsCollector<E> {
 
     private val logger = LoggerFactory.getLogger(ConsumingEventsCollector::class.java)

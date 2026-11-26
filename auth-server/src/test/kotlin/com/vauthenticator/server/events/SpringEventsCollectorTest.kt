@@ -1,5 +1,6 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.events.EventFixture.vauthenticatorAuthEvent
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
@@ -12,8 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.context.annotation.AnnotationConfigUtils
 import org.springframework.context.support.GenericApplicationContext
-import com.vauthenticator.platform.events.Event
-import java.time.Instant
 
 @ExtendWith(MockKExtension::class)
 class SpringEventsCollectorTest {
@@ -42,7 +41,7 @@ class SpringEventsCollectorTest {
     }
 
     @Test
-    fun `as the event listener it receives the authorization server events only`() {
+    fun `as the event listener it receives VAuthenticator events only`() {
         val received = mutableListOf<Any>()
         val recordingConsumer = object : EventConsumer {
             override fun accept(event: VAuthenticatorEvent) {
@@ -51,7 +50,7 @@ class SpringEventsCollectorTest {
 
             override fun handleable(event: VAuthenticatorEvent) = true
         }
-        val anotherServerEvent = object : Event("a user", "a client", Instant.EPOCH, "another server's payload", null) {}
+        val anApplicationEvent = "an application event that is not a VAuthenticator event"
 
         GenericApplicationContext().use { context ->
             context.registerBean(SpringEventsCollector::class.java, listOf(recordingConsumer))
@@ -59,7 +58,7 @@ class SpringEventsCollectorTest {
             AnnotationConfigUtils.registerAnnotationConfigProcessors(context)
             context.refresh()
 
-            context.publishEvent(anotherServerEvent)
+            context.publishEvent(anApplicationEvent)
             context.publishEvent(vauthenticatorAuthEvent)
         }
 

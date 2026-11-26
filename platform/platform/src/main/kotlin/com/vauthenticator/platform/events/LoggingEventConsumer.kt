@@ -14,7 +14,7 @@ private const val SPRING_AUTHENTICATION_EVENT = "org.springframework.security.au
  * disguise log lines; values with no natural bound are capped first. A [SensitivePayload] is written as its type
  * only, and so is a Spring Security authentication event, whose text holds the typed username and the raw session id.
  */
-open class LoggingEventConsumer<in E : Event>(private val eventConsumerConfig: EventConsumerConfig) :
+open class LoggingEventConsumer<in E : VAuthenticatorEvent>(private val eventConsumerConfig: EventConsumerConfig) :
     EventConsumer<E> {
 
     private val logger = LoggerFactory.getLogger(LoggingEventConsumer::class.java)
@@ -31,7 +31,7 @@ open class LoggingEventConsumer<in E : Event>(private val eventConsumerConfig: E
         logger.info(logLine + requestContextLinesOf(event))
     }
 
-    private fun requestContextLinesOf(event: Event): String =
+    private fun requestContextLinesOf(event: VAuthenticatorEvent): String =
         event.requestContext?.let {
             """
 
@@ -41,7 +41,7 @@ open class LoggingEventConsumer<in E : Event>(private val eventConsumerConfig: E
             """.trimIndent()
         } ?: ""
 
-    private fun loggablePayloadOf(event: Event): String {
+    private fun loggablePayloadOf(event: VAuthenticatorEvent): String {
         val payload = event.payload
         if (payload is SensitivePayload) return "${payload::class.simpleName}(*****)"
         if (springSecurityPresent) AuthenticationPayloads.typeOnly(payload)?.let { return it }

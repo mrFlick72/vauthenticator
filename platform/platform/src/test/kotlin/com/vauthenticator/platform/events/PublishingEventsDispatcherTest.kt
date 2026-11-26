@@ -14,10 +14,10 @@ class PublishingEventsDispatcherTest {
     @Test
     fun `an event is dispatched as a Spring application event`() {
         val publisher = mockk<ApplicationEventPublisher>()
-        val event = object : Event("a user", "a client", Instant.EPOCH, "a payload", null) {}
+        val event = object : VAuthenticatorEvent("a user", "a client", Instant.EPOCH, "a payload", null) {}
         every { publisher.publishEvent(event) } just runs
 
-        PublishingEventsDispatcher<Event>(publisher).dispatch(event)
+        PublishingEventsDispatcher<VAuthenticatorEvent>(publisher).dispatch(event)
 
         verify { publisher.publishEvent(event) }
     }

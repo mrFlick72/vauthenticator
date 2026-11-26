@@ -2,7 +2,7 @@ package com.vauthenticator.server.account.domain
 
 import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.FailedLoginLockReleasedEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRelease
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockReleaseReason
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId

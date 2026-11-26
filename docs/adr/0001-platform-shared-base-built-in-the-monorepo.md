@@ -10,7 +10,8 @@ Maven registry.
 
 The platform holds mechanisms, never a server's concepts. Every Document belongs to exactly one server and
 servers never read each other's Documents; the platform knows no Document Type of its own. Likewise the event
-pipeline moves to the platform while each server keeps its own events and consumers, and the extensions that
+pipeline and the `VAuthenticatorEvent` every event extends move to the platform, with the account and the
+client as plain strings, while each server keeps its own event subclasses and consumers, and the extensions that
 work on a server's types (client apps, scopes, accounts) stay in that server. A package that mixes the
 two is split when it moves.
 
@@ -28,8 +29,8 @@ The name is a plain description on purpose: a brand-like name such as "VAuth0" r
   the first step moves five mechanisms that every server will need, so a starter each adds modules
   and wiring without letting any server leave one out. Revisit when a server needs a mechanism the
   others do not.
-- Moving the packages whole, with the auth-server types they use (`ClientAppId`, `Email`, the sealed
-  event hierarchy). Rejected: the platform would become most of the auth-server domain, and the next servers
+- Moving the packages whole, with the auth-server types they use (`ClientAppId`, `Email`, the
+  event subclasses and their payloads). Rejected: the platform would become most of the auth-server domain, and the next servers
   would inherit it.
 - A separately versioned platform published to GitHub Packages or Maven Central, in this repo or in its
   own. Rejected for now: GitHub Packages needs a token even to read public packages, so every

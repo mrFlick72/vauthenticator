@@ -2,7 +2,7 @@ package com.vauthenticator.server.password.domain.resetpassword
 
 import com.vauthenticator.server.events.EventConsumer
 import com.vauthenticator.server.events.ResetPasswordEvent
-import com.vauthenticator.server.events.VAuthenticatorEvent
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.PasswordHistoryRepository
 import org.springframework.stereotype.Service

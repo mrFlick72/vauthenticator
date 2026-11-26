@@ -14,7 +14,7 @@ import java.time.Instant
 class LoggingEventConsumerTest {
 
     private class AnEvent(principal: String, clientId: String, payload: Any, requestContext: RequestContext? = null) :
-        Event(principal, clientId, Instant.ofEpochSecond(42), payload, requestContext)
+        VAuthenticatorEvent(principal, clientId, Instant.ofEpochSecond(42), payload, requestContext)
 
     private class ASecret(val value: String) : SensitivePayload {
         override fun toString() = value
