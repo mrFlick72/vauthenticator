@@ -21,14 +21,14 @@ vocabulary is in `CONTEXT.md`.
     evict-on-write rule stay in the server (auth-server `CacheConfig`, ADR 0012)
   - `events`: the in-process event pipeline: the abstract `VAuthenticatorEvent` (principal, client id, timestamp,
     payload, `RequestContext`) every server's events extend, the `EventsDispatcher`/`EventsCollector`/`EventConsumer`
-    contracts generic on the event type, `PublishingEventsDispatcher` (publishes as a Spring application event), the consumer loop
-    `ConsumingEventsCollector`, `LoggingEventConsumer` (switched on by `event.consumer.enable.logger-event-consumer`;
+    contracts generic on the event type, `PublishingEventsDispatcher` (publishes as a Spring application event), the collector
+    `ConsumingEventsCollector` (the `@EventListener` of the pipeline: it receives every `VAuthenticatorEvent` and no other
+    application event, whatever event type it is bound to), `LoggingEventConsumer` (switched on by `event.consumer.enable.logger-event-consumer`;
     escapes every client-controlled value, logs a `SensitivePayload` and a Spring Security authentication event as their
     type only), `EventConsumerConfig` and `RequestContext` (IP, user agent, SHA-256 session reference, never the session
     id: auth-server ADR 0016). A server defines its event subclasses on top of `VAuthenticatorEvent` (typed constructor
-    arguments, plain-string state), binds the contracts, the dispatcher and the logger to it and puts `@EventListener`
-    on its collector's `accept` override, so it receives `VAuthenticatorEvent`s and no other application event
-    (auth-server `SpringEventsCollector`). A payload that must never be written, such as a password, implements `SensitivePayload`
+    arguments, plain-string state), binds the contracts, the dispatcher, the collector and the logger to it and declares
+    them as beans (auth-server `EventsConfig`). A payload that must never be written, such as a password, implements `SensitivePayload`
   - `i18n`: `I18nMessageRepository` reads the messages and errors of a scope (a key prefix) from the server's
     `i18n/messages_<lang>.properties` bundle, falling back to `i18n/messages.properties`; `I18nMessages`. The scopes,
     the bundles and how messages reach a page stay in the server (auth-server `I18nScope`, `I18nMessageInjector`)

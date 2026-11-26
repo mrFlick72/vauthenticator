@@ -7,7 +7,8 @@ import java.time.Instant
  * Something that happened in a VAuthenticator server: who it happened to ([principal], such as an account's username),
  * through which client ([clientId], empty when there is none), when, with which [payload], and the request it happened
  * in ([RequestContext], ADR 0016 of the auth server). Every server's events extend it directly, each server in its own
- * process; a server can still narrow the contracts below to a subtype of its own.
+ * process. A server can still narrow the dispatcher and consumer contracts below to a subtype of its own; the collector
+ * ([ConsumingEventsCollector]) always listens for every [VAuthenticatorEvent].
  */
 abstract class VAuthenticatorEvent(
     val principal: String,
