@@ -23,9 +23,10 @@ client id, timestamp, payload, request context), `RequestContext`, the generic d
 the publishing dispatcher, the consumer loop (`ConsumingEventsCollector`), the event logger (`LoggingEventConsumer`) and
 `EventConsumerConfig` (`event.consumer.enable.*`). The auth-server keeps its own events: each one extends the platform's `VAuthenticatorEvent` directly, takes the
 account (`Email`) and the client app (`ClientAppId`) typed in its constructor and hands their values to the platform as
-principal and client id. Its `EventsDispatcher`, `EventConsumer` and `SpringEventsCollector` bind the platform's
-contracts to `VAuthenticatorEvent`, so the collector receives no other application event;
-`VAuthenticatorEventsDispatcher` and `LoggerEventConsumer` are the platform's dispatcher and logger bound to them.
+principal and client id. It uses the platform contracts directly, as `EventsDispatcher<VAuthenticatorEvent>` and
+`EventConsumer<VAuthenticatorEvent>`; `SpringEventsCollector` listens for `VAuthenticatorEvent` only, so it receives no
+other application event; `VAuthenticatorEventsDispatcher` and `LoggerEventConsumer` are the platform's dispatcher and
+logger bound to `VAuthenticatorEvent`.
 `Password` is a `SensitivePayload`, so the logger never writes it.
 
 Everything runs synchronously, on the thread that raised the event. Nothing is published outside the auth-server; a

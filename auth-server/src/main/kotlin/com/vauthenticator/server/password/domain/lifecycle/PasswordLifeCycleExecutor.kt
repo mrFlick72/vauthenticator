@@ -1,12 +1,13 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountMandatoryAction
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.PasswordLifeCycleActionAppliedEvent
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import org.slf4j.LoggerFactory
@@ -44,7 +45,7 @@ class BasePasswordLifeCycleStrategy(
     private val accountRepository: AccountRepository,
     private val accountAdministration: AccountAdministration,
     private val passwordLifeCycleRepository: PasswordLifeCycleRepository,
-    private val eventsDispatcher: EventsDispatcher,
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
     private val implementation: PasswordLifeCycleStrategyImplementation
 ) : PasswordLifeCycleStrategy {
 

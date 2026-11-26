@@ -1,5 +1,6 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.EventConsumer
 import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.events.EventFixture.vauthenticatorAuthEvent
 import io.mockk.every
@@ -18,10 +19,10 @@ import org.springframework.context.support.GenericApplicationContext
 class SpringEventsCollectorTest {
 
     @MockK
-    private lateinit var eventConsumer: EventConsumer
+    private lateinit var eventConsumer: EventConsumer<VAuthenticatorEvent>
 
     @MockK
-    private lateinit var anotherEventConsumer: EventConsumer
+    private lateinit var anotherEventConsumer: EventConsumer<VAuthenticatorEvent>
 
     @Test
     fun `when an event is received and processed from a list of event consumers`() {
@@ -43,7 +44,7 @@ class SpringEventsCollectorTest {
     @Test
     fun `as the event listener it receives VAuthenticator events only`() {
         val received = mutableListOf<Any>()
-        val recordingConsumer = object : EventConsumer {
+        val recordingConsumer = object : EventConsumer<VAuthenticatorEvent> {
             override fun accept(event: VAuthenticatorEvent) {
                 received.add(event)
             }

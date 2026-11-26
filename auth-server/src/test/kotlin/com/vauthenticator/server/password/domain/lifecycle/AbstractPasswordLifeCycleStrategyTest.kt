@@ -1,11 +1,11 @@
 package com.vauthenticator.server.password.domain.lifecycle
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
 import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.PasswordLifeCycleActionAppliedEvent
 import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
@@ -44,7 +44,7 @@ abstract class AbstractPasswordLifeCycleStrategyTest {
     lateinit var passwordLifeCycleRepository: PasswordLifeCycleRepository
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     lateinit var uut: PasswordLifeCycleStrategy
 

@@ -1,7 +1,7 @@
 package com.vauthenticator.server.login.userdetails
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.account.domain.AccountRepository
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.login.failedloginlock.ConsecutiveFailedLogins
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLock
@@ -49,7 +49,7 @@ class AccountUserDetailsServiceTest {
     lateinit var consecutiveFailedLogins: ConsecutiveFailedLogins
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     @MockK
     lateinit var currentHttpServletRequestService: CurrentHttpServletRequestService

@@ -1,9 +1,10 @@
 package com.vauthenticator.server.login.failedloginlock
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.events.FailedLoginLockAppliedEvent
 import com.vauthenticator.server.events.FailedLoginLockReleasedEvent
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
@@ -44,7 +45,7 @@ class FailedLoginLock(
     private val accountRepository: AccountRepository,
     private val failedLoginLockRepository: FailedLoginLockRepository,
     private val consecutiveFailedLogins: ConsecutiveFailedLogins,
-    private val eventsDispatcher: EventsDispatcher,
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
     private val clock: Clock,
     private val config: FailedLoginLockConfig
 ) {

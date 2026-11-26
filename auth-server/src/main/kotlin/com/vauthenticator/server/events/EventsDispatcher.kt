@@ -1,5 +1,6 @@
 package com.vauthenticator.server.events
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.extentions.requestedClientAppId
@@ -16,9 +17,9 @@ import org.springframework.web.context.request.ServletRequestAttributes
 import java.time.Instant
 
 class VAuthenticatorEventsDispatcher(publisher: ApplicationEventPublisher) :
-    PublishingEventsDispatcher<VAuthenticatorEvent>(publisher), EventsDispatcher
+    PublishingEventsDispatcher<VAuthenticatorEvent>(publisher)
 
-class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublisher) : EventsDispatcher {
+class SpringEventEventsDispatcher(private val publisher: ApplicationEventPublisher) : EventsDispatcher<VAuthenticatorEvent> {
 
     private val logger = LoggerFactory.getLogger(SpringEventEventsDispatcher::class.java)
 

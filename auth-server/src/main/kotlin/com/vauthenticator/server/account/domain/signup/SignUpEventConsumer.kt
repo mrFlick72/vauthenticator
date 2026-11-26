@@ -1,6 +1,6 @@
 package com.vauthenticator.server.account.domain.signup
 
-import com.vauthenticator.server.events.EventConsumer
+import com.vauthenticator.platform.events.EventConsumer
 import com.vauthenticator.server.events.SignUpEvent
 import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.password.domain.Password
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 class SignUpEventConsumer(
     private val passwordHistoryRepository: PasswordHistoryRepository
-) : EventConsumer {
+) : EventConsumer<VAuthenticatorEvent> {
     override fun accept(event: VAuthenticatorEvent) {
         passwordHistoryRepository.store(event.principal, event.payload as Password)
     }

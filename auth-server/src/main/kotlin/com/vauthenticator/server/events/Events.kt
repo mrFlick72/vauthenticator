@@ -11,13 +11,6 @@ import com.vauthenticator.platform.events.VAuthenticatorEvent
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import java.time.Instant
 
-interface EventsDispatcher : com.vauthenticator.platform.events.EventsDispatcher<VAuthenticatorEvent>
-
-interface EventsCollector : com.vauthenticator.platform.events.EventsCollector<VAuthenticatorEvent>
-
-interface EventConsumer : com.vauthenticator.platform.events.EventConsumer<VAuthenticatorEvent>
-
-
 class VAuthenticatorAuthEvent(
     userName: Email,
     clientAppId: ClientAppId,

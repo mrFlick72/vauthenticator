@@ -1,6 +1,7 @@
 package com.vauthenticator.server.account.domain
 
-import com.vauthenticator.server.events.EventsDispatcher
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.events.FailedLoginLockReleasedEvent
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockRelease
 import com.vauthenticator.server.login.failedloginlock.FailedLoginLockReleaseReason
@@ -20,7 +21,7 @@ data class AdminAccountApiRequest(
 class AccountUpdateAdminAction(
     private val accountRepository: AccountRepository,
     private val accountAdministration: AccountAdministration,
-    private val eventsDispatcher: EventsDispatcher,
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
     private val clock: Clock
 ) {
     fun execute(

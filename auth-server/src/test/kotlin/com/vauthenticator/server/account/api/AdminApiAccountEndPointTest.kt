@@ -1,12 +1,13 @@
 package com.vauthenticator.server.account.api
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.role.adapter.security.SecurityContextAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.AccountUpdateAdminAction
 import com.vauthenticator.server.account.domain.AdminAccountApiRequest
-import com.vauthenticator.server.events.EventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientApplicationRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.role.domain.PermissionValidator
@@ -50,7 +51,7 @@ internal class AdminApiAccountEndPointTest {
     lateinit var clientApplicationRepository: ClientApplicationRepository
 
     @MockK
-    lateinit var eventsDispatcher: EventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     private val objectMapper = ObjectMapper()
 
