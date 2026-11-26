@@ -25,8 +25,10 @@ the publishing dispatcher, the consumer loop (`ConsumingEventsCollector`), the e
 account (`Email`) and the client app (`ClientAppId`) typed in its constructor and hands their values to the platform as
 principal and client id. It uses the platform contracts directly, as `EventsDispatcher<VAuthenticatorEvent>` and
 `EventConsumer<VAuthenticatorEvent>`, and declares the platform's `ConsumingEventsCollector` as its collector: it listens for
-`VAuthenticatorEvent` only, so it receives no other application event; `VAuthenticatorEventsDispatcher` is the platform's dispatcher bound to `VAuthenticatorEvent`, and the event logger is
-the platform's `LoggingEventConsumer<VAuthenticatorEvent>`.
+`VAuthenticatorEvent` only, so it receives no other application event; the dispatcher is the platform's
+`PublishingEventsDispatcher<VAuthenticatorEvent>` and the event logger the platform's
+`LoggingEventConsumer<VAuthenticatorEvent>`. `SpringEventEventsDispatcher` is not a dispatcher bean: it listens for the
+Spring Security authentication events and hands them to that dispatcher.
 `Password` is a `SensitivePayload`, so the logger never writes it.
 
 Everything runs synchronously, on the thread that raised the event. Nothing is published outside the auth-server; a

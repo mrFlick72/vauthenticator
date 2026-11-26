@@ -1,11 +1,12 @@
 package com.vauthenticator.server.password.domain.changepassword
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
 import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.ChangePasswordEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.oauth2.clientapp.domain.Scope
 import com.vauthenticator.server.password.domain.PasswordPolicy
@@ -47,7 +48,7 @@ class ChangePasswordTest {
     lateinit var passwordEncoder: VAuthenticatorPasswordEncoder
 
     @MockK
-    lateinit var eventsDispatcher: VAuthenticatorEventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     @BeforeEach
     fun setUp() {

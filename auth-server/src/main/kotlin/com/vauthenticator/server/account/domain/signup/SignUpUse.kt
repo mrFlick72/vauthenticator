@@ -1,11 +1,12 @@
 package com.vauthenticator.server.account.domain.signup
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.Account
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.SignUpEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.PasswordPolicy
@@ -18,7 +19,7 @@ open class SignUpUse(
     private val accountRepository: AccountRepository,
     private val accountAdministration: AccountAdministration,
     private val vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
-    private val eventsDispatcher: VAuthenticatorEventsDispatcher
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 ) {
     open fun execute(clientAppId: ClientAppId, account: Account) {
         passwordPolicy.accept(account.email, account.password)

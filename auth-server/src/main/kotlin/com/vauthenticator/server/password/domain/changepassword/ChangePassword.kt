@@ -1,11 +1,12 @@
 package com.vauthenticator.server.password.domain.changepassword
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.vauthenticator.server.account.domain.AccountNotFoundException
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.ChangePasswordEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.PasswordPolicy
@@ -18,7 +19,7 @@ import java.security.Principal
 import java.time.Instant
 
 class ChangePassword(
-    private val eventsDispatcher: VAuthenticatorEventsDispatcher,
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
     private val passwordPolicy: PasswordPolicy,
     private val passwordEncoder: VAuthenticatorPasswordEncoder,
     private val accountRepository: AccountRepository,

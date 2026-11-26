@@ -1,8 +1,8 @@
 package com.vauthenticator.server.mfa.domain
 
+import com.vauthenticator.platform.events.EventsDispatcher
 import com.vauthenticator.server.events.MfaDeviceRevokedEvent
 import com.vauthenticator.platform.events.VAuthenticatorEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyPurpose
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.Kid
@@ -37,7 +37,7 @@ class MfaDevicesTest {
     lateinit var keyRepository: KeyRepository
 
     @MockK
-    lateinit var eventsDispatcher: VAuthenticatorEventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     lateinit var underTest: MfaDevices
 

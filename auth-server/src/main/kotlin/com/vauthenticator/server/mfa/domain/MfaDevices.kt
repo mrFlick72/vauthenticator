@@ -1,8 +1,9 @@
 package com.vauthenticator.server.mfa.domain
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.events.MfaDeviceRevokedEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyPurpose
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
@@ -16,7 +17,7 @@ import java.time.Instant
 class MfaDevices(
     private val mfaAccountMethodsRepository: MfaAccountMethodsRepository,
     private val keyRepository: KeyRepository,
-    private val eventsDispatcher: VAuthenticatorEventsDispatcher
+    private val eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 ) {
 
     private val logger = LoggerFactory.getLogger(MfaDevices::class.java)

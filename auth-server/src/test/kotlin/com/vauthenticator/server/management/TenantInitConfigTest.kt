@@ -1,7 +1,8 @@
 package com.vauthenticator.server.management
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.AccountRepositoryConfig
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.KeyStorage
 import com.vauthenticator.server.management.init.AccountSetUpJob
@@ -45,7 +46,7 @@ class TenantInitConfigTest {
         .withBean(RoleRepository::class.java, { mockk<RoleRepository>(relaxed = true) })
         .withBean(PasswordPolicy::class.java, { mockk<PasswordPolicy>(relaxed = true) })
         .withBean(VAuthenticatorPasswordEncoder::class.java, { mockk<VAuthenticatorPasswordEncoder>(relaxed = true) })
-        .withBean(VAuthenticatorEventsDispatcher::class.java, { mockk<VAuthenticatorEventsDispatcher>(relaxed = true) })
+        .withBean(EventsDispatcher::class.java, { mockk<EventsDispatcher<VAuthenticatorEvent>>(relaxed = true) })
         .withBean(KeyStorage::class.java, { mockk<KeyStorage>(relaxed = true) })
         .withBean(KeyRepository::class.java, { mockk<KeyRepository>(relaxed = true) })
         .withBean(DocumentRepository::class.java, { documentRepository })

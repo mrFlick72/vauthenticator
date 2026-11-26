@@ -1,5 +1,7 @@
 package com.vauthenticator.server.password
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountAdministration
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.platform.document.domain.DocumentRepository
@@ -10,7 +12,6 @@ import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderS
 import com.vauthenticator.server.communication.domain.EMailSenderService
 import com.vauthenticator.server.communication.domain.EMailType
 import com.vauthenticator.server.communication.domain.SimpleEMailMessageFactory
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.password.adapter.jdbc.JdbcPasswordHistoryRepository
 import com.vauthenticator.server.password.adapter.jdbc.JdbcPasswordLifeCycleRepository
 import com.vauthenticator.server.password.domain.*
@@ -92,7 +93,7 @@ class PasswordConfig {
 
     @Bean
     fun changePassword(
-        eventsDispatcher: VAuthenticatorEventsDispatcher,
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
         passwordPolicy: PasswordPolicy,
         passwordEncoder: VAuthenticatorPasswordEncoder,
         accountRepository: AccountRepository,
@@ -132,7 +133,7 @@ class ResetPasswordConfig {
 
     @Bean
     fun resetPasswordChallengeSent(
-        eventsDispatcher: VAuthenticatorEventsDispatcher,
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
         accountRepository: AccountRepository,
         accountAdministration: AccountAdministration,
         vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder,
@@ -188,7 +189,7 @@ class PasswordLifeCycleConfig {
         accountRepository: AccountRepository,
         accountAdministration: AccountAdministration,
         passwordLifeCycleRepository: PasswordLifeCycleRepository,
-        eventsDispatcher: VAuthenticatorEventsDispatcher,
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>,
     ) = PasswordLifeCycleExecutor(
         listOf(
             BasePasswordLifeCycleStrategy(

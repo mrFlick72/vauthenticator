@@ -1,10 +1,11 @@
 package com.vauthenticator.server.account.domain.signup
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.account.domain.Email
 import com.vauthenticator.server.account.domain.signup.SignUpUse
 import com.vauthenticator.server.events.SignUpEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.oauth2.clientapp.domain.ClientAppId
 import com.vauthenticator.server.password.domain.Password
 import com.vauthenticator.server.password.domain.PasswordPolicy
@@ -39,7 +40,7 @@ internal class SignUpUseTest {
     lateinit var vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder
 
     @MockK
-    lateinit var vAuthenticatorEventsDispatcher: VAuthenticatorEventsDispatcher
+    lateinit var vAuthenticatorEventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     private lateinit var underTest: SignUpUse
 

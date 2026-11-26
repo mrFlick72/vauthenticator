@@ -1,5 +1,7 @@
 package com.vauthenticator.server.password.domain.resetpassword
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.vauthenticator.server.support.AdministrationFixture.accountAdministrationFor
 import com.vauthenticator.server.support.AdministrationFixture.notAnAdministrator
 import io.mockk.verify
@@ -7,7 +9,6 @@ import com.vauthenticator.server.ticket.domain.TicketContext
 import com.vauthenticator.server.ticket.domain.Ticket
 import com.vauthenticator.server.account.domain.AccountRepository
 import com.vauthenticator.server.events.ResetPasswordEvent
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.password.api.ResetPasswordRequest
 import com.vauthenticator.server.password.domain.PasswordPolicy
 import com.vauthenticator.server.password.domain.VAuthenticatorPasswordEncoder
@@ -45,7 +46,7 @@ class ResetAccountPasswordTest {
     lateinit var vAuthenticatorPasswordEncoder: VAuthenticatorPasswordEncoder
 
     @MockK
-    lateinit var eventsDispatcher: VAuthenticatorEventsDispatcher
+    lateinit var eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
 
     @BeforeEach
     fun setUp() {

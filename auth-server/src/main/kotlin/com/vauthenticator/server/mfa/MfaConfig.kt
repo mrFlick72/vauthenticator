@@ -1,5 +1,7 @@
 package com.vauthenticator.server.mfa
 
+import com.vauthenticator.platform.events.EventsDispatcher
+import com.vauthenticator.platform.events.VAuthenticatorEvent
 import com.hubspot.jinjava.Jinjava
 import com.vauthenticator.platform.document.domain.DocumentRepository
 import com.vauthenticator.server.account.domain.AccountRepository
@@ -8,7 +10,6 @@ import com.vauthenticator.server.communication.adapter.JinJavaTemplateResolver
 import com.vauthenticator.server.communication.adapter.javamail.JavaEMailSenderService
 import com.vauthenticator.server.communication.adapter.sns.SnsSmsSenderService
 import com.vauthenticator.server.communication.domain.*
-import com.vauthenticator.server.events.VAuthenticatorEventsDispatcher
 import com.vauthenticator.server.keys.domain.KeyDecrypter
 import com.vauthenticator.server.keys.domain.KeyRepository
 import com.vauthenticator.server.keys.domain.MasterKid
@@ -72,7 +73,7 @@ class MfaConfig {
     fun mfaDevices(
         mfaAccountMethodsRepository: MfaAccountMethodsRepository,
         keyRepository: KeyRepository,
-        eventsDispatcher: VAuthenticatorEventsDispatcher
+        eventsDispatcher: EventsDispatcher<VAuthenticatorEvent>
     ) = MfaDevices(mfaAccountMethodsRepository, keyRepository, eventsDispatcher)
 
     @Bean
